@@ -532,6 +532,7 @@ footer .f-small{font-size:.78rem; letter-spacing:.1em; text-transform:uppercase;
     .ex-inner{grid-template-columns:1fr}
     .grid3{grid-template-columns:1fr}
   }
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -680,7 +681,7 @@ footer .f-small{font-size:.78rem; letter-spacing:.1em; text-transform:uppercase;
     <div class="sec-wrap">
       <div class="sec-head">
         <h2 data-i="rosterH">A-tím · Súpiska</h2>
-        <p data-i="rosterP">Bratislava Neanderthals — sezóna 2026/27</p>
+        <p data-i="rosterP">Bratislava Neanderthals — sezóna 2025/26 · RAHL1</p>
       </div>
       <div style="overflow-x:auto">
         <table class="player-table">
@@ -689,25 +690,24 @@ footer .f-small{font-size:.78rem; letter-spacing:.1em; text-transform:uppercase;
               <th data-i="thNum">#</th>
               <th data-i="thName">Meno</th>
               <th data-i="thPos">Post</th>
+              <th>Z</th><th>G</th><th>A</th><th>B</th>
               <th data-i="thNote">Poznámka</th>
             </tr>
           </thead>
-          <tbody>
-            <tr><td>1</td><td>Martin Novák</td><td><span class="pos-badge g">B</span></td><td data-i="pCapt">Kapitán</td></tr>
-            <tr><td>3</td><td>Tomáš Kováč</td><td><span class="pos-badge d">O</span></td><td>—</td></tr>
-            <tr><td>7</td><td>Peter Horváth</td><td><span class="pos-badge f">Ú</span></td><td>—</td></tr>
-            <tr><td>11</td><td>Lukáš Sloboda</td><td><span class="pos-badge f">Ú</span></td><td>—</td></tr>
-            <tr><td>14</td><td>Marek Blaho</td><td><span class="pos-badge d">O</span></td><td data-i="pVice">Vicekap.</td></tr>
-            <tr><td>17</td><td>Juraj Takáč</td><td><span class="pos-badge f">Ú</span></td><td>—</td></tr>
-            <tr><td>21</td><td>Rastislav Oravec</td><td><span class="pos-badge g">B</span></td><td>—</td></tr>
-            <tr><td>23</td><td>Michal Varga</td><td><span class="pos-badge d">O</span></td><td data-i="pFin">Financmajster</td></tr>
-            <tr><td>27</td><td>Andrej Mrva</td><td><span class="pos-badge f">Ú</span></td><td>—</td></tr>
-            <tr><td>33</td><td>Dávid Šimko</td><td><span class="pos-badge d">O</span></td><td>—</td></tr>
+          <tbody id="roster-tbody">
+            <tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--bone);">
+              <span class="spinner" style="display:inline-block;width:18px;height:18px;
+                border:2px solid rgba(233,220,195,.3);border-top-color:var(--cream-bright);
+                border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;">
+              </span> Načítavam…
+            </td></tr>
           </tbody>
         </table>
       </div>
-      <p style="margin-top:1.2rem; color:var(--bone); font-size:.9rem;" data-i="rosterNote">
-        B = Brankár · O = Obranca · Ú = Útočník · Súpiska je orientačná, bude aktualizovaná.
+      <p style="margin-top:.8rem;color:var(--bone);font-size:.88rem;" data-i="rosterNote">
+        B = Brankár · O = Obranca · Ú = Útočník ·
+        <a href="https://szalh.sk/team/2025/RAHL1/NEA" target="_blank"
+          style="color:var(--rust-light);text-decoration:none;">szalh.sk ↗</a>
       </p>
     </div>
   </div>
@@ -716,51 +716,80 @@ footer .f-small{font-size:.78rem; letter-spacing:.1em; text-transform:uppercase;
   <div class="page-section" id="sec-rahl">
     <div class="sec-wrap">
       <div class="sec-head">
-        <h2>Liga RAHL</h2>
-        <p data-i="rahlP">Recreational Adult Hockey League · Bratislava · Sezóna 2025/26</p>
+        <h2>Liga RAHL1</h2>
+        <p>Ružinovská amatérska hokejová liga 1 · Sezóna 2025/26 ·
+          <a href="https://szalh.sk/league/2025/RAHL1" target="_blank"
+            style="color:var(--rust-light);text-decoration:none;">szalh.sk ↗</a>
+        </p>
       </div>
-      <h3 style="font-family:'Oswald'; font-weight:700; text-transform:uppercase; color:var(--rust-light); font-size:.8rem; letter-spacing:.2em; margin-bottom:.8rem;" data-i="rahlStandings">Tabuľka — Divízia B</h3>
-      <div class="rahl-table-wrap">
-        <table class="standings-table">
-          <thead>
-            <tr>
-              <th data-i="thTeam">Tím</th><th>Z</th><th>V</th><th>P</th><th>R</th>
-              <th data-i="thGoals">G</th><th data-i="thPts">Body</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>Bratislava Wolves</td><td>14</td><td>11</td><td>2</td><td>1</td><td>68:34</td><td class="pts">34</td></tr>
-            <tr><td>HC Karpaty</td><td>14</td><td>9</td><td>4</td><td>1</td><td>55:41</td><td class="pts">28</td></tr>
-            <tr class="highlight"><td>🦴 <strong>Neanderthals</strong></td><td>14</td><td>7</td><td>5</td><td>2</td><td>49:47</td><td class="pts">23</td></tr>
-            <tr><td>Dunajskí Rytieri</td><td>14</td><td>6</td><td>6</td><td>2</td><td>44:50</td><td class="pts">20</td></tr>
-            <tr><td>HC Petržalka</td><td>14</td><td>4</td><td>8</td><td>2</td><td>38:55</td><td class="pts">14</td></tr>
-            <tr><td>Staromestskí Lordi</td><td>14</td><td>2</td><td>11</td><td>1</td><td>30:57</td><td class="pts">7</td></tr>
-          </tbody>
-        </table>
+
+      <!-- Loading state -->
+      <div id="rahl-loading" style="text-align:center;padding:3rem;color:var(--bone);">
+        <span class="spinner" style="display:inline-block;width:22px;height:22px;
+          border:2px solid rgba(233,220,195,.3);border-top-color:var(--cream-bright);
+          border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;">
+        </span>
+        <span style="margin-left:.6rem;">Načítavam dáta zo szalh.sk…</span>
       </div>
-      <div class="stripe"></div>
-      <h3 style="font-family:'Oswald'; font-weight:700; text-transform:uppercase; color:var(--rust-light); font-size:.8rem; letter-spacing:.2em; margin-bottom:.8rem;" data-i="rahlResults">Posledné výsledky</h3>
-      <div style="overflow-x:auto">
-        <table class="schedule-table">
-          <thead>
-            <tr>
-              <th data-i="thDate">Dátum</th><th data-i="thOpponent">Súper</th>
-              <th data-i="thScore">Skóre</th><th data-i="thResult">Výsledok</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>2.6.2026</td><td>HC Petržalka <span class="home-badge">Doma</span></td><td>5:2</td><td class="result-w">V</td></tr>
-            <tr><td>26.5.2026</td><td>HC Karpaty</td><td>3:4</td><td class="result-l">P</td></tr>
-            <tr><td>19.5.2026</td><td>Dunajskí Rytieri <span class="home-badge">Doma</span></td><td>4:4</td><td class="result-u">R</td></tr>
-            <tr><td>12.5.2026</td><td>Bratislava Wolves</td><td>2:6</td><td class="result-l">P</td></tr>
-            <tr><td>5.5.2026</td><td>Staromestskí Lordi <span class="home-badge">Doma</span></td><td>7:1</td><td class="result-w">V</td></tr>
-          </tbody>
-        </table>
+
+      <!-- Error state -->
+      <div id="rahl-error" style="display:none;text-align:center;padding:2rem;color:var(--bone);">
+        <p>Dáta momentálne nie sú dostupné.</p>
+        <a href="https://szalh.sk/league/2025/RAHL1" target="_blank"
+          style="color:var(--rust-light);">Zobraziť na szalh.sk ↗</a>
       </div>
+
+      <!-- Content -->
+      <div id="rahl-content" style="display:none;">
+
+        <!-- Standings -->
+        <h3 style="font-family:'Oswald';font-weight:700;text-transform:uppercase;
+          color:var(--rust-light);font-size:.8rem;letter-spacing:.2em;margin-bottom:.8rem;">
+          Tabuľka — Základná časť
+        </h3>
+        <div style="overflow-x:auto;margin-bottom:2rem;">
+          <table class="standings-table" id="rahl-standings-table">
+            <thead>
+              <tr>
+                <th style="text-align:left;width:28px">#</th>
+                <th style="text-align:left">Tím</th>
+                <th>Z</th><th>V</th><th>P</th><th>R</th>
+                <th>GF</th><th>GA</th>
+                <th style="color:var(--cream-bright)">Body</th>
+              </tr>
+            </thead>
+            <tbody id="rahl-standings-tbody"></tbody>
+          </table>
+        </div>
+
+        <div class="stripe"></div>
+
+        <!-- NEA Results -->
+        <h3 style="font-family:'Oswald';font-weight:700;text-transform:uppercase;
+          color:var(--rust-light);font-size:.8rem;letter-spacing:.2em;margin-bottom:.8rem;">
+          Neanderthals — posledné výsledky
+        </h3>
+        <div style="overflow-x:auto;margin-bottom:1rem;">
+          <table class="schedule-table" id="rahl-results-table">
+            <thead>
+              <tr>
+                <th>Dátum</th>
+                <th>Súper</th>
+                <th>Skóre</th>
+                <th>Výsledok</th>
+              </tr>
+            </thead>
+            <tbody id="rahl-results-tbody"></tbody>
+          </table>
+        </div>
+
+        <p id="rahl-updated" style="margin-top:.8rem;color:var(--bone);font-size:.82rem;opacity:.5;"></p>
+
+      </div><!-- /rahl-content -->
     </div>
   </div>
 
-  <!-- ── MEDIA ── -->
+<!-- ── MEDIA ── -->
   <div class="page-section" id="sec-media">
     <div class="sec-wrap">
       <div class="sec-head">
@@ -1479,6 +1508,75 @@ document.querySelectorAll('a[data-scroll]').forEach(a => {
 
 /* ─── Init ─── */
 
+
+/* ══ RAHL — načítanie zo szalh.sk proxy ══ */
+async function loadRAHL() {
+  try {
+    const res = await fetch('https://trenuj.ndrtls.com/rahl-proxy.php');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+
+    document.getElementById('rahl-loading').style.display = 'none';
+
+    // Standings
+    const tbody = document.getElementById('rahl-standings-tbody');
+    if (data.standings && data.standings.length) {
+      tbody.innerHTML = data.standings.map(t => {
+        const isNea = t.is_nea;
+        const highlight = isNea ? 'class="highlight"' : '';
+        const name = isNea ? '🦴 <strong>' + t.team + '</strong>' : t.team;
+        return '<tr ' + highlight + '>' +
+          '<td style="text-align:center;color:var(--bone)">' + t.pos + '</td>' +
+          '<td style="text-align:left;color:' + (isNea ? 'var(--cream-bright)' : 'var(--bone)') + '">' + name + '</td>' +
+          '<td>' + t.gp + '</td>' +
+          '<td>' + t.w + '</td>' +
+          '<td>' + t.l + '</td>' +
+          '<td>' + t.d + '</td>' +
+          '<td>' + t.gf + '</td>' +
+          '<td>' + t.ga + '</td>' +
+          '<td class="pts">' + t.pts + '</td>' +
+          '</tr>';
+      }).join('');
+    } else {
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:1.5rem;color:var(--bone)">Tabuľka nie je dostupná.</td></tr>';
+    }
+
+    // NEA Results
+    const rtbody = document.getElementById('rahl-results-tbody');
+    if (data.matches && data.matches.length) {
+      const months = ['jan','feb','mar','apr','máj','jún','júl','aug','sep','okt','nov','dec'];
+      rtbody.innerHTML = data.matches.map(m => {
+        const d = m.date ? m.date.split(' ')[0] : '';
+        const parts = d.split('.');
+        const dateStr = parts.length === 3
+          ? parseInt(parts[0]) + '. ' + months[parseInt(parts[1])-1]
+          : d;
+        const resClass = m.result === 'V' ? 'result-w' : m.result === 'P' ? 'result-l' : 'result-u';
+        const resLabel = m.result === 'V' ? 'V' : m.result === 'P' ? 'P' : 'R';
+        return '<tr>' +
+          '<td style="color:var(--bone)">' + dateStr + '</td>' +
+          '<td style="color:var(--cream-bright)">' + m.opponent + '</td>' +
+          '<td style="font-family:Oswald;font-weight:700">' + m.score + '</td>' +
+          '<td class="' + resClass + '">' + resLabel + '</td>' +
+          '</tr>';
+      }).join('');
+    } else {
+      rtbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:1.5rem;color:var(--bone)">Výsledky nie sú dostupné.</td></tr>';
+    }
+
+    // Updated timestamp
+    const upd = document.getElementById('rahl-updated');
+    if (upd && data.updated) upd.textContent = 'Aktualizované: ' + data.updated + ' · Zdroj: szalh.sk';
+
+    document.getElementById('rahl-content').style.display = 'block';
+
+  } catch(e) {
+    console.error('RAHL load error:', e);
+    document.getElementById('rahl-loading').style.display = 'none';
+    document.getElementById('rahl-error').style.display = 'block';
+  }
+}
+
 /* ══ SUPABASE — načítanie súpisky ══ */
 const { createClient } = supabase;
 const sb = createClient('https://vchxjbdrromujmzujduo.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjaHhqYmRycm9tdWptenVqZHVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NjAyNDAsImV4cCI6MjA5NjQzNjI0MH0.xGT8sxDD2bDogwCZGYAJ-sGWROt1c7e1M9f9_qrm2WA');
@@ -1528,6 +1626,7 @@ function showSection(id) {
   if (sec) sec.classList.add('active');
   const nav = document.getElementById('nav-' + id);
   if (nav) nav.classList.add('active');
+  if (id === 'rahl' && !window._rahlLoaded) { window._rahlLoaded = true; loadRAHL(); }
   if (id === 'training' && !window._trainingInit) {
     window._trainingInit = true;
     setLang(LANG);
