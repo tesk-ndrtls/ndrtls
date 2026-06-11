@@ -1508,6 +1508,43 @@ async function loadRosterFromDB() {
   } catch(e) { console.log('Roster DB load failed, using static'); }
 }
 
+
+/* ── Splash navigation ── */
+function enterSite(section) {
+  const splash = document.getElementById('splash');
+  const site   = document.getElementById('main-site');
+  splash.classList.add('hide');
+  setTimeout(() => {
+    splash.style.display = 'none';
+    site.style.display = 'block';
+  }, 500);
+  showSection(section || 'news');
+}
+
+function showSection(id) {
+  document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const sec = document.getElementById('sec-' + id);
+  if (sec) sec.classList.add('active');
+  const nav = document.getElementById('nav-' + id);
+  if (nav) nav.classList.add('active');
+  if (id === 'training' && !window._trainingInit) {
+    window._trainingInit = true;
+    setLang(LANG);
+  }
+  closeNav();
+  window.scrollTo(0, 0);
+}
+
+function toggleNav() {
+  document.getElementById('sidenav').classList.toggle('open');
+  document.getElementById('nav-overlay').classList.toggle('show');
+}
+function closeNav() {
+  document.getElementById('sidenav').classList.remove('open');
+  document.getElementById('nav-overlay').classList.remove('show');
+}
+
 setLang('sk');
 loadRosterFromDB();
 
