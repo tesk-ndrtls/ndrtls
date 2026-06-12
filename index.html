@@ -533,6 +533,11 @@ footer .f-small{font-size:.78rem; letter-spacing:.1em; text-transform:uppercase;
     .grid3{grid-template-columns:1fr}
   }
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── GLOBAL LINK COLOR FIX ─────────────────── */
+a{color:var(--rust-light);text-decoration:none;}
+a:hover{color:var(--cream-bright);}
+
 </style>
 </head>
 <body>
@@ -802,7 +807,7 @@ footer .f-small{font-size:.78rem; letter-spacing:.1em; text-transform:uppercase;
         <!-- Video 2: Povedz loď -->
         <div class="media-item">
           <div class="media-thumb" style="cursor:pointer;position:relative;overflow:hidden;"
-            onclick="this.innerHTML='<iframe width=\'100%\' height=\'100%\' src=\'https://www.youtube-nocookie.com/embed/moEoQqsYBvI?autoplay=1\' frameborder=\'0\' allow=\'autoplay;encrypted-media\' allowfullscreen style=\'position:absolute;inset:0;\'></iframe>'">
+            onclick="this.style.padding='0';this.innerHTML='<iframe src=\'https://www.youtube-nocookie.com/embed/moEoQqsYBvI?autoplay=1\' frameborder=\'0\' allow=\'autoplay;encrypted-media\' allowfullscreen></iframe>'" style="cursor:pointer;">
             <img src="https://img.youtube.com/vi/moEoQqsYBvI/hqdefault.jpg"
               style="width:100%;height:100%;object-fit:cover;" alt="Povedz loď">
             <div style="position:absolute;inset:0;display:flex;align-items:center;
@@ -822,7 +827,7 @@ footer .f-small{font-size:.78rem; letter-spacing:.1em; text-transform:uppercase;
         
         <div class="media-item">
           <div class="media-thumb" style="cursor:pointer;position:relative;overflow:hidden;"
-            onclick="this.innerHTML='<iframe width=\'100%\' height=\'100%\' src=\'https://www.youtube-nocookie.com/embed/fw4QdkXbYC0?autoplay=1\' frameborder=\'0\' allow=\'autoplay;encrypted-media\' allowfullscreen style=\'position:absolute;inset:0;\'></iframe>'">
+            onclick="this.style.padding='0';this.innerHTML='<iframe src=\'https://www.youtube-nocookie.com/embed/fw4QdkXbYC0?autoplay=1\' frameborder=\'0\' allow=\'autoplay;encrypted-media\' allowfullscreen></iframe>'" style="cursor:pointer;">
             <img src="https://img.youtube.com/vi/fw4QdkXbYC0/hqdefault.jpg"
               style="width:100%;height:100%;object-fit:cover;" alt="Praha 2019">
             <div style="position:absolute;inset:0;display:flex;align-items:center;
