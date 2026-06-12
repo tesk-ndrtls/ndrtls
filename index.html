@@ -799,25 +799,6 @@ footer .f-small{font-size:.78rem; letter-spacing:.1em; text-transform:uppercase;
 
       <div class="media-grid">
 
-        <!-- Video 1: Praha 2019 -->
-        <div class="media-item">
-          <div class="media-thumb" style="cursor:pointer;position:relative;overflow:hidden;"
-            onclick="this.innerHTML='<iframe width=\'100%\' height=\'100%\' src=\'https://www.youtube-nocookie.com/embed/fw4QdkXbYC0?autoplay=1\' frameborder=\'0\' allow=\'autoplay;encrypted-media\' allowfullscreen style=\'position:absolute;inset:0;\'></iframe>'">
-            <img src="https://img.youtube.com/vi/fw4QdkXbYC0/hqdefault.jpg"
-              style="width:100%;height:100%;object-fit:cover;" alt="Praha 2019">
-            <div style="position:absolute;inset:0;display:flex;align-items:center;
-              justify-content:center;background:rgba(0,0,0,.3);">
-              <div style="width:54px;height:54px;background:rgba(107,31,42,.9);
-                border-radius:50%;display:flex;align-items:center;justify-content:center;
-                font-size:1.4rem;">▶</div>
-            </div>
-          </div>
-          <div class="media-info">
-            <h4>Turnaj Praha 2019 🏆</h4>
-            <p>Víťazné ťaženie Neanderthals na turnaji v Prahe. Prvé miesto, nezabudnuteľný víkend.</p>
-          </div>
-        </div>
-
         <!-- Video 2: Povedz loď -->
         <div class="media-item">
           <div class="media-thumb" style="cursor:pointer;position:relative;overflow:hidden;"
@@ -833,7 +814,27 @@ footer .f-small{font-size:.78rem; letter-spacing:.1em; text-transform:uppercase;
           </div>
           <div class="media-info">
             <h4>Povedz loď ⛵</h4>
-            <p>Každoročná tradícia — týždeň na mori. Keď lopta chýba, stačí voda a dobrá partia.</p>
+            <p>Každoročná tradícia — týždeň na mori s partiou. Slnko, more, dobrá nálada.</p>
+          </div>
+        </div>
+
+        <!-- Video 1: Praha 2019 -->
+        
+        <div class="media-item">
+          <div class="media-thumb" style="cursor:pointer;position:relative;overflow:hidden;"
+            onclick="this.innerHTML='<iframe width=\'100%\' height=\'100%\' src=\'https://www.youtube-nocookie.com/embed/fw4QdkXbYC0?autoplay=1\' frameborder=\'0\' allow=\'autoplay;encrypted-media\' allowfullscreen style=\'position:absolute;inset:0;\'></iframe>'">
+            <img src="https://img.youtube.com/vi/fw4QdkXbYC0/hqdefault.jpg"
+              style="width:100%;height:100%;object-fit:cover;" alt="Praha 2019">
+            <div style="position:absolute;inset:0;display:flex;align-items:center;
+              justify-content:center;background:rgba(0,0,0,.3);">
+              <div style="width:54px;height:54px;background:rgba(107,31,42,.9);
+                border-radius:50%;display:flex;align-items:center;justify-content:center;
+                font-size:1.4rem;">▶</div>
+            </div>
+          </div>
+          <div class="media-info">
+            <h4>Turnaj Praha 2019 🏆</h4>
+            <p>Víťazné ťaženie Neanderthals na turnaji v Prahe. Prvé miesto, nezabudnuteľný víkend.</p>
           </div>
         </div>
 
@@ -1612,6 +1613,29 @@ async function loadRAHL() {
     document.getElementById('rahl-error').style.display = 'block';
   }
 }
+
+
+/* ══ AUTO-REDIRECT pre prihlásených hráčov ══ */
+(async function() {
+  // Len ak nie sme na hash navigácii
+  if (!window.location.hash) {
+    try {
+      const { createClient } = supabase;
+      const _sb = createClient(
+        'https://vchxjbdrromujmzujduo.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjaHhqYmRycm9tdWptenVqZHVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NjAyNDAsImV4cCI6MjA5NjQzNjI0MH0.xGT8sxDD2bDogwCZGYAJ-sGWROt1c7e1M9f9_qrm2WA'
+      );
+      const { data: { session } } = await _sb.auth.getSession();
+      if (session) {
+        // Prihlásený užívateľ → presmeruj na zónu
+        window.location.href = 'https://zona.ndrtls.com';
+        return;
+      }
+    } catch(e) {
+      // Supabase nedostupný — pokračuj normálne
+    }
+  }
+})();
 
 /* ══ SUPABASE — načítanie súpisky ══ */
 const { createClient } = supabase;
