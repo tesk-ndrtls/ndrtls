@@ -166,7 +166,7 @@ header{
 
 /* ── PAGE SECTIONS ── */
 .page-section{display:none; position:relative; z-index:2; min-height:calc(100vh - 68px);}
-.page-section.active{display:block;}
+.page-section.active{display:block !important;}
 
 /* ── SECTION WRAPPER ── */
 .sec-wrap{max-width:1080px; margin:0 auto; padding:2.5rem 1.2rem;}
@@ -623,11 +623,20 @@ a:hover{color:var(--cream-bright);}
 .yt-play-btn svg { filter:drop-shadow(0 2px 8px rgba(0,0,0,.5)); transition:.2s; }
 .media-thumb:hover .yt-play-btn svg { transform:scale(1.1); }
 
+
+.btn-login-header {
+  font-family:'Oswald'; font-weight:700; font-size:.78rem; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--bone); cursor:pointer;
+  padding:.4rem .8rem; border:1px solid var(--line); border-radius:6px;
+  background:transparent; transition:.2s; white-space:nowrap;
+}
+.btn-login-header:hover { border-color:var(--rust-light); color:var(--cream-bright); background:rgba(107,31,42,.2); }
+
 </style>
 </head>
 <body>
 
-<div id="version-badge">v3.0.0</div>
+<div id="version-badge">v3.0.1</div>
 <div id="toast"></div>
 <div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
 
@@ -684,7 +693,7 @@ a:hover{color:var(--cream-bright);}
       <span class="user-name" id="user-name"></span>
       <button class="btn-sm" onclick="event.stopPropagation();doLogout()">Odhlásiť</button>
     </div>
-    <div id="login-header-btn" onclick="enterSite('login')" style="font-family:'Oswald';font-weight:700;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);cursor:pointer;padding:.4rem .6rem;border:1px solid var(--line);border-radius:6px;transition:.2s;" onmouseover="this.style.borderColor='var(--rust-light)';this.style.color='var(--cream-bright)'" onmouseout="this.style.borderColor='var(--line)';this.style.color='var(--bone)'">🔑 Prihlásiť sa</div>
+    <button id="login-header-btn" onclick="enterSite('login')" class="btn-login-header">🔑 Prihlásiť sa</button>
     <div class="lang">
       <button id="btn-sk" class="active" onclick="setLang('sk')">SK</button>
       <button id="btn-en" onclick="setLang('en')">EN</button>
@@ -2813,12 +2822,27 @@ function onLogout() {
 }
 async function doLogout() { await sb.auth.signOut(); }
 async function doLogin() {
-  const email=document.getElementById('login-email').value.trim();
-  const pass=document.getElementById('login-pass').value;
-  const err=document.getElementById('login-err');
-  err.style.display='none';
-  const { error }=await sb.auth.signInWithPassword({ email, password: pass });
-  if (error) { err.textContent='Nesprávny email alebo heslo.'; err.style.display='block'; }
+  const emailEl = document.getElementById('login-email');
+  const passEl  = document.getElementById('login-pass');
+  const err     = document.getElementById('login-err');
+  const btn     = document.querySelector('#sec-login .btn-primary');
+  const email   = emailEl.value.trim();
+  const pass    = passEl.value;
+  if (!email || !pass) {
+    err.textContent = 'Zadaj email a heslo.';
+    err.style.display = 'block';
+    return;
+  }
+  err.style.display = 'none';
+  if (btn) { btn.disabled = true; btn.textContent = 'Prihlasovanie…'; }
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if (btn) { btn.disabled = false; btn.textContent = 'Prihlásiť sa'; }
+  if (error) {
+    err.textContent = error.message === 'Invalid login credentials'
+      ? 'Nesprávny email alebo heslo.'
+      : 'Chyba: ' + error.message;
+    err.style.display = 'block';
+  }
 }
 function showForgot() { document.getElementById('login-card-main').style.display='none'; document.getElementById('login-card-forgot').style.display='block'; }
 async function sendRecovery() {
