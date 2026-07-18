@@ -770,7 +770,7 @@ a:hover{color:var(--cream-bright);}
 </head>
 <body>
 
-<div id="version-badge">v3.0.3</div>
+<div id="version-badge">v3.0.4</div>
 <div id="toast"></div>
 <div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
 
@@ -2939,8 +2939,11 @@ async function onLogin(user) {
   document.getElementById('nav-zone-section').style.display = 'block';
   if (currentProfile?.role==='admin') document.getElementById('nav-admin-section').style.display='block';
   hideSplash();
-  showSection('events');
-  loadRosterFromDB();
+  // Small delay to ensure DOM is ready after hideSplash
+  setTimeout(() => {
+    showSection('events');
+    loadRosterFromDB();
+  }, 50);
 }
 
 function onLogout() {
@@ -2962,24 +2965,33 @@ async function doLogin() {
   const btn     = document.querySelector('#sec-login .btn-primary');
   const email   = (emailEl?.value||'').trim();
   const pass    = passEl?.value||'';
-  if (!email || !pass) {
-    if (err) { err.textContent = 'Zadaj email a heslo.'; err.style.display = 'block'; }
-    return;
+
+  function showErr(msg) {
+    if (err) { err.textContent = msg; err.style.display = 'block'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Prihlásiť sa'; }
   }
+
+  if (!email || !pass) { showErr('Zadaj email a heslo.'); return; }
   if (err) err.style.display = 'none';
   if (btn) { btn.disabled = true; btn.textContent = 'Prihlasovanie…'; }
+
   try {
-    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
-    if (error) throw error;
-    // Success is handled by onAuthStateChange
-  } catch(e) {
-    if (btn) { btn.disabled = false; btn.textContent = 'Prihlásiť sa'; }
-    if (err) {
-      err.textContent = (e.message||'').includes('Invalid') 
+    const result = await sb.auth.signInWithPassword({ email, password: pass });
+    const { data, error } = result;
+    if (error) {
+      showErr((error.message||'').includes('Invalid')
         ? 'Nesprávny email alebo heslo.'
-        : 'Chyba: ' + (e.message||'Unknown');
-      err.style.display = 'block';
+        : 'Chyba Supabase: ' + error.message);
+      return;
     }
+    if (data?.session) {
+      // Manually trigger onLogin if onAuthStateChange doesn't fire
+      await onLogin(data.session.user);
+    } else {
+      showErr('Prihlásenie zlyhalo — žiadna session.');
+    }
+  } catch(e) {
+    showErr('JS chyba: ' + (e.message||String(e)));
   }
 }
 function showForgot() { document.getElementById('login-card-main').style.display='none'; document.getElementById('login-card-forgot').style.display='block'; }
