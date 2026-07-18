@@ -612,6 +612,17 @@ a:hover{color:var(--cream-bright);}
 .adm-tab.active,.adm-tab:hover{background:var(--maroon);color:var(--cream-bright);border-color:var(--maroon);}
 #version-badge{position:fixed;bottom:.5rem;right:.5rem;z-index:400;font-family:'Oswald';font-size:.6rem;letter-spacing:.1em;color:rgba(205,191,159,.2);pointer-events:none;}
 
+
+/* ── YOUTUBE PLAY BUTTON ─────────────────────── */
+.yt-play-btn {
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.2); transition:.2s;
+}
+.media-thumb:hover .yt-play-btn { background:rgba(0,0,0,.1); }
+.yt-play-btn svg { filter:drop-shadow(0 2px 8px rgba(0,0,0,.5)); transition:.2s; }
+.media-thumb:hover .yt-play-btn svg { transform:scale(1.1); }
+
 </style>
 </head>
 <body>
@@ -759,24 +770,48 @@ a:hover{color:var(--cream-bright);}
   <div class="sec-wrap">
     <div class="sec-head"><h2 data-i="mediaH">Médiá</h2><p data-i="mediaP">Videá, fotky a náš Instagram.</p></div>
     <div class="media-grid">
+
+      <!-- Video: Povedz loď -->
       <div class="media-item">
-        <div class="media-thumb" onclick="this.style.padding='0';this.innerHTML='<iframe src=\'https://www.youtube-nocookie.com/embed/moEoQqsYBvI?autoplay=1\' frameborder=\'0\' allow=\'autoplay;encrypted-media\' allowfullscreen></iframe>'">
-          <img src="https://img.youtube.com/vi/moEoQqsYBvI/hqdefault.jpg" style="width:100%;height:100%;object-fit:cover;" alt="Povedz loď">
-          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.3);"><div style="width:54px;height:54px;background:rgba(107,31,42,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;">▶</div></div>
+        <div class="media-thumb" id="yt-lod" onclick="playVideo('yt-lod','moEoQqsYBvI')" style="cursor:pointer;">
+          <img src="https://img.youtube.com/vi/moEoQqsYBvI/maxresdefault.jpg"
+            onerror="this.src='https://img.youtube.com/vi/moEoQqsYBvI/hqdefault.jpg'"
+            style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" alt="Povedz loď">
+          <div class="yt-play-btn">
+            <svg viewBox="0 0 68 48" width="68" height="48">
+              <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="#ff0000"/>
+              <path d="M45 24L27 14v20" fill="#fff"/>
+            </svg>
+          </div>
         </div>
-        <div class="media-info"><h4>Povedz loď ⛵</h4><p>Každoročná tradícia — týždeň na mori s partiou.</p></div>
+        <div class="media-info"><h4>Povedz loď ⛵</h4><p>Každoročná tradícia — týždeň na mori s partiou. Slnko, more, dobrá nálada.</p></div>
       </div>
+
+      <!-- Video: Praha 2019 -->
       <div class="media-item">
-        <div class="media-thumb" onclick="this.style.padding='0';this.innerHTML='<iframe src=\'https://www.youtube-nocookie.com/embed/fw4QdkXbYC0?autoplay=1\' frameborder=\'0\' allow=\'autoplay;encrypted-media\' allowfullscreen></iframe>'">
-          <img src="https://img.youtube.com/vi/fw4QdkXbYC0/hqdefault.jpg" style="width:100%;height:100%;object-fit:cover;" alt="Praha 2019">
-          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.3);"><div style="width:54px;height:54px;background:rgba(107,31,42,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;">▶</div></div>
+        <div class="media-thumb" id="yt-praha" onclick="playVideo('yt-praha','fw4QdkXbYC0')" style="cursor:pointer;">
+          <img src="https://img.youtube.com/vi/fw4QdkXbYC0/maxresdefault.jpg"
+            onerror="this.src='https://img.youtube.com/vi/fw4QdkXbYC0/hqdefault.jpg'"
+            style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" alt="Praha 2019">
+          <div class="yt-play-btn">
+            <svg viewBox="0 0 68 48" width="68" height="48">
+              <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="#ff0000"/>
+              <path d="M45 24L27 14v20" fill="#fff"/>
+            </svg>
+          </div>
         </div>
-        <div class="media-info"><h4>Turnaj Praha 2019 🏆</h4><p>Víťazné ťaženie na turnaji v Prahe. Prvé miesto.</p></div>
+        <div class="media-info"><h4>Turnaj Praha 2019 🏆</h4><p>Víťazné ťaženie Neanderthals na turnaji v Prahe. Prvé miesto, nezabudnuteľný víkend.</p></div>
       </div>
+
+      <!-- Instagram -->
       <div class="media-item" style="cursor:pointer;" onclick="window.open('https://www.instagram.com/neanderthals_bratislava/','_blank')">
-        <div class="media-thumb" style="background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);display:flex;align-items:center;justify-content:center;font-size:3.5rem;">📸</div>
-        <div class="media-info"><h4>@neanderthals_bratislava</h4><p>Fotky zo zápasov, tréningov a akcií.</p></div>
+        <div class="media-thumb" style="background:linear-gradient(135deg,#405de6,#5851db,#833ab4,#c13584,#e1306c,#fd1d1d,#f56040,#f77737,#fcaf45,#ffdc80);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5rem;">
+          <svg viewBox="0 0 24 24" width="52" height="52" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+          <span style="color:white;font-family:'Oswald';font-weight:700;font-size:.9rem;letter-spacing:.1em;">@neanderthals_bratislava</span>
+        </div>
+        <div class="media-info"><h4>Instagram</h4><p>Fotky zo zápasov, tréningov a akcií. Sleduj nás.</p></div>
       </div>
+
     </div>
     <p style="color:var(--bone);font-size:.9rem;">Máš fotky alebo video? Pošli na <a href="mailto:konty@ndrtls.com">konty@ndrtls.com</a></p>
   </div>
@@ -785,29 +820,47 @@ a:hover{color:var(--cream-bright);}
 <!-- ── CONTACT ── -->
 <div class="page-section" id="sec-contact">
   <div class="sec-wrap" style="max-width:800px;">
-    <div class="sec-head"><h2>Kontakt</h2><p>Ozvi sa nám.</p></div>
+    <div class="sec-head">
+      <h2>Hľadáme posily</h2>
+      <p>Ak si trúfaš obliecť si dres, vyplň formulár a my sa ti ozveme. Všetky pozície vítané — aj brankári.</p>
+    </div>
+
+    <!-- Formulár PRVÝ -->
+    <div style="background:var(--charcoal);border:1px solid var(--maroon);border-radius:12px;padding:1.6rem;max-width:560px;margin-bottom:2.5rem;">
+      <div class="form-group"><label>Meno a priezvisko</label><input type="text" id="cf-name" placeholder="Tvoje meno"></div>
+      <div class="form-group"><label>E-mail</label><input type="email" id="cf-email" placeholder="tvoj@email.com"></div>
+      <div class="form-group"><label>Telefón</label><input type="tel" id="cf-phone" placeholder="+421 9xx xxx xxx"></div>
+      <div class="form-group">
+        <label>Pozícia</label>
+        <select id="cf-pos" style="width:100%;background:rgba(21,17,15,.7);border:1px solid var(--line);border-radius:6px;padding:.75rem .9rem;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;">
+          <option value="">— vyber pozíciu —</option>
+          <option>Útočník</option><option>Obranca</option><option>Brankár</option><option>Flex / neviem</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Správa <span style="font-weight:400;text-transform:none;letter-spacing:0;">(skúsenosti, otázky…)</span></label>
+        <textarea id="cf-msg" rows="4" style="width:100%;background:rgba(21,17,15,.7);border:1px solid var(--line);border-radius:6px;padding:.75rem .9rem;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;resize:vertical;min-height:90px;" placeholder="Krátko o sebe — odkiaľ si, aké máš skúsenosti s hokejom…"></textarea>
+      </div>
+      <button class="btn-primary" onclick="submitContact()" id="cf-btn">Odoslať prihlášku</button>
+      <div id="cf-result" style="display:none;margin-top:.8rem;font-family:'Oswald';font-size:.9rem;"></div>
+    </div>
+
+    <div class="stripe"></div>
+
+    <!-- Kontakty pod formulárom -->
+    <h3 style="font-family:'Oswald';font-weight:700;font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--rust-light);margin:1.5rem 0 .8rem;">Priame kontakty</h3>
     <div class="contact-grid">
       <div class="contact-card"><div class="cc-icon">🏒</div><h4>GM / Tréner</h4><p><a href="mailto:sakinder@ndrtls.com">sakinder@ndrtls.com</a></p></div>
       <div class="contact-card"><div class="cc-icon">🏆</div><h4>Kapitán / Financmajster</h4><p><a href="mailto:stehno@ndrtls.com">stehno@ndrtls.com</a></p></div>
       <div class="contact-card"><div class="cc-icon">📱</div><h4>PR / Social media</h4><p><a href="mailto:konty@ndrtls.com">konty@ndrtls.com</a></p></div>
       <div class="contact-card"><div class="cc-icon">⚙</div><h4>Admin</h4><p><a href="mailto:admin@ndrtls.com">admin@ndrtls.com</a></p></div>
     </div>
-    <div class="stripe"></div>
-    <h3 style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rust-light);margin:1rem 0 .8rem;">Záujem o hokej? Napíš nám</h3>
-    <div style="background:var(--charcoal);border:1px solid var(--line);border-radius:12px;padding:1.4rem;max-width:560px;">
-      <div class="form-group"><label>Meno</label><input type="text" id="cf-name" placeholder="Tvoje meno"></div>
-      <div class="form-group"><label>E-mail</label><input type="email" id="cf-email" placeholder="tvoj@email.com"></div>
-      <div class="form-group"><label>Pozícia</label><select id="cf-pos" style="width:100%;background:rgba(21,17,15,.7);border:1px solid var(--line);border-radius:6px;padding:.75rem .9rem;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;"><option value="">— vyber —</option><option>Útočník</option><option>Obranca</option><option>Brankár</option><option>Flex</option></select></div>
-      <div class="form-group"><label>Správa</label><textarea id="cf-msg" rows="4" style="width:100%;background:rgba(21,17,15,.7);border:1px solid var(--line);border-radius:6px;padding:.75rem .9rem;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;resize:vertical;min-height:100px;" placeholder="Krátko o sebe…"></textarea></div>
-      <button class="btn-primary" onclick="submitContact()" id="cf-btn">Odoslať správu</button>
-      <div id="cf-result" style="display:none;margin-top:.8rem;font-family:'Oswald';font-size:.9rem;"></div>
-    </div>
   </div>
 </div>
 
 <!-- ── TRAINING ── -->
 <div class="page-section" id="sec-training">
-  <div class="hero">
+  <div style="position:relative;z-index:2;">
+<div class="hero">
   <div class="kick" data-i="heroKick">Home Workouts &middot; No Equipment</div>
   <h2 data-i="heroTitle"></h2>
   <p data-i="heroText"></p>
@@ -846,12 +899,8 @@ a:hover{color:var(--cream-bright);}
   <p data-i="footTag" style="margin-top:.4rem"></p>
   <p class="small">ndrtls.com &middot; <span data-i="footProg">Training Program</span></p>
 </footer>
+  </div>
 </div>
-
-<!-- ── LOGIN ── -->
-<div class="page-section" id="sec-login" style="display:none;">
-</div>
-<div id="sec-login-content" style="display:none;align-items:center;justify-content:center;min-height:calc(100vh - 68px);padding:2rem 1.2rem;">
 </div>
 
 <!-- ── ZONE: EVENTS ── -->
@@ -2927,17 +2976,30 @@ async function deleteNews() {
 }
 
 /* ── CONTACT ──────────────────────────────────── */
+async 
+function playVideo(containerId, ytId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = '<iframe style="position:absolute;inset:0;width:100%;height:100%;border:0;" src="https://www.youtube-nocookie.com/embed/' + ytId + '?autoplay=1&rel=0" allow="autoplay;encrypted-media" allowfullscreen></iframe>';
+  el.style.cursor = 'default';
+}
+
 async function submitContact() {
-  const name=document.getElementById('cf-name').value.trim(), email=document.getElementById('cf-email').value.trim(),
-        pos=document.getElementById('cf-pos').value, msg=document.getElementById('cf-msg').value.trim(),
-        btn=document.getElementById('cf-btn'), res=document.getElementById('cf-result');
+  const name=document.getElementById('cf-name').value.trim();
+  const email=document.getElementById('cf-email').value.trim();
+  const phone=(document.getElementById('cf-phone')?.value||'').trim();
+  const pos=document.getElementById('cf-pos').value;
+  const msg=document.getElementById('cf-msg').value.trim();
+  const btn=document.getElementById('cf-btn');
+  const res=document.getElementById('cf-result');
   if (!name||!email||!msg) { res.textContent='Vyplň meno, email a správu.'; res.style.color='#bf6d6d'; res.style.display='block'; return; }
   btn.disabled=true; btn.textContent='Odosielam…';
-  const { error }=await sb.from('contact_requests').insert({name,email,position:pos||null,message:msg});
-  btn.disabled=false; btn.textContent='Odoslať správu';
-  res.textContent=error?'Chyba. Napíš priamo na admin@ndrtls.com':'✓ Správa odoslaná! Ozveme sa čoskoro.';
+  const msgFull = (phone ? 'Tel: '+phone+'\n' : '') + msg;
+  const { error }=await sb.from('contact_requests').insert({name,email,position:pos||null,message:msgFull});
+  btn.disabled=false; btn.textContent='Odoslať prihlášku';
+  res.textContent=error?'Chyba. Napíš priamo na admin@ndrtls.com':'✓ Prihláška odoslaná! Ozveme sa ti čoskoro.';
   res.style.color=error?'#bf6d6d':'#6dbf6d'; res.style.display='block';
-  if (!error) { ['cf-name','cf-email','cf-msg'].forEach(i=>document.getElementById(i).value=''); document.getElementById('cf-pos').value=''; }
+  if (!error) { ['cf-name','cf-email','cf-phone','cf-msg'].forEach(i=>{ const el=document.getElementById(i); if(el) el.value=''; }); document.getElementById('cf-pos').value=''; }
 }
 
 /* ── RAHL ─────────────────────────────────────── */
