@@ -755,8 +755,6 @@ a:hover{color:var(--cream-bright);}
   color: rgba(205,191,159,.3);
 }
 
-.sec-login-page.active { display: flex !important; align-items: center; justify-content: center; }
-
 .splash-subtitle {
   font-family: 'Oswald', sans-serif;
   font-weight: 400;
@@ -820,7 +818,7 @@ a:hover{color:var(--cream-bright);}
 </head>
 <body>
 
-<div id="version-badge">v3.0.5</div>
+<div id="version-badge">v3.0.7</div>
 <div id="toast"></div>
 <div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
 
@@ -1144,41 +1142,6 @@ a:hover{color:var(--cream-bright);}
 </div>
 
 <!-- ══ ROSTER ══ -->
-<div class="page-section" id="sec-roster">
-  <div class="sec-wrap">
-    <div class="sec-head">
-      <h2>Súpiska</h2>
-      <p>Bratislava Neanderthals · RAHL1 · Sezóna 2025/26</p>
-    </div>
-    <div id="roster-admin-bar" class="admin-bar" style="display:none">
-      <span class="admin-label">⚙ Admin</span>
-      <button class="btn-admin edit" onclick="enableRosterEdit()" id="btn-roster-edit">✏ Upraviť</button>
-      <button class="btn-admin save" onclick="saveRosterEdits()" id="btn-roster-save" style="display:none">✓ Uložiť</button>
-      <button class="btn-admin cancel" onclick="cancelRosterEdit()" id="btn-roster-cancel" style="display:none">✗ Zrušiť</button>
-      <span class="saved-msg" id="roster-saved">✓ Uložené</span>
-    </div>
-    <div style="overflow-x:auto">
-      <table class="player-table" id="roster-table">
-        <thead>
-          <tr>
-            <th>#</th><th>Meno</th><th>Post</th>
-            <th>Z</th><th>G</th><th>A</th><th>B</th><th>Poznámka</th>
-          </tr>
-        </thead>
-        <tbody id="roster-tbody">
-          <tr><td colspan="8" style="text-align:center;padding:2rem;">
-            <span class="spinner"></span> Načítavam…
-          </td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p style="margin-top:.8rem;color:var(--bone);font-size:.88rem;">
-      B = Brankár · O = Obranca · Ú = Útočník ·
-      <a href="https://szalh.sk/team/2025/RAHL1/NEA" target="_blank"
-        style="color:var(--rust-light);text-decoration:none;">szalh.sk ↗</a>
-    </p>
-  </div>
-</div>
 
 <!-- ══ FINANCE ══ -->
 <div class="page-section" id="sec-finance">
@@ -1530,243 +1493,12 @@ a:hover{color:var(--cream-bright);}
 </div>
 
 <!-- ══ FINANCE ══ -->
-<div class="page-section" id="sec-finance">
-  <div class="sec-wrap">
-    <div class="sec-head">
-      <h2>Financie</h2>
-      <p id="finance-subtitle">Tvoj prehľad za aktuálnu sezónu.</p>
-    </div>
-
-    <!-- Season selector -->
-    <div style="margin-bottom:1.2rem;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;">
-      <label style="font-family:'Oswald';font-weight:600;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--bone);">Sezóna:</label>
-      <select id="fin-season-select" onchange="loadFinance()"
-        style="background:var(--charcoal);border:1px solid var(--line);border-radius:6px;
-        padding:.4rem .8rem;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;">
-      </select>
-    </div>
-
-    <!-- KPI summary -->
-    <div class="fin-summary" id="fin-summary">
-      <div class="fin-kpi">
-        <div class="val" id="fin-balance">—</div>
-        <div class="lbl">Stav konta</div>
-      </div>
-      <div class="fin-kpi">
-        <div class="val" id="fin-games-played">—</div>
-        <div class="lbl">Odohraté zápasy</div>
-      </div>
-      <div class="fin-kpi">
-        <div class="val" id="fin-paid-total">—</div>
-        <div class="lbl">Zaplatené</div>
-      </div>
-      <div class="fin-kpi">
-        <div class="val" id="fin-charged-total">—</div>
-        <div class="lbl">Zaúčtované</div>
-      </div>
-    </div>
-
-    <!-- Tabs -->
-    <div style="display:flex;gap:0;border-bottom:2px solid var(--maroon);margin-bottom:1.2rem;">
-      <button onclick="finTab('games')" id="fin-tab-games"
-        style="font-family:'Oswald';font-weight:700;font-size:.8rem;letter-spacing:.1em;
-        text-transform:uppercase;padding:.6rem 1.2rem;border:0;cursor:pointer;
-        background:var(--maroon);color:var(--cream-bright);border-radius:6px 6px 0 0;">
-        Zápasy
-      </button>
-      <button onclick="finTab('payments')" id="fin-tab-payments"
-        style="font-family:'Oswald';font-weight:700;font-size:.8rem;letter-spacing:.1em;
-        text-transform:uppercase;padding:.6rem 1.2rem;border:0;cursor:pointer;
-        background:var(--charcoal);color:var(--bone);border-radius:6px 6px 0 0;">
-        Platby
-      </button>
-    </div>
-
-    <!-- Games tab -->
-    <div id="fin-panel-games">
-      <div style="overflow-x:auto">
-        <table class="fin-table">
-          <thead>
-            <tr>
-              <th>Dátum</th><th>Zápas</th><th>Stav</th>
-              <th style="text-align:right">Suma</th>
-            </tr>
-          </thead>
-          <tbody id="fin-games-tbody">
-            <tr><td colspan="4" style="text-align:center;padding:2rem;">
-              <span class="spinner"></span>
-            </td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Payments tab -->
-    <div id="fin-panel-payments" style="display:none">
-      <div style="overflow-x:auto">
-        <table class="fin-table">
-          <thead>
-            <tr><th>Dátum</th><th>Popis</th><th style="text-align:right">Suma</th></tr>
-          </thead>
-          <tbody id="fin-payments-tbody">
-            <tr><td colspan="3" style="text-align:center;padding:2rem;">
-              <span class="spinner"></span>
-            </td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <p style="margin-top:1rem;color:var(--bone);font-size:.85rem;opacity:.6;">
-      * Otázky k platbám smeruj na financmajstra. Záporný zostatok = dlhuješ.
-    </p>
-  </div>
-</div>
 
 <!-- ══ INTERNAL ══ -->
-<div class="page-section" id="sec-internal">
-  <div class="sec-wrap">
-    <div class="sec-head">
-      <h2>Interné info</h2>
-      <p>Dokumenty a informácie len pre hráčov kmeňa.</p>
-    </div>
-    <div class="card-grid">
-      <div class="card">
-        <h3>Pravidlá kabíny</h3>
-        <p>Príchod min. 20 minút pred zápasom. Výstroj si každý prináša vlastnú. Kto mešká, platí rundu.</p>
-      </div>
-      <div class="card">
-        <h3>Kontakty</h3>
-        <p>
-          🏒 <strong>GM / Tréner:</strong><br>
-          <a href="mailto:sakinder@ndrtls.com" style="color:var(--rust-light)">sakinder@ndrtls.com</a><br><br>
-          🏆 <strong>Kapitán / Financmajster:</strong><br>
-          <a href="mailto:stehno@ndrtls.com" style="color:var(--rust-light)">stehno@ndrtls.com</a><br><br>
-          📱 <strong>PR / Social media:</strong><br>
-          <a href="mailto:konty@ndrtls.com" style="color:var(--rust-light)">konty@ndrtls.com</a><br><br>
-          ⚙ <strong>Admin / Tréner:</strong><br>
-          <a href="mailto:admin@ndrtls.com" style="color:var(--rust-light)">admin@ndrtls.com</a>
-        </p>
-      </div>
-      <div class="card">
-        <h3>Sezónne ciele</h3>
-        <p>Top 3 v tabuľke RAHL1. Výhra aspoň jedného turnaja. A nezabudnúť sa baviť.</p>
-      </div>
-      <div class="card">
-        <h3>📸 Instagram</h3>
-        <p>
-          <a href="https://www.instagram.com/neanderthals_bratislava/" target="_blank"
-            style="color:var(--rust-light);text-decoration:none;font-family:'Oswald';font-weight:700;">
-            @neanderthals_bratislava
-          </a><br>
-          <span style="color:var(--bone);font-size:.9rem;">Sleduj nás na Instagrame</span>
-        </p>
-      </div>
-      <div class="card">
-        <h3>Tímový výjazd</h3>
-        <p>Plánujeme víkendový výjazd. Hlasovanie o termíne prebehne v skupinovom chate.</p>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- ══ ADMIN: EVENTS ══ -->
-<div class="page-section" id="sec-admin-events">
-  <div class="sec-wrap">
-    <div class="sec-head">
-      <h2>Správa udalostí</h2>
-      <p>Pridávaj a uprav zápasy, tréningy a akcie.</p>
-    </div>
-    <div class="admin-bar">
-      <span class="admin-label">⚙ Admin</span>
-      <button class="btn-admin edit" onclick="openNewEventModal()">+ Nová udalosť</button>
-    </div>
-    <div id="admin-events-list">
-      <div class="empty-state"><div class="es-icon"><span class="spinner"></span></div><p>Načítavam…</p></div>
-    </div>
-  </div>
-</div>
 
 <!-- ══ ADMIN: PAYMENTS ══ -->
-<div class="page-section" id="sec-admin-payments">
-  <div class="sec-wrap">
-    <div class="sec-head">
-      <h2>Správa financií</h2>
-      <p>Uzatváranie zápasov, platby hráčov a prehľad tímu.</p>
-    </div>
-
-    <!-- Season selector -->
-    <div style="margin-bottom:1.2rem;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;">
-      <label style="font-family:'Oswald';font-weight:600;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--bone);">Sezóna:</label>
-      <select id="adm-season-select" onchange="loadAdminPayments()"
-        style="background:var(--charcoal);border:1px solid var(--line);border-radius:6px;
-        padding:.4rem .8rem;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;">
-      </select>
-    </div>
-
-    <!-- Tabs -->
-    <div style="display:flex;gap:0;border-bottom:2px solid var(--maroon);margin-bottom:1.2rem;">
-      <button onclick="admTab('overview')" id="adm-tab-overview"
-        style="font-family:'Oswald';font-weight:700;font-size:.8rem;letter-spacing:.1em;
-        text-transform:uppercase;padding:.6rem 1.2rem;border:0;cursor:pointer;
-        background:var(--maroon);color:var(--cream-bright);border-radius:6px 6px 0 0;">
-        Prehľad tímu
-      </button>
-      <button onclick="admTab('games')" id="adm-tab-games"
-        style="font-family:'Oswald';font-weight:700;font-size:.8rem;letter-spacing:.1em;
-        text-transform:uppercase;padding:.6rem 1.2rem;border:0;cursor:pointer;
-        background:var(--charcoal);color:var(--bone);border-radius:6px 6px 0 0;">
-        Uzatváranie zápasov
-      </button>
-      <button onclick="admTab('manual')" id="adm-tab-manual"
-        style="font-family:'Oswald';font-weight:700;font-size:.8rem;letter-spacing:.1em;
-        text-transform:uppercase;padding:.6rem 1.2rem;border:0;cursor:pointer;
-        background:var(--charcoal);color:var(--bone);border-radius:6px 6px 0 0;">
-        Platby
-      </button>
-    </div>
-
-    <!-- Team overview -->
-    <div id="adm-panel-overview">
-      <div style="overflow-x:auto">
-        <table class="fin-table" id="adm-overview-table">
-          <thead>
-            <tr>
-              <th>Hráč</th>
-              <th style="text-align:right">Zaplatené</th>
-              <th style="text-align:right">Zaúčtované</th>
-              <th style="text-align:right">Stav konta</th>
-            </tr>
-          </thead>
-          <tbody id="adm-overview-tbody">
-            <tr><td colspan="4" style="text-align:center;padding:2rem;">
-              <span class="spinner"></span>
-            </td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Game closing -->
-    <div id="adm-panel-games" style="display:none">
-      <div id="adm-games-list">
-        <div class="empty-state"><div class="es-icon"><span class="spinner"></span></div><p>Načítavam…</p></div>
-      </div>
-    </div>
-
-    <!-- Manual payments -->
-    <div id="adm-panel-manual" style="display:none">
-      <div class="admin-bar">
-        <span class="admin-label">⚙ Admin</span>
-        <button class="btn-admin edit" onclick="openNewSeasonPaymentModal()">+ Pridať platbu</button>
-      </div>
-      <div id="adm-manual-list">
-        <div class="empty-state"><div class="es-icon"><span class="spinner"></span></div><p>Načítavam…</p></div>
-      </div>
-    </div>
-
-  </div>
-</div>
 
 <!-- ══ NEW EVENT MODAL ══ -->
 <div class="modal-overlay" id="modal-event">
@@ -1936,149 +1668,10 @@ a:hover{color:var(--cream-bright);}
 </div>
 
 <!-- ══ INTERNAL ══ -->
-<div class="page-section" id="sec-internal">
-  <div class="sec-wrap">
-    <div class="sec-head">
-      <h2>Interné info</h2>
-      <p>Dokumenty a informácie len pre hráčov kmeňa.</p>
-    </div>
-    <div class="card-grid">
-      <div class="card">
-        <h3>Pravidlá kabíny</h3>
-        <p>Príchod min. 20 minút pred zápasom. Výstroj si každý prináša vlastnú. Kto mešká, platí rundu.</p>
-      </div>
-      <div class="card">
-        <h3>Kontakty</h3>
-        <p>
-          🏒 <strong>GM / Tréner:</strong><br>
-          <a href="mailto:sakinder@ndrtls.com" style="color:var(--rust-light)">sakinder@ndrtls.com</a><br><br>
-          🏆 <strong>Kapitán / Financmajster:</strong><br>
-          <a href="mailto:stehno@ndrtls.com" style="color:var(--rust-light)">stehno@ndrtls.com</a><br><br>
-          📱 <strong>PR / Social media:</strong><br>
-          <a href="mailto:konty@ndrtls.com" style="color:var(--rust-light)">konty@ndrtls.com</a><br><br>
-          ⚙ <strong>Admin / Tréner:</strong><br>
-          <a href="mailto:admin@ndrtls.com" style="color:var(--rust-light)">admin@ndrtls.com</a>
-        </p>
-      </div>
-      <div class="card">
-        <h3>Sezónne ciele</h3>
-        <p>Top 3 v tabuľke RAHL1. Výhra aspoň jedného turnaja. A nezabudnúť sa baviť.</p>
-      </div>
-      <div class="card">
-        <h3>📸 Instagram</h3>
-        <p>
-          <a href="https://www.instagram.com/neanderthals_bratislava/" target="_blank"
-            style="color:var(--rust-light);text-decoration:none;font-family:'Oswald';font-weight:700;">
-            @neanderthals_bratislava
-          </a><br>
-          <span style="color:var(--bone);font-size:.9rem;">Sleduj nás na Instagrame</span>
-        </p>
-      </div>
-      <div class="card">
-        <h3>Tímový výjazd</h3>
-        <p>Plánujeme víkendový výjazd. Hlasovanie o termíne prebehne v skupinovom chate.</p>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- ══ ADMIN: EVENTS ══ -->
-<div class="page-section" id="sec-admin-events">
-  <div class="sec-wrap">
-    <div class="sec-head">
-      <h2>Správa udalostí</h2>
-      <p>Pridávaj a uprav zápasy, tréningy a akcie.</p>
-    </div>
-    <div class="admin-bar">
-      <span class="admin-label">⚙ Admin</span>
-      <button class="btn-admin edit" onclick="openNewEventModal()">+ Nová udalosť</button>
-    </div>
-    <div id="admin-events-list">
-      <div class="empty-state"><div class="es-icon"><span class="spinner"></span></div><p>Načítavam…</p></div>
-    </div>
-  </div>
-</div>
 
 <!-- ══ ADMIN: PAYMENTS ══ -->
-<div class="page-section" id="sec-admin-payments">
-  <div class="sec-wrap">
-    <div class="sec-head">
-      <h2>Správa financií</h2>
-      <p>Uzatváranie zápasov, platby hráčov a prehľad tímu.</p>
-    </div>
-
-    <!-- Season selector -->
-    <div style="margin-bottom:1.2rem;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;">
-      <label style="font-family:'Oswald';font-weight:600;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--bone);">Sezóna:</label>
-      <select id="adm-season-select" onchange="loadAdminPayments()"
-        style="background:var(--charcoal);border:1px solid var(--line);border-radius:6px;
-        padding:.4rem .8rem;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;">
-      </select>
-    </div>
-
-    <!-- Tabs -->
-    <div style="display:flex;gap:0;border-bottom:2px solid var(--maroon);margin-bottom:1.2rem;">
-      <button onclick="admTab('overview')" id="adm-tab-overview"
-        style="font-family:'Oswald';font-weight:700;font-size:.8rem;letter-spacing:.1em;
-        text-transform:uppercase;padding:.6rem 1.2rem;border:0;cursor:pointer;
-        background:var(--maroon);color:var(--cream-bright);border-radius:6px 6px 0 0;">
-        Prehľad tímu
-      </button>
-      <button onclick="admTab('games')" id="adm-tab-games"
-        style="font-family:'Oswald';font-weight:700;font-size:.8rem;letter-spacing:.1em;
-        text-transform:uppercase;padding:.6rem 1.2rem;border:0;cursor:pointer;
-        background:var(--charcoal);color:var(--bone);border-radius:6px 6px 0 0;">
-        Uzatváranie zápasov
-      </button>
-      <button onclick="admTab('manual')" id="adm-tab-manual"
-        style="font-family:'Oswald';font-weight:700;font-size:.8rem;letter-spacing:.1em;
-        text-transform:uppercase;padding:.6rem 1.2rem;border:0;cursor:pointer;
-        background:var(--charcoal);color:var(--bone);border-radius:6px 6px 0 0;">
-        Platby
-      </button>
-    </div>
-
-    <!-- Team overview -->
-    <div id="adm-panel-overview">
-      <div style="overflow-x:auto">
-        <table class="fin-table" id="adm-overview-table">
-          <thead>
-            <tr>
-              <th>Hráč</th>
-              <th style="text-align:right">Zaplatené</th>
-              <th style="text-align:right">Zaúčtované</th>
-              <th style="text-align:right">Stav konta</th>
-            </tr>
-          </thead>
-          <tbody id="adm-overview-tbody">
-            <tr><td colspan="4" style="text-align:center;padding:2rem;">
-              <span class="spinner"></span>
-            </td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Game closing -->
-    <div id="adm-panel-games" style="display:none">
-      <div id="adm-games-list">
-        <div class="empty-state"><div class="es-icon"><span class="spinner"></span></div><p>Načítavam…</p></div>
-      </div>
-    </div>
-
-    <!-- Manual payments -->
-    <div id="adm-panel-manual" style="display:none">
-      <div class="admin-bar">
-        <span class="admin-label">⚙ Admin</span>
-        <button class="btn-admin edit" onclick="openNewSeasonPaymentModal()">+ Pridať platbu</button>
-      </div>
-      <div id="adm-manual-list">
-        <div class="empty-state"><div class="es-icon"><span class="spinner"></span></div><p>Načítavam…</p></div>
-      </div>
-    </div>
-
-  </div>
-</div>
 
 <!-- ══ NEW EVENT MODAL ══ -->
 <div class="modal-overlay" id="modal-event">
@@ -2211,7 +1804,7 @@ a:hover{color:var(--cream-bright);}
 
 
 <!-- ── NEWS ── -->
-  <div class="page-section active" id="sec-pub-news">
+  <div class="page-section active" id="sec-pub-news-old" style="display:none !important;">
     <div class="sec-wrap">
       <div class="sec-head"><h2>Oznamy & Novinky</h2><p>Všetko dôležité o tíme na jednom mieste.</p></div>
       <div id="pub-news-list">
@@ -2276,102 +1869,8 @@ a:hover{color:var(--cream-bright);}
 </div>
 
 <!-- ══ ADMIN: EVENTS ══ -->
-<div class="page-section" id="sec-admin-events">
-  <div class="sec-wrap">
-    <div class="sec-head">
-      <h2>Správa udalostí</h2>
-      <p>Pridávaj a uprav zápasy, tréningy a akcie.</p>
-    </div>
-    <div class="admin-bar">
-      <span class="admin-label">⚙ Admin</span>
-      <button class="btn-admin edit" onclick="openNewEventModal()">+ Nová udalosť</button>
-    </div>
-    <div id="admin-events-list">
-      <div class="empty-state"><div class="es-icon"><span class="spinner"></span></div><p>Načítavam…</p></div>
-    </div>
-  </div>
-</div>
 
 <!-- ══ ADMIN: PAYMENTS ══ -->
-<div class="page-section" id="sec-admin-payments">
-  <div class="sec-wrap">
-    <div class="sec-head">
-      <h2>Správa financií</h2>
-      <p>Uzatváranie zápasov, platby hráčov a prehľad tímu.</p>
-    </div>
-
-    <!-- Season selector -->
-    <div style="margin-bottom:1.2rem;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;">
-      <label style="font-family:'Oswald';font-weight:600;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--bone);">Sezóna:</label>
-      <select id="adm-season-select" onchange="loadAdminPayments()"
-        style="background:var(--charcoal);border:1px solid var(--line);border-radius:6px;
-        padding:.4rem .8rem;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;">
-      </select>
-    </div>
-
-    <!-- Tabs -->
-    <div style="display:flex;gap:0;border-bottom:2px solid var(--maroon);margin-bottom:1.2rem;">
-      <button onclick="admTab('overview')" id="adm-tab-overview"
-        style="font-family:'Oswald';font-weight:700;font-size:.8rem;letter-spacing:.1em;
-        text-transform:uppercase;padding:.6rem 1.2rem;border:0;cursor:pointer;
-        background:var(--maroon);color:var(--cream-bright);border-radius:6px 6px 0 0;">
-        Prehľad tímu
-      </button>
-      <button onclick="admTab('games')" id="adm-tab-games"
-        style="font-family:'Oswald';font-weight:700;font-size:.8rem;letter-spacing:.1em;
-        text-transform:uppercase;padding:.6rem 1.2rem;border:0;cursor:pointer;
-        background:var(--charcoal);color:var(--bone);border-radius:6px 6px 0 0;">
-        Uzatváranie zápasov
-      </button>
-      <button onclick="admTab('manual')" id="adm-tab-manual"
-        style="font-family:'Oswald';font-weight:700;font-size:.8rem;letter-spacing:.1em;
-        text-transform:uppercase;padding:.6rem 1.2rem;border:0;cursor:pointer;
-        background:var(--charcoal);color:var(--bone);border-radius:6px 6px 0 0;">
-        Platby
-      </button>
-    </div>
-
-    <!-- Team overview -->
-    <div id="adm-panel-overview">
-      <div style="overflow-x:auto">
-        <table class="fin-table" id="adm-overview-table">
-          <thead>
-            <tr>
-              <th>Hráč</th>
-              <th style="text-align:right">Zaplatené</th>
-              <th style="text-align:right">Zaúčtované</th>
-              <th style="text-align:right">Stav konta</th>
-            </tr>
-          </thead>
-          <tbody id="adm-overview-tbody">
-            <tr><td colspan="4" style="text-align:center;padding:2rem;">
-              <span class="spinner"></span>
-            </td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Game closing -->
-    <div id="adm-panel-games" style="display:none">
-      <div id="adm-games-list">
-        <div class="empty-state"><div class="es-icon"><span class="spinner"></span></div><p>Načítavam…</p></div>
-      </div>
-    </div>
-
-    <!-- Manual payments -->
-    <div id="adm-panel-manual" style="display:none">
-      <div class="admin-bar">
-        <span class="admin-label">⚙ Admin</span>
-        <button class="btn-admin edit" onclick="openNewSeasonPaymentModal()">+ Pridať platbu</button>
-      </div>
-      <div id="adm-manual-list">
-        <div class="empty-state"><div class="es-icon"><span class="spinner"></span></div><p>Načítavam…</p></div>
-      </div>
-    </div>
-
-  </div>
-</div>
 
 <!-- ══ NEW EVENT MODAL ══ -->
 <div class="modal-overlay" id="modal-event">
@@ -2464,85 +1963,6 @@ a:hover{color:var(--cream-bright);}
 </div>
 
 <!-- ══ ADMIN: PAYMENTS ══ -->
-<div class="page-section" id="sec-admin-payments">
-  <div class="sec-wrap">
-    <div class="sec-head">
-      <h2>Správa financií</h2>
-      <p>Uzatváranie zápasov, platby hráčov a prehľad tímu.</p>
-    </div>
-
-    <!-- Season selector -->
-    <div style="margin-bottom:1.2rem;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;">
-      <label style="font-family:'Oswald';font-weight:600;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--bone);">Sezóna:</label>
-      <select id="adm-season-select" onchange="loadAdminPayments()"
-        style="background:var(--charcoal);border:1px solid var(--line);border-radius:6px;
-        padding:.4rem .8rem;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;">
-      </select>
-    </div>
-
-    <!-- Tabs -->
-    <div style="display:flex;gap:0;border-bottom:2px solid var(--maroon);margin-bottom:1.2rem;">
-      <button onclick="admTab('overview')" id="adm-tab-overview"
-        style="font-family:'Oswald';font-weight:700;font-size:.8rem;letter-spacing:.1em;
-        text-transform:uppercase;padding:.6rem 1.2rem;border:0;cursor:pointer;
-        background:var(--maroon);color:var(--cream-bright);border-radius:6px 6px 0 0;">
-        Prehľad tímu
-      </button>
-      <button onclick="admTab('games')" id="adm-tab-games"
-        style="font-family:'Oswald';font-weight:700;font-size:.8rem;letter-spacing:.1em;
-        text-transform:uppercase;padding:.6rem 1.2rem;border:0;cursor:pointer;
-        background:var(--charcoal);color:var(--bone);border-radius:6px 6px 0 0;">
-        Uzatváranie zápasov
-      </button>
-      <button onclick="admTab('manual')" id="adm-tab-manual"
-        style="font-family:'Oswald';font-weight:700;font-size:.8rem;letter-spacing:.1em;
-        text-transform:uppercase;padding:.6rem 1.2rem;border:0;cursor:pointer;
-        background:var(--charcoal);color:var(--bone);border-radius:6px 6px 0 0;">
-        Platby
-      </button>
-    </div>
-
-    <!-- Team overview -->
-    <div id="adm-panel-overview">
-      <div style="overflow-x:auto">
-        <table class="fin-table" id="adm-overview-table">
-          <thead>
-            <tr>
-              <th>Hráč</th>
-              <th style="text-align:right">Zaplatené</th>
-              <th style="text-align:right">Zaúčtované</th>
-              <th style="text-align:right">Stav konta</th>
-            </tr>
-          </thead>
-          <tbody id="adm-overview-tbody">
-            <tr><td colspan="4" style="text-align:center;padding:2rem;">
-              <span class="spinner"></span>
-            </td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Game closing -->
-    <div id="adm-panel-games" style="display:none">
-      <div id="adm-games-list">
-        <div class="empty-state"><div class="es-icon"><span class="spinner"></span></div><p>Načítavam…</p></div>
-      </div>
-    </div>
-
-    <!-- Manual payments -->
-    <div id="adm-panel-manual" style="display:none">
-      <div class="admin-bar">
-        <span class="admin-label">⚙ Admin</span>
-        <button class="btn-admin edit" onclick="openNewSeasonPaymentModal()">+ Pridať platbu</button>
-      </div>
-      <div id="adm-manual-list">
-        <div class="empty-state"><div class="es-icon"><span class="spinner"></span></div><p>Načítavam…</p></div>
-      </div>
-    </div>
-
-  </div>
-</div>
 
 <!-- ══ NEW EVENT MODAL ══ -->
 <div class="modal-overlay" id="modal-event">
@@ -2619,7 +2039,7 @@ a:hover{color:var(--cream-bright);}
   <!-- ══ PROFILE ══ -->
 
 <!-- ── ZONE: LOGIN ── -->
-<div class="page-section sec-login-page" id="sec-login">
+<div class="page-section" id="sec-login">
   <div style="display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 68px);padding:2rem 1.2rem;">
     <div class="login-card" style="width:100%;max-width:420px;background:rgba(38,34,32,.95);border:1px solid var(--line);border-radius:14px;padding:2.2rem;">
       <div style="text-align:center;margin-bottom:1.5rem;">
@@ -2998,7 +2418,9 @@ async function onLogin(user) {
   document.getElementById('nav-zone-section').style.display = 'block';
   if (currentProfile?.role==='admin') document.getElementById('nav-admin-section').style.display='block';
   hideSplash();
-  // Small delay to ensure DOM is ready after hideSplash
+  // Explicitly hide login section
+  const loginSec = document.getElementById('sec-login');
+  if (loginSec) { loginSec.classList.remove('active'); loginSec.style.display = 'none'; }
   setTimeout(() => {
     showSection('events');
     loadRosterFromDB();
@@ -3118,12 +2540,19 @@ function toast(msg,type) {
 async function loadRosterFromDB() {
   const tbody=document.getElementById('roster-tbody');
   if (!tbody) return;
+  // Show loading state
+  tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--bone);"><span class="spinner"></span> Načítavam…</td></tr>';
   try {
     const { data,error }=await sb.from('players').select('*').eq('active',true).order('points',{ascending:false});
-    if (error||!data?.length) return;
-    rosterData=data; renderRosterTable();
-    if (currentProfile?.role==='admin') document.getElementById('roster-admin-bar').style.display='flex';
-  } catch(e) {}
+    if (error) { tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:1rem;color:#bf6d6d;">Chyba načítania: '+error.message+'</td></tr>'; return; }
+    if (!data?.length) { tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:1rem;color:var(--bone);">Žiadni hráči.</td></tr>'; return; }
+    rosterData=data;
+    renderRosterTable();
+    const adminBar=document.getElementById('roster-admin-bar');
+    if (adminBar && currentProfile?.role==='admin') adminBar.style.display='flex';
+  } catch(e) {
+    if (tbody) tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:1rem;color:#bf6d6d;">Chyba: '+e.message+'</td></tr>';
+  }
 }
 function renderRosterTable() {
   const tbody=document.getElementById('roster-tbody');
