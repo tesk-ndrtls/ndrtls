@@ -819,7 +819,7 @@ a:hover{color:var(--cream-bright);}
 </head>
 <body>
 
-<div id="version-badge">v3.1.4</div>
+<div id="version-badge">v3.1.6</div>
 <div id="toast"></div>
 <div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
 
@@ -1723,7 +1723,7 @@ a:hover{color:var(--cream-bright);}
 
 <script>
 /* ════════════════════════════════════════════════
-   BRATISLAVA NEANDERTHALS — Unified v3.1.4
+   BRATISLAVA NEANDERTHALS — Unified v3.1.6
    ════════════════════════════════════════════════ */
 const { createClient } = supabase;
 const sb = createClient('https://vchxjbdrromujmzujduo.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjaHhqYmRycm9tdWptenVqZHVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NjAyNDAsImV4cCI6MjA5NjQzNjI0MH0.xGT8sxDD2bDogwCZGYAJ-sGWROt1c7e1M9f9_qrm2WA');
@@ -1884,7 +1884,7 @@ function showSection(id) {
   if (id==='admin-events') loadAdminEvents();
   if (id==='admin-payments') { loadAdminPayments(); admTab('overview'); }
   if (id==='admin-news') loadAdminNews();
-  if (id==='news' && !window._newsLoaded) { window._newsLoaded=true; loadPublicNews(); }
+  if (id==='news') loadPublicNews();
   if (id==='roster') loadRosterFromDB();
   if (id==='rahl' && !window._rahlLoaded) { window._rahlLoaded=true; loadRAHL(); }
   if (id==='training' && !window._trainingInit) { window._trainingInit=true; applyStatic(); buildCards(); buildTabs(); }
@@ -1948,8 +1948,13 @@ function extractYoutubeId(url) {
 async function loadPublicNews() {
   const list=document.getElementById('pub-news-list');
   if (!list) return;
+  list.innerHTML='<div class="empty-state"><span class="spinner"></span> <span style="margin-left:.5rem">Načítavam…</span></div>';
   const { data,error }=await sb.from('news').select('*').order('created_at',{ascending:false});
-  if (error||!data?.length) { list.innerHTML='<div class="empty-state"><div class="es-icon">📋</div><p>Zatiaľ žiadne príspevky.</p></div>'; return; }
+  if (error) {
+    list.innerHTML='<div class="empty-state"><div class="es-icon">⚠️</div><p>Chyba načítania: '+error.message+'</p></div>';
+    return;
+  }
+  if (!data?.length) { list.innerHTML='<div class="empty-state"><div class="es-icon">📋</div><p>Zatiaľ žiadne príspevky.</p></div>'; return; }
   const months=['jan','feb','mar','apr','máj','jún','júl','aug','sep','okt','nov','dec'];
   list.innerHTML=data.map(n=>{
     const d=new Date(n.created_at);
@@ -1998,7 +2003,7 @@ async function saveNews() {
   const { error }=id?await sb.from('news').update(payload).eq('id',parseInt(id)):await sb.from('news').insert(payload);
   if (error) { toast('Chyba: '+error.message,'error'); return; }
   closeModal('modal-news'); toast(id?'Oznam upravený ✓':'Oznam pridaný ✓','success');
-  loadAdminNews(); window._newsLoaded=false;
+  loadAdminNews();
 }
 async function deleteNews() {
   const id=document.getElementById('news-edit-id').value;
@@ -2884,6 +2889,51 @@ const UI = {
     tags:{Strength:"Siln\u00FD","Single-Leg":"Jedna noha","Posterior Chain":"Zadok-re\u0165az","Hockey-Specific":"Pre hokej",Stability:"Stabilita",Pull:"T\u00E1ha\u0165",Core:"Stred telo",Power:"V\u00FDbuch","Power-Endurance":"V\u00FDbuch-vytrvalos\u0165",Conditioning:"Motor","Core-Cardio":"Stred + dych"}
   }
 };
+const WARM = {
+  en:[
+    {ic:"01",h:"Pulse Raise",p:"Two minutes of jogging on the spot, jumping jacks and high knees. Get the heart rate up and break a light sweat \u2014 that post-match pint is the reward."},
+    {ic:"02",h:"Dynamic Mobility",p:"Leg swings, hip openers, deep squat holds, arm circles, walking lunges with a twist. 8\u201310 reps each side."},
+    {ic:"03",h:"Activation",p:"Glute bridges, bodyweight squats and marching in place. Wake up the hips and core that drive every stride \u2014 and every walk to the bar."}
+  ],
+  sk:[
+    {ic:"01",h:"Zahriatie",p:"2 min\u00FAty behu na mieste, jumping jacks a vysok\u00E9 kolen\u00E1. Rozpr\u00FA\u010F krv a jemne sa zapo\u0165 \u2014 zasl\u00FA\u017Een\u00E9 pivo po z\u00E1pase chut\u00ED lep\u0161ie."},
+    {ic:"02",h:"Dynamick\u00E1 mobilita",p:"\u0160vihy nohami, otv\u00E1ranie bedier, hlbok\u00FD drep, kr\u00FA\u017Eenie rukami a v\u00FDpady s rot\u00E1ciou. Po 8\u201310 opakovan\u00ED na ka\u017Ed\u00FA stranu."},
+    {ic:"03",h:"Aktiv\u00E1cia",p:"Glute bridge, drepy s vlastnou v\u00E1hou, pochod na mieste. Prebu\u010F bedr\u00E1 a stred tela \u2014 poh\u00E1\u0148aj\u00FA ka\u017Ed\u00FD sklz aj ka\u017Ed\u00FA cestu k baru."}
+  ],
+  nea:[
+    {ic:"01",h:"ZV\u00DD\u0160I\u0164 TEP",p:"Dva min\u00FAt be\u017Ea\u0165 na miesto, sk\u00E1ka\u0165 + kol\u00E9na hore. Zahria\u0165 krev, zapoti\u0165 sa \u2014 pivo po z\u00E1pas chuti\u0165 lep\u0161ie ke\u010F ty zaspoti\u0165. RRGH."},
+    {ic:"02",h:"POHYBOVA\u0164 SA",p:"\u0160viha\u0165 nohy, otv\u00E1ra\u0165 bedro, hlbok\u00FD drep, kr\u00FA\u017Ei\u0165 ruky, v\u00FDpad s ot\u00E1\u010Danie. Osem-desa\u0165 opakovan\u00ED na stranu."},
+    {ic:"03",h:"PREBUDI\u0164 TELO",p:"Glute bridge, drepi\u0165 s v\u00E1ha vlastn\u00E1, pochod na miesto. Zobudi\u0165 bedra a stred telo \u2014 hna\u0165 ka\u017Ed\u00FD krok aj ka\u017Ed\u00FA cestu k bar. HUK."}
+  ]
+};
+
+const RULES = {
+  en:[
+    {ic:"\u26CF",h:"Form Over Ego",p:"Clean reps beat fast reps \u2014 control every movement. A torn hamstring ends up in the stands, drinking alone."},
+    {ic:"\u21BB",h:"3\u20134x / Week",p:"Alternate the sessions and slot a rest day between hard leg days. Mix in skating and on-ice work. The pub round counts as active recovery."},
+    {ic:"\u26A1",h:"Explode, Then Control",p:"On power moves: fast and violent on the way up, slow and controlled on the way down."},
+    {ic:"\uD83D\uDCA7",h:"Fuel & Hydrate",p:"Water before, during, after. Protein within an hour of finishing. Sleep is the cheapest supplement."},
+    {ic:"\uD83D\uDCC8",h:"Progress Slowly",p:"Add a few reps or a harder variation each week. Small, steady gains win the season \u2014 and justify another round at the bar."},
+    {ic:"\uD83E\uDE79",h:"Pain \u2260 Gain",p:"Muscle burn is fine, sharp joint pain is a stop signal. Never train through injury \u2014 a player who can't even lift his pint is a sad sight."}
+  ],
+  sk:[
+    {ic:"\u26CF",h:"Technika nad egom",p:"\u010Cist\u00E9 opakovania s\u00FA lep\u0161ie ako r\u00FDchle. Ovl\u00E1daj ka\u017Ed\u00FD pohyb. S natrhnut\u00FDm stehnom skon\u010D\u00ED\u0161 na trib\u00FAne \u2014 a pivo bude\u0161 pi\u0165 s\u00E1m."},
+    {ic:"\u21BB",h:"3\u20134x / t\u00FD\u017Ede\u0148",p:"Striedaj tr\u00E9ningy a medzi n\u00E1ro\u010Dn\u00E9 dni na nohy vlo\u017E de\u0148 odpo\u010Dinku. Pridaj kor\u010Du\u013Eovanie. A piatok v kr\u010Dme \u2014 ten je povinn\u00FD."},
+    {ic:"\u26A1",h:"Najprv v\u00FDbuch, potom kontrola",p:"Pri silov\u00FDch cvikoch cho\u010F nahor r\u00FDchlo a prudko, nadol pomaly a pod kontrolou."},
+    {ic:"\uD83D\uDCA7",h:"Jedz a pi",p:"Pi vodu pred tr\u00E9ningom, po\u010Das aj po \u0148om. Bielkoviny dopraj telu do hodiny. A sp\u00E1nok je ten najlacnej\u0161\u00ED doplnok."},
+    {ic:"\uD83D\uDCC8",h:"Postupuj pomaly",p:"Ka\u017Ed\u00FD t\u00FD\u017Ede\u0148 pridaj zop\u00E1r opakovan\u00ED alebo \u0165a\u017E\u0161iu verziu. Mal\u00E9, ale pravideln\u00E9 pokroky vyhr\u00E1vaj\u00FA sez\u00F3nu \u2014 a ka\u017Ed\u00FD si zasl\u00FA\u017Ei jedno pivo."},
+    {ic:"\uD83E\uDE79",h:"Boles\u0165 nie je pokrok",p:"P\u00E1lenie svalov je v pohode. Ostr\u00E1 boles\u0165 v k\u013Abe je sign\u00E1l stop. Necvi\u010D cez zranenie \u2014 hr\u00E1\u010D, ktor\u00FD nezdvihne ani kr\u00EDgel, je smutn\u00FD poh\u013Ead."}
+  ],
+  nea:[
+    {ic:"\u26CF",h:"TECHNIKA NAD EGO",p:"Opakovanie \u010Diste by\u0165 lep\u0161\u00ED ako r\u00FDchle. Ovl\u00E1da\u0165 ka\u017Ed\u00FD pohyb. So stehn\u00E1m natrhnut\u00FDm sedie\u0165 na trib\u00FAna. UGH."},
+    {ic:"\u21BB",h:"TRI-\u0160TYRI RAZ ZA T\u00DD\u017EDEN",p:"Strieda\u0165 treninky, medzi \u0165a\u017Ek\u00FD d\u0148om da\u0165 de\u0148 odpo\u010D\u00EDvania. Prida\u0165 kor\u010Du\u013Eovanie. Piatok v kr\u010Dma \u2014 ten povinn\u00FD."},
+    {ic:"\u26A1",h:"NAJPRV V\u00DDBUCH, POTOM KONTROLA",p:"Pri pohyb silov\u00FD: hore r\u00FDchlo a prudko, dole pomaly a kontrolovane. GRRRK."},
+    {ic:"\uD83D\uDCA7",h:"JES\u0164 A PI\u0164",p:"Voda pred, po\u010Das aj po. Bielkovina do hodinu po trenink. Sp\u00E1nok by\u0165 najlacnej\u0161\u00ED doplnok. HUK."},
+    {ic:"\uD83D\uDCC8",h:"PRID\u00C1VA\u0164 POMALY",p:"Ka\u017Ed\u00FD t\u00FD\u017Eden prida\u0165 p\u00E1r opakovan\u00ED alebo \u0165a\u017E\u0161\u00ED variant. Pokrok mal\u00FD vyhr\u00E1va\u0165 sez\u00F3na \u2014 ka\u017Ed\u00FD pokrok zasl\u00FA\u017Ei\u0165 jedno pivo. Zaisten\u00E9."},
+    {ic:"\uD83E\uDE79",h:"BOLES\u0164 NIE BY\u0164 POKROK",p:"P\u00E1lenie svalov by\u0165 v poriadku. Ostr\u00FD boles\u0165 k\u013Ebu by\u0165 sign\u00E1l stop. NIE cvi\u010Di\u0165 cez zranenie \u2014 hr\u00E1\u010D zranen\u00FD ktor\u00FD NIE zdvihn\u00FA\u0165 kr\u00EDgel by\u0165 smutno poh\u013Ead. RRGH."}
+  ]
+};
+
 const SESSIONS = [
   {
     name:{en:"Lower Body Power",sk:"Sila dolnej \u010Dasti",nea:"Sila noh\u00E1m doln\u00FD"},
@@ -3068,6 +3118,7 @@ const SESSIONS = [
 function buildTabs(){
   const tabsEl=document.getElementById('tabs');
   const sessEl=document.getElementById('sessions');
+  if(!tabsEl||!sessEl) return;
   tabsEl.innerHTML=''; sessEl.innerHTML='';
   SESSIONS.forEach((s,i)=>{
     const tab=document.createElement('button');
@@ -3109,31 +3160,34 @@ function exCard(e,j){
 }
 
 function buildCards(){
-  const u=UI[LANG];
-  document.getElementById('warmCards').innerHTML =
-    WARM[LANG].map(c=>'<div class="card"><div class="ic">'+c.ic+'</div><h4>'+c.h+'</h4><p>'+c.p+'</p></div>').join('');
-  document.getElementById('ruleCards').innerHTML =
-    RULES[LANG].map(c=>'<div class="card"><div class="ic">'+c.ic+'</div><h4>'+c.h+'</h4><p>'+c.p+'</p></div>').join('');
+  const wc=document.getElementById('warmCards');
+  const rc=document.getElementById('ruleCards');
+  if(wc && typeof WARM!=='undefined' && WARM[LANG]) {
+    wc.innerHTML = WARM[LANG].map(c=>'<div class="card"><div class="ic">'+c.ic+'</div><h4>'+c.h+'</h4><p>'+c.p+'</p></div>').join('');
+  }
+  if(rc && typeof RULES!=='undefined' && RULES[LANG]) {
+    rc.innerHTML = RULES[LANG].map(c=>'<div class="card"><div class="ic">'+c.ic+'</div><h4>'+c.h+'</h4><p>'+c.p+'</p></div>').join('');
+  }
 }
 
 function applyStatic(){
   const u=UI[LANG];
   document.documentElement.lang=LANG;
-  document.querySelector('[data-i="navTrain"]').textContent=u.navTrain;
-  document.querySelector('[data-i="navWarm"]').textContent=u.navWarm;
-  document.querySelector('[data-i="navRules"]').textContent=u.navRules;
-  document.querySelector('[data-i="heroKick"]').textContent=u.heroKick;
-  document.querySelector('[data-i="heroTitle"]').innerHTML=u.heroTitle[0]+'<em>'+u.heroTitle[1]+'</em>';
-  document.querySelector('[data-i="heroText"]').textContent=u.heroText;
-  document.querySelector('[data-i="heroGear"]').textContent=u.heroGear;
-  document.querySelector('[data-i="warmH"]').textContent=u.warmH;
-  document.querySelector('[data-i="warmP"]').textContent=u.warmP;
-  document.querySelector('[data-i="trainH"]').textContent=u.trainH;
-  document.querySelector('[data-i="trainP"]').textContent=u.trainP;
-  document.querySelector('[data-i="rulesH"]').textContent=u.rulesH;
-  document.querySelector('[data-i="rulesP"]').textContent=u.rulesP;
-  document.querySelector('[data-i="footTag"]').textContent=u.footTag;
-  document.querySelector('[data-i="footProg"]').textContent=u.footProg;
+  const set=(sel,val,html)=>{ const el=document.querySelector(sel); if(el){ if(html) el.innerHTML=val; else el.textContent=val; } };
+  set('[data-i="heroKick"]',u.heroKick);
+  set('[data-i="heroTitle"]',u.heroTitle[0]+'<em>'+u.heroTitle[1]+'</em>',true);
+  set('[data-i="heroText"]',u.heroText);
+  set('[data-i="heroGear"]',u.heroGear);
+  set('[data-i="warmH"]',u.warmH);
+  set('[data-i="warmP"]',u.warmP);
+  set('[data-i="trainH"]',u.trainH);
+  set('[data-i="trainP"]',u.trainP);
+  set('[data-i="rulesH"]',u.rulesH);
+  set('[data-i="rulesP"]',u.rulesP);
+  const bs=document.getElementById('btn-sk'), be=document.getElementById('btn-en'), bn=document.getElementById('btn-nea');
+  if(bs) bs.classList.toggle('active',LANG==='sk');
+  if(be) be.classList.toggle('active',LANG==='en');
+  if(bn) bn.classList.toggle('active',LANG==='nea');
 }
 
 function setLang(l){
