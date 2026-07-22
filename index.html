@@ -165,7 +165,8 @@ header{
 .nav-overlay.show{display:block;}
 
 /* ── PAGE SECTIONS ── */
-.page-section{display:none; position:relative; z-index:2; min-height:calc(100vh - 68px);}
+.page-/* section display none removed - conflicts with training */
+#sec-training section{display:block !important; min-height:auto;}
 .page-section.active{display:block !important;}
 
 /* ── SECTION WRAPPER ── */
@@ -815,11 +816,20 @@ a:hover{color:var(--cream-bright);}
 .btn-sm:hover { border-color: var(--rust-light); color: var(--cream-bright); }
 
 
+
+/* ── TRAINING SECTIONS VISIBLE ── */
+#sec-training section { display: block !important; min-height: auto; margin-bottom: 2rem; }
+#sec-training .hero { display: block !important; }
+#sec-training .grid3 { display: grid !important; }
+#sec-training .session { display: none; }
+#sec-training .session.active { display: block; }
+#sec-training .tab { display: inline-flex !important; }
+
 </style>
 </head>
 <body>
 
-<div id="version-badge">v3.1.7</div>
+<div id="version-badge">v3.2.0</div>
 <div id="toast"></div>
 <div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
 
@@ -853,6 +863,7 @@ a:hover{color:var(--cream-bright);}
     <div class="nav-group">
       <div class="nav-group-label">Admin</div>
       <div class="nav-item" onclick="showSection('admin-news')" id="nav-admin-news"><span class="nav-ic">📝</span><span>Správa oznamov</span></div>
+      <div class="nav-item" onclick="showSection('admin-media')" id="nav-admin-media"><span class="nav-ic">📸</span><span>Správa médií</span></div>
       <div class="nav-item" onclick="showSection('admin-events')" id="nav-admin-events"><span class="nav-ic">⚙</span><span>Správa udalostí</span></div>
       <div class="nav-item" onclick="showSection('admin-payments')" id="nav-admin-payments"><span class="nav-ic">⚙</span><span>Správa financií</span></div>
     </div>
@@ -964,51 +975,10 @@ a:hover{color:var(--cream-bright);}
 <div class="page-section" id="sec-media">
   <div class="sec-wrap">
     <div class="sec-head"><h2 data-i="mediaH">Médiá</h2><p data-i="mediaP">Videá, fotky a náš Instagram.</p></div>
-    <div class="media-grid">
-
-      <!-- Video: Povedz loď -->
-      <div class="media-item">
-        <div class="media-thumb" id="yt-lod" onclick="playVideo('yt-lod','moEoQqsYBvI')" style="cursor:pointer;">
-          <img src="https://img.youtube.com/vi/moEoQqsYBvI/maxresdefault.jpg"
-            onerror="this.src='https://img.youtube.com/vi/moEoQqsYBvI/hqdefault.jpg'"
-            style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" alt="Povedz loď">
-          <div class="yt-play-btn">
-            <svg viewBox="0 0 68 48" width="68" height="48">
-              <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="#ff0000"/>
-              <path d="M45 24L27 14v20" fill="#fff"/>
-            </svg>
-          </div>
-        </div>
-        <div class="media-info"><h4>Povedz loď ⛵</h4><p>Každoročná tradícia — týždeň na mori s partiou. Slnko, more, dobrá nálada.</p></div>
-      </div>
-
-      <!-- Video: Praha 2019 -->
-      <div class="media-item">
-        <div class="media-thumb" id="yt-praha" onclick="playVideo('yt-praha','fw4QdkXbYC0')" style="cursor:pointer;">
-          <img src="https://img.youtube.com/vi/fw4QdkXbYC0/maxresdefault.jpg"
-            onerror="this.src='https://img.youtube.com/vi/fw4QdkXbYC0/hqdefault.jpg'"
-            style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" alt="Praha 2019">
-          <div class="yt-play-btn">
-            <svg viewBox="0 0 68 48" width="68" height="48">
-              <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="#ff0000"/>
-              <path d="M45 24L27 14v20" fill="#fff"/>
-            </svg>
-          </div>
-        </div>
-        <div class="media-info"><h4>Turnaj Praha 2019 🏆</h4><p>Víťazné ťaženie Neanderthals na turnaji v Prahe. Prvé miesto, nezabudnuteľný víkend.</p></div>
-      </div>
-
-      <!-- Instagram -->
-      <div class="media-item" style="cursor:pointer;" onclick="window.open('https://www.instagram.com/neanderthals_bratislava/','_blank')">
-        <div class="media-thumb" style="background:linear-gradient(135deg,#405de6,#5851db,#833ab4,#c13584,#e1306c,#fd1d1d,#f56040,#f77737,#fcaf45,#ffdc80);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5rem;">
-          <svg viewBox="0 0 24 24" width="52" height="52" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-          <span style="color:white;font-family:'Oswald';font-weight:700;font-size:.9rem;letter-spacing:.1em;">@neanderthals_bratislava</span>
-        </div>
-        <div class="media-info"><h4>Instagram</h4><p>Fotky zo zápasov, tréningov a akcií. Sleduj nás.</p></div>
-      </div>
-
+    <div class="media-grid" id="media-grid">
+      <div class="empty-state" style="grid-column:1/-1;"><span class="spinner"></span> Načítavam…</div>
     </div>
-    <p style="color:var(--bone);font-size:.9rem;">Máš fotky alebo video? Pošli na <a href="mailto:konty@ndrtls.com">konty@ndrtls.com</a></p>
+    <p style="color:var(--bone);font-size:.9rem;margin-top:1.5rem;">Máš fotky alebo video? Pošli na <a href="mailto:konty@ndrtls.com">konty@ndrtls.com</a></p>
   </div>
 </div>
 
@@ -1334,6 +1304,15 @@ a:hover{color:var(--cream-bright);}
     <div class="sec-head"><h2>Správa oznamov</h2><p>Pridávaj, uprav a mazaj príspevky.</p></div>
     <div class="admin-bar"><span class="admin-label">&#9881; Admin</span><button class="btn-admin edit" onclick="openNewsModal()">+ Nový oznam</button></div>
     <div id="admin-news-list"><div class="empty-state"><div class="es-icon">📋</div><p>Načítavam…</p></div></div>
+  </div>
+</div>
+
+<!-- ── ADMIN: MEDIA ── -->
+<div class="page-section" id="sec-admin-media">
+  <div class="sec-wrap">
+    <div class="sec-head"><h2>Správa médií</h2><p>Uprav popisy, pridaj YouTube videá alebo nahraj fotky.</p></div>
+    <div class="admin-bar"><span class="admin-label">&#9881; Admin</span><button class="btn-admin edit" onclick="openMediaModal()">+ Pridať médium</button></div>
+    <div id="admin-media-list"><div class="empty-state"><div class="es-icon">📸</div><p>Načítavam…</p></div></div>
   </div>
 </div>
 
@@ -1721,12 +1700,37 @@ a:hover{color:var(--cream-bright);}
   </div>
 </div>
 
+
+<!-- ══ MEDIA MODAL ══ -->
+<div class="modal-overlay" id="modal-media">
+  <div class="modal">
+    <h3 id="media-modal-title">Nové médium</h3>
+    <input type="hidden" id="media-edit-id">
+    <div class="form-group"><label>Nadpis</label><input type="text" id="media-title" placeholder="Napr. Turnaj Praha 2024"></div>
+    <div class="form-group"><label>Popis</label><textarea id="media-desc" rows="3" style="width:100%;background:var(--ink);border:1px solid var(--line);border-radius:6px;padding:.75rem .9rem;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;resize:vertical;"></textarea></div>
+    <div class="form-group"><label>YouTube link (nepovinné)</label><input type="url" id="media-yt" placeholder="https://youtu.be/..."></div>
+    <div class="form-group"><label>Foto URL (nepovinné)</label><input type="url" id="media-img" placeholder="https://..."></div>
+    <div class="modal-actions">
+      <button class="btn-admin save" onclick="saveMedia()">Uložiť</button>
+      <button class="btn-admin cancel" onclick="closeModal('modal-media')">Zrušiť</button>
+      <button class="btn-admin danger" id="media-delete-btn" onclick="deleteMedia()" style="display:none;margin-left:auto;">Vymazať</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ════════════════════════════════════════════════
-   BRATISLAVA NEANDERTHALS — Unified v3.1.7
+   BRATISLAVA NEANDERTHALS — Unified v3.2.0
    ════════════════════════════════════════════════ */
 const { createClient } = supabase;
-const sb = createClient('https://vchxjbdrromujmzujduo.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjaHhqYmRycm9tdWptenVqZHVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NjAyNDAsImV4cCI6MjA5NjQzNjI0MH0.xGT8sxDD2bDogwCZGYAJ-sGWROt1c7e1M9f9_qrm2WA');
+const sb = createClient('https://vchxjbdrromujmzujduo.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjaHhqYmRycm9tdWptenVqZHVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NjAyNDAsImV4cCI6MjA5NjQzNjI0MH0.xGT8sxDD2bDogwCZGYAJ-sGWROt1c7e1M9f9_qrm2WA', {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    storage: window.localStorage,
+    storageKey: 'ndrtls-auth'
+  }
+});
 
 let currentUser    = null;
 let currentProfile = null;
@@ -1885,7 +1889,9 @@ function showSection(id) {
   if (id==='admin-events') loadAdminEvents();
   if (id==='admin-payments') { loadAdminPayments(); admTab('overview'); }
   if (id==='admin-news') loadAdminNews();
+  if (id==='admin-media') loadAdminMedia();
   if (id==='news') loadPublicNews();
+  if (id==='media') loadPublicMedia();
   if (id==='roster') loadRosterFromDB();
   if (id==='rahl' && !window._rahlLoaded) { window._rahlLoaded=true; loadRAHL(); }
   if (id==='training') { applyStatic(); buildCards(); buildTabs(); }
@@ -3268,6 +3274,129 @@ function applyStatic() {
   document.getElementById('btn-nea')?.classList.toggle('active',LANG==='nea');
 }
 function setLang(lang) { LANG=lang; applyStatic(); if(window._trainingInit) { buildCards(); buildTabs(); } }
+
+
+
+/* ── PUBLIC MEDIA ─────────────────────────────── */
+async function loadPublicMedia() {
+  const grid = document.getElementById('media-grid');
+  if (!grid) return;
+
+  // Hardcoded Instagram card always shown
+  const instagramCard = `<div class="media-item" style="cursor:pointer;" onclick="window.open('https://www.instagram.com/neanderthals_bratislava/','_blank')">
+    <div class="media-thumb" style="background:linear-gradient(135deg,#405de6,#5851db,#833ab4,#c13584,#e1306c,#fd1d1d,#f56040,#f77737,#fcaf45,#ffdc80);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5rem;">
+      <svg viewBox="0 0 24 24" width="52" height="52" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+      <span style="color:white;font-family:'Oswald';font-weight:700;font-size:.9rem;letter-spacing:.1em;">@neanderthals_bratislava</span>
+    </div>
+    <div class="media-info"><h4>Instagram</h4><p>Fotky zo zápasov, tréningov a akcií. Sleduj nás.</p></div>
+  </div>`;
+
+  const { data, error } = await sb.from('media').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: false });
+
+  let cards = '';
+  if (data && data.length) {
+    cards = data.map(m => {
+      if (m.youtube_url) {
+        const ytId = extractYoutubeId(m.youtube_url);
+        if (ytId) {
+          const domId = 'ytm-' + m.id;
+          return `<div class="media-item">
+            <div class="media-thumb" id="${domId}" onclick="playVideo('${domId}','${ytId}')" style="cursor:pointer;">
+              <img src="https://img.youtube.com/vi/${ytId}/maxresdefault.jpg" onerror="this.src='https://img.youtube.com/vi/${ytId}/hqdefault.jpg'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" alt="${m.title}">
+              <div class="yt-play-btn"><svg viewBox="0 0 68 48" width="68" height="48"><path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="#ff0000"/><path d="M45 24L27 14v20" fill="#fff"/></svg></div>
+            </div>
+            <div class="media-info"><h4>${m.title}</h4><p>${m.description||''}</p></div>
+          </div>`;
+        }
+      }
+      if (m.image_url) {
+        return `<div class="media-item">
+          <div class="media-thumb"><img src="${m.image_url}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" alt="${m.title}" onerror="this.parentElement.innerHTML='📷'"></div>
+          <div class="media-info"><h4>${m.title}</h4><p>${m.description||''}</p></div>
+        </div>`;
+      }
+      // Text only
+      return `<div class="media-item">
+        <div class="media-thumb" style="display:flex;align-items:center;justify-content:center;font-size:3rem;">📝</div>
+        <div class="media-info"><h4>${m.title}</h4><p>${m.description||''}</p></div>
+      </div>`;
+    }).join('');
+  }
+
+  grid.innerHTML = cards + instagramCard;
+}
+
+
+/* ── MEDIA MANAGEMENT (admin) ─────────────────── */
+async function loadAdminMedia() {
+  const list = document.getElementById('admin-media-list');
+  if (!list) return;
+  const { data, error } = await sb.from('media').select('*').order('created_at', { ascending: false });
+  if (error) {
+    // Table might not exist yet
+    list.innerHTML = '<div class="empty-state"><div class="es-icon">📸</div><p>Zatiaľ žiadne médiá. Pridaj prvé cez tlačidlo vyššie.</p></div>';
+    return;
+  }
+  if (!data || !data.length) {
+    list.innerHTML = '<div class="empty-state"><div class="es-icon">📸</div><p>Žiadne médiá.</p></div>';
+    return;
+  }
+  list.innerHTML = data.map(m => {
+    const type = m.youtube_url ? '🎬 Video' : m.image_url ? '📷 Foto' : '📝 Text';
+    return `<div class="event-card" style="margin-bottom:.8rem;">
+      <div class="ev-info"><h4>${m.title||'(bez názvu)'}</h4><p style="color:var(--bone);font-size:.9rem;">${type}${m.description?' · '+m.description.slice(0,50):''}</p></div>
+      <div class="ev-actions"><button class="btn-admin edit" onclick="openMediaModal(${m.id})">✏ Upraviť</button></div>
+    </div>`;
+  }).join('');
+}
+
+function openMediaModal(id) {
+  const isEdit = !!id;
+  document.getElementById('media-modal-title').textContent = isEdit ? 'Upraviť médium' : 'Nové médium';
+  document.getElementById('media-edit-id').value = id || '';
+  document.getElementById('media-delete-btn').style.display = isEdit ? 'inline-block' : 'none';
+  if (isEdit) {
+    sb.from('media').select('*').eq('id', id).single().then(({ data: m }) => {
+      if (m) {
+        document.getElementById('media-title').value = m.title || '';
+        document.getElementById('media-desc').value = m.description || '';
+        document.getElementById('media-yt').value = m.youtube_url || '';
+        document.getElementById('media-img').value = m.image_url || '';
+      }
+    });
+  } else {
+    ['media-title','media-desc','media-yt','media-img'].forEach(i => document.getElementById(i).value = '');
+  }
+  document.getElementById('modal-media').classList.add('show');
+}
+
+async function saveMedia() {
+  const id = document.getElementById('media-edit-id').value;
+  const title = document.getElementById('media-title').value.trim();
+  const description = document.getElementById('media-desc').value.trim() || null;
+  const youtube_url = document.getElementById('media-yt').value.trim() || null;
+  const image_url = document.getElementById('media-img').value.trim() || null;
+  if (!title) { toast('Zadaj nadpis.', 'error'); return; }
+  const payload = { title, description, youtube_url, image_url };
+  const { error } = id
+    ? await sb.from('media').update(payload).eq('id', parseInt(id))
+    : await sb.from('media').insert(payload);
+  if (error) { toast('Chyba: ' + error.message, 'error'); return; }
+  closeModal('modal-media');
+  toast(id ? 'Médium upravené ✓' : 'Médium pridané ✓', 'success');
+  loadAdminMedia();
+  loadPublicMedia();
+}
+
+async function deleteMedia() {
+  const id = document.getElementById('media-edit-id').value;
+  if (!id || !confirm('Vymazať toto médium?')) return;
+  await sb.from('media').delete().eq('id', parseInt(id));
+  closeModal('modal-media');
+  toast('Médium vymazané', 'success');
+  loadAdminMedia();
+}
+
 
 /* ── MAIN LANG ────────────────────────────────── */
 const UI_MAIN={
