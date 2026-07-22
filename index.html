@@ -819,7 +819,7 @@ a:hover{color:var(--cream-bright);}
 </head>
 <body>
 
-<div id="version-badge">v3.1.6</div>
+<div id="version-badge">v3.1.7</div>
 <div id="toast"></div>
 <div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
 
@@ -1723,7 +1723,7 @@ a:hover{color:var(--cream-bright);}
 
 <script>
 /* ════════════════════════════════════════════════
-   BRATISLAVA NEANDERTHALS — Unified v3.1.6
+   BRATISLAVA NEANDERTHALS — Unified v3.1.7
    ════════════════════════════════════════════════ */
 const { createClient } = supabase;
 const sb = createClient('https://vchxjbdrromujmzujduo.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjaHhqYmRycm9tdWptenVqZHVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NjAyNDAsImV4cCI6MjA5NjQzNjI0MH0.xGT8sxDD2bDogwCZGYAJ-sGWROt1c7e1M9f9_qrm2WA');
@@ -1792,6 +1792,7 @@ async function onLogin(user) {
   if (loginSec) { loginSec.classList.remove('active'); loginSec.style.display = 'none'; }
   showSection('events');
   loadRosterFromDB();
+  loadSeasons();
 }
 
 function onLogout() {
@@ -1887,7 +1888,7 @@ function showSection(id) {
   if (id==='news') loadPublicNews();
   if (id==='roster') loadRosterFromDB();
   if (id==='rahl' && !window._rahlLoaded) { window._rahlLoaded=true; loadRAHL(); }
-  if (id==='training' && !window._trainingInit) { window._trainingInit=true; applyStatic(); buildCards(); buildTabs(); }
+  if (id==='training') { applyStatic(); buildCards(); buildTabs(); }
   closeNav(); window.scrollTo(0,0);
 }
 function handleHash() {
@@ -2382,9 +2383,35 @@ async function loadSeasons() {
   });
 }
 
+function getFinSeasonId() {
+  return parseInt(document.getElementById('fin-season-select')?.value) || allSeasons.find(s=>s.status==='active')?.id;
+}
+function getAdmSeasonId() {
+  return parseInt(document.getElementById('adm-season-select')?.value) || allSeasons.find(s=>s.status==='active')?.id;
+}
+
+let finActiveTab = 'games';
+function finTab(tab) {
+  finActiveTab = tab;
+  ['games','payments'].forEach(t => {
+    const btn = document.getElementById('fin-tab-'+t);
+    const panel = document.getElementById('fin-panel-'+t);
+    if (btn) btn.style.background = t===tab ? 'var(--maroon)' : 'var(--charcoal)';
+    if (btn) btn.style.color = t===tab ? 'var(--cream-bright)' : 'var(--bone)';
+    if (panel) panel.style.display = t===tab ? 'block' : 'none';
+  });
+  if (tab === 'payments') renderFinPayments();
+}
+
+
 async function loadFinance() {
+  if (!allSeasons || !allSeasons.length) { await loadSeasons(); }
   const seasonId = getFinSeasonId();
-  if (!seasonId) return;
+  if (!seasonId) {
+    const el = document.getElementById('finance-subtitle');
+    if (el) el.textContent = 'Žiadne sezóny nie sú k dispozícii.';
+    return;
+  }
   const season = allSeasons.find(s => s.id === seasonId);
   document.getElementById('finance-subtitle').textContent =
     `Tvoj prehľad za sezónu ${season?.name || ''}.`;
