@@ -829,7 +829,7 @@ a:hover{color:var(--cream-bright);}
 </head>
 <body>
 
-<div id="version-badge">v3.2.0</div>
+<div id="version-badge">v3.2.3</div>
 <div id="toast"></div>
 <div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
 
@@ -1710,6 +1710,16 @@ a:hover{color:var(--cream-bright);}
     <div class="form-group"><label>Popis</label><textarea id="media-desc" rows="3" style="width:100%;background:var(--ink);border:1px solid var(--line);border-radius:6px;padding:.75rem .9rem;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;resize:vertical;"></textarea></div>
     <div class="form-group"><label>YouTube link (nepovinné)</label><input type="url" id="media-yt" placeholder="https://youtu.be/..."></div>
     <div class="form-group"><label>Foto URL (nepovinné)</label><input type="url" id="media-img" placeholder="https://..."></div>
+    <div class="form-group"><label>Poradie <span style="font-weight:400;text-transform:none;letter-spacing:0;">(nižšie číslo = vyššie v zozname)</span></label><input type="number" id="media-order" placeholder="0" value="0"></div>
+    <div id="media-photos-section" style="display:none;border-top:1px solid var(--line);margin-top:1rem;padding-top:1rem;">
+      <label style="display:block;font-family:'Oswald';font-weight:600;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--bone);margin-bottom:.6rem;">Fotogaléria</label>
+      <div id="media-photos-list" style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.8rem;"></div>
+      <div style="display:flex;gap:.4rem;">
+        <input type="url" id="new-photo-url" placeholder="https://... URL fotky" style="flex:1;background:var(--ink);border:1px solid var(--line);border-radius:6px;padding:.6rem .8rem;color:var(--cream);font-family:'Barlow Condensed';font-size:.95rem;">
+        <button class="btn-admin edit" onclick="addPhotoToGallery()">+ Pridať</button>
+      </div>
+      <p style="font-size:.8rem;color:var(--bone);opacity:.6;margin-top:.4rem;">Prvá fotka = náhľad. Ostatné sa zobrazia po rozkliknutí.</p>
+    </div>
     <div class="modal-actions">
       <button class="btn-admin save" onclick="saveMedia()">Uložiť</button>
       <button class="btn-admin cancel" onclick="closeModal('modal-media')">Zrušiť</button>
@@ -1718,9 +1728,28 @@ a:hover{color:var(--cream-bright);}
   </div>
 </div>
 
+
+<!-- ══ GALLERY LIGHTBOX ══ -->
+<div id="gallery-lightbox" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.95);flex-direction:column;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.2rem;">
+    <div>
+      <div id="gl-title" style="font-family:'Oswald';font-weight:700;font-size:1rem;color:var(--cream-bright);text-transform:uppercase;letter-spacing:.05em;"></div>
+      <div id="gl-counter" style="font-family:'Oswald';font-size:.8rem;color:var(--bone);margin-top:.2rem;"></div>
+    </div>
+    <button onclick="closeGallery()" style="background:none;border:0;color:var(--cream-bright);font-size:2rem;cursor:pointer;line-height:1;padding:0 .5rem;">&times;</button>
+  </div>
+  <div id="gl-viewport" style="flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;touch-action:pan-y;">
+    <button onclick="galleryPrev()" id="gl-prev" style="position:absolute;left:.5rem;z-index:5;background:rgba(0,0,0,.5);border:1px solid var(--line);color:var(--cream-bright);font-size:1.5rem;width:44px;height:44px;border-radius:50%;cursor:pointer;">‹</button>
+    <img id="gl-image" src="" style="max-width:100%;max-height:100%;object-fit:contain;">
+    <button onclick="galleryNext()" id="gl-next" style="position:absolute;right:.5rem;z-index:5;background:rgba(0,0,0,.5);border:1px solid var(--line);color:var(--cream-bright);font-size:1.5rem;width:44px;height:44px;border-radius:50%;cursor:pointer;">›</button>
+  </div>
+  <div id="gl-caption" style="padding:1rem 1.2rem;text-align:center;color:var(--bone);font-size:.9rem;min-height:2.5rem;"></div>
+  <div id="gl-thumbs" style="display:flex;gap:.4rem;padding:0 1.2rem 1.2rem;overflow-x:auto;justify-content:center;"></div>
+</div>
+
 <script>
 /* ════════════════════════════════════════════════
-   BRATISLAVA NEANDERTHALS — Unified v3.2.0
+   BRATISLAVA NEANDERTHALS — Unified v3.2.3
    ════════════════════════════════════════════════ */
 const { createClient } = supabase;
 const sb = createClient('https://vchxjbdrromujmzujduo.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjaHhqYmRycm9tdWptenVqZHVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NjAyNDAsImV4cCI6MjA5NjQzNjI0MH0.xGT8sxDD2bDogwCZGYAJ-sGWROt1c7e1M9f9_qrm2WA', {
@@ -1864,7 +1893,7 @@ function hideSplash() {
   if (s) { s.classList.add('hide'); setTimeout(()=>s.style.display='none',400); }
   if (m) m.style.display='block';
 }
-function enterSite(section) { hideSplash(); showSection(section||'news'); }
+function enterSite(section) { hideSplash(); showSection(section||'news'); closeNav(); }
 function goHome() {
   if (!document.getElementById('main-site') || document.getElementById('main-site').style.display==='none') {
     const s=document.getElementById('splash'); s.style.display='flex'; s.classList.remove('hide');
@@ -1894,7 +1923,19 @@ function showSection(id) {
   if (id==='media') loadPublicMedia();
   if (id==='roster') loadRosterFromDB();
   if (id==='rahl' && !window._rahlLoaded) { window._rahlLoaded=true; loadRAHL(); }
-  if (id==='training') { applyStatic(); buildCards(); buildTabs(); }
+  if (id==='training') {
+    try { applyStatic(); } catch(e) { console.error('applyStatic:', e); }
+    try { buildCards(); } catch(e) { console.error('buildCards:', e); }
+    try { buildTabs(); } catch(e) { console.error('buildTabs:', e); }
+    // Fallback: if still empty, show error
+    setTimeout(() => {
+      const t = document.getElementById('tabs');
+      const w = document.getElementById('warmCards');
+      if (t && !t.children.length) {
+        t.innerHTML = '<p style="color:var(--bone);padding:1rem;">Tréningový obsah sa nepodarilo načítať. Skús obnoviť stránku.</p>';
+      }
+    }, 300);
+  }
   closeNav(); window.scrollTo(0,0);
 }
 function handleHash() {
@@ -3293,6 +3334,14 @@ async function loadPublicMedia() {
 
   const { data, error } = await sb.from('media').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: false });
 
+  // Get photo counts for gallery badges
+  if (data && data.length) {
+    const { data: photoCounts } = await sb.from('media_photos').select('media_id');
+    const countMap = {};
+    (photoCounts||[]).forEach(p => countMap[p.media_id] = (countMap[p.media_id]||0) + 1);
+    data.forEach(m => m.photo_count = countMap[m.id] || (m.image_url ? 1 : 0));
+  }
+
   let cards = '';
   if (data && data.length) {
     cards = data.map(m => {
@@ -3310,8 +3359,13 @@ async function loadPublicMedia() {
         }
       }
       if (m.image_url) {
-        return `<div class="media-item">
-          <div class="media-thumb"><img src="${m.image_url}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" alt="${m.title}" onerror="this.parentElement.innerHTML='📷'"></div>
+        const photoCount = m.photo_count || 1;
+        const badge = photoCount > 1 ? `<div style="position:absolute;top:.6rem;right:.6rem;background:rgba(0,0,0,.7);color:var(--cream-bright);font-family:'Oswald';font-size:.75rem;padding:.25rem .5rem;border-radius:4px;z-index:3;">📷 ${photoCount}</div>` : '';
+        return `<div class="media-item" style="cursor:pointer;" onclick="openGallery(${m.id})">
+          <div class="media-thumb">
+            <img src="${m.image_url}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" alt="${m.title}" onerror="this.parentElement.innerHTML='📷'">
+            ${badge}
+          </div>
           <div class="media-info"><h4>${m.title}</h4><p>${m.description||''}</p></div>
         </div>`;
       }
@@ -3327,7 +3381,145 @@ async function loadPublicMedia() {
 }
 
 
+
+/* ── GALLERY LIGHTBOX ─────────────────────────── */
+let _galleryPhotos = [];
+let _galleryIndex = 0;
+let _touchStartX = 0;
+
+async function openGallery(mediaId) {
+  const lb = document.getElementById('gallery-lightbox');
+  const { data: media } = await sb.from('media').select('*').eq('id', mediaId).single();
+  if (!media) return;
+
+  // Load photos for this media item
+  const { data: photos } = await sb.from('media_photos')
+    .select('*').eq('media_id', mediaId).order('sort_order', { ascending: true });
+
+  _galleryPhotos = (photos && photos.length)
+    ? photos
+    : [{ image_url: media.image_url, caption: media.description }];
+  _galleryIndex = 0;
+
+  document.getElementById('gl-title').textContent = media.title || '';
+  renderGallery();
+  lb.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function renderGallery() {
+  const p = _galleryPhotos[_galleryIndex];
+  if (!p) return;
+  document.getElementById('gl-image').src = p.image_url;
+  document.getElementById('gl-caption').textContent = p.caption || '';
+  document.getElementById('gl-counter').textContent = `${_galleryIndex+1} / ${_galleryPhotos.length}`;
+  const single = _galleryPhotos.length <= 1;
+  document.getElementById('gl-prev').style.display = single ? 'none' : 'block';
+  document.getElementById('gl-next').style.display = single ? 'none' : 'block';
+  // Thumbnails
+  const thumbs = document.getElementById('gl-thumbs');
+  thumbs.innerHTML = single ? '' : _galleryPhotos.map((ph, i) =>
+    `<img src="${ph.image_url}" onclick="galleryGoTo(${i})" style="width:52px;height:52px;object-fit:cover;border-radius:5px;cursor:pointer;flex-shrink:0;border:2px solid ${i===_galleryIndex?'var(--rust)':'transparent'};opacity:${i===_galleryIndex?1:.5};">`
+  ).join('');
+}
+
+function galleryGoTo(i) { _galleryIndex = i; renderGallery(); }
+function galleryNext() { _galleryIndex = (_galleryIndex + 1) % _galleryPhotos.length; renderGallery(); }
+function galleryPrev() { _galleryIndex = (_galleryIndex - 1 + _galleryPhotos.length) % _galleryPhotos.length; renderGallery(); }
+function closeGallery() {
+  document.getElementById('gallery-lightbox').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+// Swipe support
+document.addEventListener('DOMContentLoaded', () => {
+  const vp = document.getElementById('gl-viewport');
+  if (!vp) return;
+  vp.addEventListener('touchstart', e => { _touchStartX = e.changedTouches[0].screenX; }, { passive: true });
+  vp.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].screenX - _touchStartX;
+    if (Math.abs(dx) > 50) { dx < 0 ? galleryNext() : galleryPrev(); }
+  }, { passive: true });
+  // Keyboard
+  document.addEventListener('keydown', e => {
+    if (document.getElementById('gallery-lightbox')?.style.display !== 'flex') return;
+    if (e.key === 'ArrowRight') galleryNext();
+    if (e.key === 'ArrowLeft') galleryPrev();
+    if (e.key === 'Escape') closeGallery();
+  });
+});
+
+
 /* ── MEDIA MANAGEMENT (admin) ─────────────────── */
+
+/* ── MEDIA PHOTOS (gallery admin) ─────────────── */
+async function loadMediaPhotos(mediaId) {
+  const list = document.getElementById('media-photos-list');
+  const section = document.getElementById('media-photos-section');
+  if (!list || !mediaId) { if(section) section.style.display='none'; return; }
+  section.style.display = 'block';
+  const { data } = await sb.from('media_photos').select('*').eq('media_id', mediaId).order('sort_order',{ascending:true});
+  if (!data || !data.length) {
+    list.innerHTML = '<p style="color:var(--bone);font-size:.85rem;opacity:.6;">Žiadne fotky. Pridaj prvú nižšie.</p>';
+    return;
+  }
+  list.innerHTML = data.map((p,i) => `
+    <div style="position:relative;width:72px;height:72px;border-radius:6px;overflow:hidden;border:2px solid ${i===0?'var(--rust)':'var(--line)'};">
+      <img src="${p.image_url}" style="width:100%;height:100%;object-fit:cover;">
+      <button onclick="removePhoto(${p.id})" style="position:absolute;top:2px;right:2px;background:rgba(139,0,0,.9);border:0;color:#fff;width:18px;height:18px;border-radius:50%;font-size:.7rem;cursor:pointer;line-height:1;">×</button>
+      ${i>0?`<button onclick="movePhoto(${p.id},'up')" style="position:absolute;bottom:2px;left:2px;background:rgba(0,0,0,.7);border:0;color:#fff;width:18px;height:18px;border-radius:3px;font-size:.6rem;cursor:pointer;">◄</button>`:''}
+      ${i===0?'<div style="position:absolute;bottom:0;left:0;right:0;background:var(--rust);color:#fff;font-size:.6rem;text-align:center;font-family:\'Oswald\';">NÁHĽAD</div>':''}
+    </div>
+  `).join('');
+}
+
+async function addPhotoToGallery() {
+  const mediaId = document.getElementById('media-edit-id').value;
+  const url = document.getElementById('new-photo-url').value.trim();
+  if (!mediaId) { toast('Najprv ulož médium.', 'error'); return; }
+  if (!url) { toast('Zadaj URL fotky.', 'error'); return; }
+  const { count } = await sb.from('media_photos').select('*',{count:'exact',head:true}).eq('media_id', parseInt(mediaId));
+  const { error } = await sb.from('media_photos').insert({ media_id: parseInt(mediaId), image_url: url, sort_order: count||0 });
+  if (error) { toast('Chyba: '+error.message, 'error'); return; }
+  document.getElementById('new-photo-url').value = '';
+  loadMediaPhotos(parseInt(mediaId));
+  updateMediaPhotoCount(parseInt(mediaId));
+  toast('Fotka pridaná ✓','success');
+}
+
+async function removePhoto(photoId) {
+  if (!confirm('Odstrániť fotku?')) return;
+  const mediaId = parseInt(document.getElementById('media-edit-id').value);
+  await sb.from('media_photos').delete().eq('id', photoId);
+  loadMediaPhotos(mediaId);
+  updateMediaPhotoCount(mediaId);
+}
+
+async function movePhoto(photoId, dir) {
+  const mediaId = parseInt(document.getElementById('media-edit-id').value);
+  const { data } = await sb.from('media_photos').select('id,sort_order').eq('media_id',mediaId).order('sort_order',{ascending:true});
+  if (!data) return;
+  const i = data.findIndex(p => p.id === photoId);
+  const j = dir==='up' ? i-1 : i+1;
+  if (i<0 || j<0 || j>=data.length) return;
+  await sb.from('media_photos').update({sort_order: data[j].sort_order ?? j}).eq('id', data[i].id);
+  await sb.from('media_photos').update({sort_order: data[i].sort_order ?? i}).eq('id', data[j].id);
+  loadMediaPhotos(mediaId);
+  updateMediaPhotoCount(mediaId);
+}
+
+async function updateMediaPhotoCount(mediaId) {
+  // Set media.image_url to first photo so thumbnail matches
+  const { data } = await sb.from('media_photos').select('image_url').eq('media_id',mediaId).order('sort_order',{ascending:true}).limit(1);
+  if (data && data[0]) {
+    await sb.from('media').update({ image_url: data[0].image_url }).eq('id', mediaId);
+    const imgInput = document.getElementById('media-img');
+    if (imgInput) imgInput.value = data[0].image_url;
+  }
+  loadPublicMedia();
+}
+
+
 async function loadAdminMedia() {
   const list = document.getElementById('admin-media-list');
   if (!list) return;
@@ -3341,13 +3533,36 @@ async function loadAdminMedia() {
     list.innerHTML = '<div class="empty-state"><div class="es-icon">📸</div><p>Žiadne médiá.</p></div>';
     return;
   }
-  list.innerHTML = data.map(m => {
+  list.innerHTML = data.map((m, i) => {
     const type = m.youtube_url ? '🎬 Video' : m.image_url ? '📷 Foto' : '📝 Text';
+    const isFirst = i === 0;
+    const isLast  = i === data.length - 1;
     return `<div class="event-card" style="margin-bottom:.8rem;">
-      <div class="ev-info"><h4>${m.title||'(bez názvu)'}</h4><p style="color:var(--bone);font-size:.9rem;">${type}${m.description?' · '+m.description.slice(0,50):''}</p></div>
+      <div style="display:flex;flex-direction:column;gap:.2rem;margin-right:.6rem;">
+        <button class="btn-admin edit" style="padding:.2rem .5rem;font-size:.8rem;${isFirst?'opacity:.3;pointer-events:none;':''}" onclick="moveMedia(${m.id},'up')">▲</button>
+        <button class="btn-admin edit" style="padding:.2rem .5rem;font-size:.8rem;${isLast?'opacity:.3;pointer-events:none;':''}" onclick="moveMedia(${m.id},'down')">▼</button>
+      </div>
+      <div class="ev-info"><h4>${m.title||'(bez názvu)'}</h4><p style="color:var(--bone);font-size:.9rem;">#${m.sort_order??0} · ${type}${m.description?' · '+m.description.slice(0,40):''}</p></div>
       <div class="ev-actions"><button class="btn-admin edit" onclick="openMediaModal(${m.id})">✏ Upraviť</button></div>
     </div>`;
   }).join('');
+}
+
+
+async function moveMedia(id, dir) {
+  const { data } = await sb.from('media').select('id,sort_order').order('sort_order',{ascending:true}).order('created_at',{ascending:false});
+  if (!data) return;
+  const idx = data.findIndex(m => m.id === id);
+  if (idx < 0) return;
+  const swapIdx = dir === 'up' ? idx - 1 : idx + 1;
+  if (swapIdx < 0 || swapIdx >= data.length) return;
+  const a = data[idx], b = data[swapIdx];
+  const aOrder = a.sort_order ?? idx;
+  const bOrder = b.sort_order ?? swapIdx;
+  await sb.from('media').update({ sort_order: bOrder }).eq('id', a.id);
+  await sb.from('media').update({ sort_order: aOrder }).eq('id', b.id);
+  loadAdminMedia();
+  loadPublicMedia();
 }
 
 function openMediaModal(id) {
@@ -3362,10 +3577,14 @@ function openMediaModal(id) {
         document.getElementById('media-desc').value = m.description || '';
         document.getElementById('media-yt').value = m.youtube_url || '';
         document.getElementById('media-img').value = m.image_url || '';
+        document.getElementById('media-order').value = m.sort_order ?? 0;
+        loadMediaPhotos(id);
       }
     });
   } else {
     ['media-title','media-desc','media-yt','media-img'].forEach(i => document.getElementById(i).value = '');
+    document.getElementById('media-order').value = 0;
+    document.getElementById('media-photos-section').style.display = 'none';
   }
   document.getElementById('modal-media').classList.add('show');
 }
@@ -3376,8 +3595,9 @@ async function saveMedia() {
   const description = document.getElementById('media-desc').value.trim() || null;
   const youtube_url = document.getElementById('media-yt').value.trim() || null;
   const image_url = document.getElementById('media-img').value.trim() || null;
+  const sort_order = parseInt(document.getElementById('media-order').value) || 0;
   if (!title) { toast('Zadaj nadpis.', 'error'); return; }
-  const payload = { title, description, youtube_url, image_url };
+  const payload = { title, description, youtube_url, image_url, sort_order };
   const { error } = id
     ? await sb.from('media').update(payload).eq('id', parseInt(id))
     : await sb.from('media').insert(payload);
