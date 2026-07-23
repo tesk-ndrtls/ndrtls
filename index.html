@@ -829,7 +829,7 @@ a:hover{color:var(--cream-bright);}
 </head>
 <body>
 
-<div id="version-badge">v3.2.3</div>
+<div id="version-badge">v3.2.6</div>
 <div id="toast"></div>
 <div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
 
@@ -1714,6 +1714,16 @@ a:hover{color:var(--cream-bright);}
     <div id="media-photos-section" style="display:none;border-top:1px solid var(--line);margin-top:1rem;padding-top:1rem;">
       <label style="display:block;font-family:'Oswald';font-weight:600;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--bone);margin-bottom:.6rem;">Fotogaléria</label>
       <div id="media-photos-list" style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.8rem;"></div>
+      <div style="margin-bottom:.6rem;">
+        <input type="file" id="photo-upload" accept="image/*" multiple style="display:none;" onchange="uploadPhotos(this.files)">
+        <button class="btn-admin save" onclick="document.getElementById('photo-upload').click()" style="width:100%;padding:.7rem;">📤 Nahrať fotky zo zariadenia</button>
+        <div id="upload-progress" style="display:none;margin-top:.5rem;font-family:'Oswald';font-size:.85rem;color:var(--rust-light);"></div>
+      </div>
+      <div style="display:flex;gap:.4rem;align-items:center;margin-bottom:.4rem;">
+        <div style="flex:1;height:1px;background:var(--line);"></div>
+        <span style="font-size:.7rem;color:var(--bone);opacity:.5;font-family:'Oswald';letter-spacing:.1em;">ALEBO URL</span>
+        <div style="flex:1;height:1px;background:var(--line);"></div>
+      </div>
       <div style="display:flex;gap:.4rem;">
         <input type="url" id="new-photo-url" placeholder="https://... URL fotky" style="flex:1;background:var(--ink);border:1px solid var(--line);border-radius:6px;padding:.6rem .8rem;color:var(--cream);font-family:'Barlow Condensed';font-size:.95rem;">
         <button class="btn-admin edit" onclick="addPhotoToGallery()">+ Pridať</button>
@@ -1747,9 +1757,50 @@ a:hover{color:var(--cream-bright);}
   <div id="gl-thumbs" style="display:flex;gap:.4rem;padding:0 1.2rem 1.2rem;overflow-x:auto;justify-content:center;"></div>
 </div>
 
+<div class="modal-overlay" id="modal-event">
+  <div class="modal">
+    <h3 id="modal-event-title">Nová udalosť</h3>
+    <input type="hidden" id="ev-edit-id">
+    <div class="form-group">
+      <label>Názov</label>
+      <input type="text" id="ev-title" placeholder="napr. Zápas vs. Black Jokers">
+    </div>
+    <div class="form-group">
+      <label>Typ</label>
+      <select id="ev-type" style="width:100%;background:var(--ink);border:1px solid var(--line);border-radius:6px;padding:.75rem .9rem;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;">
+        <option value="zapas">Zápas</option>
+        <option value="trening">Tréning</option>
+        <option value="turnaj">Turnaj</option>
+        <option value="akcia">Akcia</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Dátum a čas</label>
+      <input type="datetime-local" id="ev-date" style="color-scheme:dark;">
+    </div>
+    <div class="form-group">
+      <label>Miesto</label>
+      <input type="text" id="ev-location" placeholder="napr. Zimný štadión BA">
+    </div>
+    <div class="form-group">
+      <label>Max hráčov (nepovinné)</label>
+      <input type="number" id="ev-max" placeholder="napr. 16">
+    </div>
+    <div class="form-group">
+      <label>Poznámka</label>
+      <input type="text" id="ev-notes" placeholder="nepovinné">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-admin save" onclick="saveEvent()">Uložiť</button>
+      <button class="btn-admin cancel" onclick="closeModal('modal-event')">Zrušiť</button>
+      <button class="btn-admin danger" id="btn-delete-event" onclick="deleteEvent()" style="display:none;margin-left:auto">Vymazať</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ════════════════════════════════════════════════
-   BRATISLAVA NEANDERTHALS — Unified v3.2.3
+   BRATISLAVA NEANDERTHALS — Unified v3.2.6
    ════════════════════════════════════════════════ */
 const { createClient } = supabase;
 const sb = createClient('https://vchxjbdrromujmzujduo.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjaHhqYmRycm9tdWptenVqZHVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NjAyNDAsImV4cCI6MjA5NjQzNjI0MH0.xGT8sxDD2bDogwCZGYAJ-sGWROt1c7e1M9f9_qrm2WA', {
@@ -1791,7 +1842,16 @@ async function init() {
   }
   const { data: { session } } = await sb.auth.getSession();
   if (session) { await onLogin(session.user); return; }
-  handleHash();
+  // Restore last section for public users
+  try {
+    const saved = localStorage.getItem('ndrtls-section');
+    if (saved && document.getElementById('sec-' + saved) && !['events','finance','internal','profile','admin-news','admin-events','admin-payments','admin-media'].includes(saved)) {
+      hideSplash();
+      showSection(saved);
+    } else {
+      handleHash();
+    }
+  } catch(e) { handleHash(); }
   sb.auth.onAuthStateChange(async (event, session) => {
     if (event==='PASSWORD_RECOVERY') showPasswordRecoveryForm();
     else if (event==='SIGNED_IN' && session) await onLogin(session.user);
@@ -1823,7 +1883,12 @@ async function onLogin(user) {
   // Explicitly hide login section
   const loginSec = document.getElementById('sec-login');
   if (loginSec) { loginSec.classList.remove('active'); loginSec.style.display = 'none'; }
-  showSection('events');
+  let restoreSection = 'events';
+  try {
+    const saved = localStorage.getItem('ndrtls-section');
+    if (saved && document.getElementById('sec-' + saved)) restoreSection = saved;
+  } catch(e) {}
+  showSection(restoreSection);
   loadRosterFromDB();
   loadSeasons();
 }
@@ -1899,6 +1964,38 @@ function goHome() {
     const s=document.getElementById('splash'); s.style.display='flex'; s.classList.remove('hide');
   } else showSection(currentUser?'events':'news');
 }
+
+/* ── TRAINING RENDER (with visible diagnostics) ─── */
+function renderTraining() {
+  const errs = [];
+  const tabsEl = document.getElementById('tabs');
+
+  // Check data availability
+  if (typeof UI === 'undefined')       errs.push('UI data chýba');
+  if (typeof WARM === 'undefined')     errs.push('WARM data chýba');
+  if (typeof RULES === 'undefined')    errs.push('RULES data chýba');
+  if (typeof SESSIONS === 'undefined') errs.push('SESSIONS data chýba');
+
+  if (errs.length) {
+    if (tabsEl) tabsEl.innerHTML = '<p style="color:#bf6d6d;padding:1rem;font-family:Oswald;">Chyba: ' + errs.join(', ') + '</p>';
+    console.error('Training data missing:', errs);
+    return;
+  }
+
+  try { applyStatic(); }
+  catch(e) { errs.push('applyStatic: ' + e.message); console.error('applyStatic', e); }
+
+  try { buildCards(); }
+  catch(e) { errs.push('buildCards: ' + e.message); console.error('buildCards', e); }
+
+  try { buildTabs(); }
+  catch(e) { errs.push('buildTabs: ' + e.message); console.error('buildTabs', e); }
+
+  if (errs.length && tabsEl) {
+    tabsEl.innerHTML = '<p style="color:#bf6d6d;padding:1rem;font-family:Oswald;font-size:.85rem;">' + errs.join('<br>') + '</p>';
+  }
+}
+
 function showSection(id) {
   document.querySelectorAll('.page-section').forEach(s=>{
     s.classList.remove('active');
@@ -1923,20 +2020,9 @@ function showSection(id) {
   if (id==='media') loadPublicMedia();
   if (id==='roster') loadRosterFromDB();
   if (id==='rahl' && !window._rahlLoaded) { window._rahlLoaded=true; loadRAHL(); }
-  if (id==='training') {
-    try { applyStatic(); } catch(e) { console.error('applyStatic:', e); }
-    try { buildCards(); } catch(e) { console.error('buildCards:', e); }
-    try { buildTabs(); } catch(e) { console.error('buildTabs:', e); }
-    // Fallback: if still empty, show error
-    setTimeout(() => {
-      const t = document.getElementById('tabs');
-      const w = document.getElementById('warmCards');
-      if (t && !t.children.length) {
-        t.innerHTML = '<p style="color:var(--bone);padding:1rem;">Tréningový obsah sa nepodarilo načítať. Skús obnoviť stránku.</p>';
-      }
-    }, 300);
-  }
+  if (id==='training') renderTraining();
   closeNav(); window.scrollTo(0,0);
+  try { localStorage.setItem('ndrtls-section', id); } catch(e) {}
 }
 function handleHash() {
   const hash=window.location.hash;
@@ -2865,6 +2951,20 @@ async function loadAdminEvents() {
   }).join('');
 }
 
+function openNewEventModal() {
+  document.getElementById('modal-event-title').textContent = 'Nová udalosť';
+  document.getElementById('ev-edit-id').value = '';
+  document.getElementById('ev-title').value = '';
+  document.getElementById('ev-type').value = 'zapas';
+  document.getElementById('ev-date').value = '';
+  document.getElementById('ev-location').value = '';
+  document.getElementById('ev-max').value = '';
+  document.getElementById('ev-notes').value = '';
+  document.getElementById('btn-delete-event').style.display = 'none';
+  document.getElementById('modal-event').classList.add('show');
+}
+
+
 function openEditEventModal(ev) {
   document.getElementById('modal-event-title').textContent = 'Upraviť udalosť';
   document.getElementById('ev-edit-id').value = ev.id;
@@ -3473,6 +3573,55 @@ async function loadMediaPhotos(mediaId) {
   `).join('');
 }
 
+
+async function uploadPhotos(files) {
+  const mediaId = document.getElementById('media-edit-id').value;
+  if (!mediaId) { toast('Najprv ulož médium.', 'error'); return; }
+  if (!files || !files.length) return;
+
+  const prog = document.getElementById('upload-progress');
+  prog.style.display = 'block';
+
+  const { count } = await sb.from('media_photos')
+    .select('*', { count: 'exact', head: true }).eq('media_id', parseInt(mediaId));
+  let order = count || 0;
+  let ok = 0, fail = 0;
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    prog.textContent = `Nahrávam ${i+1}/${files.length}…`;
+
+    // Sanitize filename
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const safeName = `${mediaId}/${Date.now()}-${i}.${ext}`;
+
+    const { error: upErr } = await sb.storage.from('media').upload(safeName, file, {
+      cacheControl: '3600',
+      upsert: false
+    });
+
+    if (upErr) { fail++; console.error('Upload failed:', upErr); continue; }
+
+    const { data: urlData } = sb.storage.from('media').getPublicUrl(safeName);
+    const publicUrl = urlData?.publicUrl;
+    if (!publicUrl) { fail++; continue; }
+
+    const { error: dbErr } = await sb.from('media_photos').insert({
+      media_id: parseInt(mediaId),
+      image_url: publicUrl,
+      sort_order: order++
+    });
+    if (dbErr) { fail++; console.error('DB insert failed:', dbErr); }
+    else ok++;
+  }
+
+  prog.style.display = 'none';
+  document.getElementById('photo-upload').value = '';
+  loadMediaPhotos(parseInt(mediaId));
+  updateMediaPhotoCount(parseInt(mediaId));
+  toast(fail ? `${ok} nahraných, ${fail} zlyhalo` : `${ok} fotiek nahraných ✓`, fail ? 'error' : 'success');
+}
+
 async function addPhotoToGallery() {
   const mediaId = document.getElementById('media-edit-id').value;
   const url = document.getElementById('new-photo-url').value.trim();
@@ -3550,18 +3699,30 @@ async function loadAdminMedia() {
 
 
 async function moveMedia(id, dir) {
-  const { data } = await sb.from('media').select('id,sort_order').order('sort_order',{ascending:true}).order('created_at',{ascending:false});
-  if (!data) return;
+  const { data, error } = await sb.from('media').select('id,sort_order,created_at')
+    .order('sort_order',{ascending:true}).order('created_at',{ascending:false});
+  if (error || !data) { toast('Chyba načítania.','error'); return; }
+
+  // Normalize: ensure every item has a unique sequential sort_order
+  const needsNormalize = data.some((m,i) => m.sort_order === null || m.sort_order === undefined);
+  if (needsNormalize) {
+    for (let i = 0; i < data.length; i++) {
+      await sb.from('media').update({ sort_order: i }).eq('id', data[i].id);
+      data[i].sort_order = i;
+    }
+  }
+
   const idx = data.findIndex(m => m.id === id);
   if (idx < 0) return;
   const swapIdx = dir === 'up' ? idx - 1 : idx + 1;
   if (swapIdx < 0 || swapIdx >= data.length) return;
+
   const a = data[idx], b = data[swapIdx];
-  const aOrder = a.sort_order ?? idx;
-  const bOrder = b.sort_order ?? swapIdx;
-  await sb.from('media').update({ sort_order: bOrder }).eq('id', a.id);
-  await sb.from('media').update({ sort_order: aOrder }).eq('id', b.id);
-  loadAdminMedia();
+  const { error: e1 } = await sb.from('media').update({ sort_order: b.sort_order }).eq('id', a.id);
+  const { error: e2 } = await sb.from('media').update({ sort_order: a.sort_order }).eq('id', b.id);
+  if (e1 || e2) { toast('Chyba: '+((e1||e2).message),'error'); return; }
+
+  await loadAdminMedia();
   loadPublicMedia();
 }
 
