@@ -829,7 +829,7 @@ a:hover{color:var(--cream-bright);}
 </head>
 <body>
 
-<div id="version-badge">v3.2.6</div>
+<div id="version-badge">v3.2.9</div>
 <div id="toast"></div>
 <div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
 
@@ -1025,38 +1025,38 @@ a:hover{color:var(--cream-bright);}
 <!-- ── TRAINING ── -->
 <div class="page-section" id="sec-training">
   <div style="position:relative;z-index:2;">
-<div class="hero">
-  <div class="kick" data-i="heroKick">Home Workouts &middot; No Equipment</div>
-  <h2 data-i="heroTitle"></h2>
-  <p data-i="heroText"></p>
-  <div class="gearnote" data-i="heroGear"></div>
-  <div class="stripe"></div>
-</div>
+    <div class="hero">
+      <div class="kick" data-i="heroKick">Domáce cvičenie · Bez vybavenia · Viac piva</div>
+      <h2 data-i="heroTitle">Trénuj ako <em>Neandertálec</em></h2>
+      <p data-i="heroText">Štyri tréningy s vlastnou váhou, ktoré zvládneš aj v obývačke. Cvič 3–4-krát týždenne a každé pivo si poctivo zaslúžiš.</p>
+      <div class="gearnote" data-i="heroGear">⚠ Žiadna posilňovňa — stačíš ty, podlaha, stena a studené pivo na záver</div>
+      <div class="stripe"></div>
+    </div>
 
-<section id="warmup">
-  <div class="sec-head">
-    <h3 data-i="warmH"></h3>
-    <p data-i="warmP"></p>
-  </div>
-  <div class="grid3" id="warmCards"></div>
-</section>
+    <section id="warmup" style="display:block;">
+      <div class="sec-head">
+        <h3 data-i="warmH">Vždy sa najprv rozcvič</h3>
+        <p data-i="warmP">5–8 minút pred každým tréningom. Studené svaly sa trhajú, zahriate ťahajú. Ber to ako rozcvičku aj pre lakeť v krčme.</p>
+      </div>
+      <div class="grid3" id="warmCards"><div class="card"><div class="ic">01</div><h4>Zahriatie</h4><p>2 minúty behu na mieste, jumping jacks a vysoké kolená. Rozprúď krv a jemne sa zapoť — zaslúžené pivo po zápase chutí lepšie.</p></div><div class="card"><div class="ic">02</div><h4>Dynamická mobilita</h4><p>Švihy nohami, otváranie bedier, hlboký drep, krúženie rukami a výpady s rotáciou. Po 8–10 opakovaní na každú stranu.</p></div><div class="card"><div class="ic">03</div><h4>Aktivácia</h4><p>Glute bridge, drepy s vlastnou váhou, pochod na mieste. Prebuď bedrá a stred tela — poháňajú každý sklz aj každú cestu k baru.</p></div></div>
+    </section>
 
-<section id="train">
-  <div class="sec-head">
-    <h3 data-i="trainH"></h3>
-    <p data-i="trainP"></p>
-  </div>
-  <div class="tabs" id="tabs"></div>
-  <div id="sessions"></div>
-</section>
+    <section id="train" style="display:block;">
+      <div class="sec-head">
+        <h3 data-i="trainH">Tréningy</h3>
+        <p data-i="trainP">Hokej je o výbušnej sile, pohybe do strán a pevnom strede tela. Tieto štyri domáce tréningy sú presne na to. Odveď si svoje a pivo si zaslúžiš.</p>
+      </div>
+      <div class="tabs" id="tabs"><button class="tab active" onclick="select(0)"><span class="num">1</span>Sila dolnej časti</button><button class="tab" onclick="select(1)"><span class="num">2</span>Vrch tela a stred</button><button class="tab" onclick="select(2)"><span class="num">3</span>Výbušnosť a agilita</button><button class="tab" onclick="select(3)"><span class="num">4</span>Kondícia</button></div>
+      <div id="sessions"><div class="session active"><div class="session-meta"><div class="focus">Sila dolnej časti tela</div><div class="intro">Motor korčuľovania. Vybuduj zadok, stehná a hamstringy — bez činiek. Silné nohy ťa nesú aj z parkoviska do krčmy.</div><span class="pill">⏱ ~35 min</span><span class="pill">🎯 Sila sklzu</span><span class="pill">🔁 3–4 série</span></div><div class="ex"><div class="ex-head" onclick="toggleEx(this)"><div class="ex-idx">1</div><div class="ex-title"><h4>Drep s vlastnou váhou</h4><span class="dose">4 série × 15–20 opakovaní</span></div><span class="tag ">Sila</span><span class="chev">&#9662;</span></div><div class="ex-body"><div class="ex-inner"><div class="vid"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/aclHkVaku9U" title="Drep s vlastnou váhou" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div><div class="ex-instr"><h5>Ako na to</h5><ol><li>Nohy na šírku ramien, špičky smerujú mierne von.</li><li>Spevni stred tela a ohýbaj bedrá aj kolená naraz.</li><li>Klesaj, kým nie sú stehná aspoň vodorovne.</li><li>Zatlač cez päty nahor a stiahni zadok.</li></ol><div class="cue"><b>Rada trénera:</b> Kolená idú nad špičky — tlač ich von, nenechaj ich padnúť dnu.</div><div class="beer"><span class="bicon">🍺</span><span>Dokonči všetky série a máš zaslúžené prvé pivo v krčme.</span></div></div></div></div></div><div class="ex"><div class="ex-head" onclick="toggleEx(this)"><div class="ex-idx">2</div><div class="ex-title"><h4>Bulharský drep</h4><span class="dose">3 série × 10 / noha</span></div><span class="tag hockey">Jednonohé</span><span class="chev">&#9662;</span></div><div class="ex-body"><div class="ex-inner"><div class="vid"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/hiLF_pF3EJM" title="Bulharský drep" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div><div class="ex-instr"><h5>Ako na to</h5><ol><li>Zadnú nohu opri o stoličku alebo gauč za sebou.</li><li>Prednú nohu daj dopredu a trup drž vzpriamený.</li><li>Klesaj rovno dole, kým nie je predné stehno vodorovne.</li><li>Zatlač sa nahor cez prednú pätu.</li></ol><div class="cue"><b>Rada trénera:</b> Hokej je šport na jednej nohe — toto buduje sklzovú nohu a vyrovnáva rozdiely strán.</div><div class="beer"><span class="bicon">🍺</span><span>Obe nohy hotové? To je jedno studené pivo po zápase.</span></div></div></div></div></div><div class="ex"><div class="ex-head" onclick="toggleEx(this)"><div class="ex-idx">3</div><div class="ex-title"><h4>Glute bridge na jednej nohe</h4><span class="dose">3 série × 12 / noha</span></div><span class="tag ">Zadný reťazec</span><span class="chev">&#9662;</span></div><div class="ex-body"><div class="ex-inner"><div class="vid"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/VUl8R0kn6v4" title="Glute bridge na jednej nohe" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div><div class="ex-instr"><h5>Ako na to</h5><ol><li>Ľahni si na chrbát, jedno koleno pokrč, druhú nohu zdvihni hore.</li><li>Zatlač cez pätu opretej nohy.</li><li>Dvíhaj boky, kým nie je telo v jednej rovnej línii.</li><li>Hore poriadne stiahni zadok a pomaly sa spusti.</li></ol><div class="cue"><b>Rada trénera:</b> Izoluje zadok — tvoj najväčší zdroj sily pri korčuľovaní.</div><div class="beer"><span class="bicon">🍺</span><span>Stiahni zadok poriadne — neskôr stiahni aj pohár piva.</span></div></div></div></div></div><div class="ex"><div class="ex-head" onclick="toggleEx(this)"><div class="ex-idx">4</div><div class="ex-title"><h4>Bočný výpad</h4><span class="dose">3 série × 10 / strana</span></div><span class="tag hockey">Pre hokej</span><span class="chev">&#9662;</span></div><div class="ex-body"><div class="ex-inner"><div class="vid"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/gwWv7aPcD88" title="Bočný výpad" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div><div class="ex-instr"><h5>Ako na to</h5><ol><li>Vykroč široko do strany a posuň boky dozadu.</li><li>Pokrč nohu, do ktorej kročíš, druhú nechaj vystretú.</li><li>Hrudník drž hore a pätu na zemi.</li><li>Výbušne sa odraz späť do stredu.</li></ol><div class="cue"><b>Rada trénera:</b> Trénuje presne ten bočný uhol odrazu ako pri korčuľovaní.</div><div class="beer"><span class="bicon">🍺</span><span>Zvládni bočné výpady a večer si pripi pivom s chalanmi.</span></div></div></div></div></div><div class="ex"><div class="ex-head" onclick="toggleEx(this)"><div class="ex-idx">5</div><div class="ex-title"><h4>Výpon na jednej nohe</h4><span class="dose">3 série × 15 / noha</span></div><span class="tag ">Stabilita</span><span class="chev">&#9662;</span></div><div class="ex-body"><div class="ex-inner"><div class="vid"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/IphGZ8OlfYg" title="Výpon na jednej nohe" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div><div class="ex-instr"><h5>Ako na to</h5><ol><li>Postav sa na jednu nohu a opri sa o stenu.</li><li>Zdvihni sa na špičku čo najvyššie.</li><li>Hore vydrž jednu sekundu.</li><li>Pomaly a pod kontrolou sa spusti.</li></ol><div class="cue"><b>Rada trénera:</b> Silné členky = lepšia rovnováha a kontrola hrán na korčuliach.</div><div class="beer"><span class="bicon">🍺</span><span>Silné členky, pevná ruka na pohári. Stojí to za pivo.</span></div></div></div></div></div></div><div class="session"><div class="session-meta"><div class="focus">Vrch tela a stred tela</div><div class="intro">Vyhrávaj súboje, ustoj náraz a vypáľ tvrdšiu strelu. A popri tom si vybuduješ ruky, čo unesú plné krígle z baru bez jediného rozliateho dúšku.</div><span class="pill">⏱ ~35 min</span><span class="pill">🎯 Sila strely a súboje</span><span class="pill">🔁 3 série</span></div><div class="ex"><div class="ex-head" onclick="toggleEx(this)"><div class="ex-idx">1</div><div class="ex-title"><h4>Kliky</h4><span class="dose">3 série × 12–15 opakovaní</span></div><span class="tag ">Sila</span><span class="chev">&#9662;</span></div><div class="ex-body"><div class="ex-inner"><div class="vid"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/IODxDxX7oi4" title="Kliky" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div><div class="ex-instr"><h5>Ako na to</h5><ol><li>Ruky daj kúsok širšie než ramená a telo drž rovné.</li><li>Spevni stred aj zadok, aby ti boky nepadali.</li><li>Spusti hrudník tesne nad zem.</li><li>Vytlač sa späť úplne nahor.</li></ol><div class="cue"><b>Rada trénera:</b> Kolená na zem pre ľahšiu verziu; nohy na stoličku pre ťažšiu.</div><div class="beer"><span class="bicon">🍺</span><span>Každý klik ťa približuje k pivu po zápase.</span></div></div></div></div></div><div class="ex"><div class="ex-head" onclick="toggleEx(this)"><div class="ex-idx">2</div><div class="ex-title"><h4>Veslica s uterákom</h4><span class="dose">3 série × 12 opakovaní</span></div><span class="tag ">Ťah</span><span class="chev">&#9662;</span></div><div class="ex-body"><div class="ex-inner"><div class="vid"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/JPL55DJHi_g" title="Veslica s uterákom" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div><div class="ex-instr"><h5>Ako na to</h5><ol><li>Prevleč uterák okolo pevnej kľučky a chyť oba konce.</li><li>Zakloň sa s vystretými rukami a spevneným telom.</li><li>Pritiahni hrudník k dverám a lakte ťahaj dozadu.</li><li>Pomaly a pod kontrolou sa vráť späť.</li></ol><div class="cue"><b>Rada trénera:</b> Silný chrbát ťa chráni pri bodyčekoch a vyrovnáva tlačenie.</div><div class="beer"><span class="bicon">🍺</span><span>Silný chrbát unesie tácku s pivom. Zaslúžiš si rundu.</span></div></div></div></div></div><div class="ex"><div class="ex-head" onclick="toggleEx(this)"><div class="ex-idx">3</div><div class="ex-title"><h4>Pallof press (anti-rotácia)</h4><span class="dose">3 série × 20 sek / strana</span></div><span class="tag hockey">Pre hokej</span><span class="chev">&#9662;</span></div><div class="ex-body"><div class="ex-inner"><div class="vid"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/dBAmQ9bx3JA" title="Pallof press (anti-rotácia)" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div><div class="ex-instr"><h5>Ako na to</h5><ol><li>Postav sa bokom k stene a oboma rukami tlač zložený uterák do nej.</li><li>Ruky drž vystreté pred hrudníkom.</li><li>Tlač silno a bráň trupu, aby sa otáčal.</li><li>Vydrž, dýchaj a potom vymeň stranu.</li></ol><div class="cue"><b>Rada trénera:</b> Buduje rotačnú kontrolu stredu tela za každou strelou a prihrávkou.</div><div class="beer"><span class="bicon">🍺</span><span>Drž pevne — ako plný pohár bez rozliatia. Pivo zaslúžené.</span></div></div></div></div></div><div class="ex"><div class="ex-head" onclick="toggleEx(this)"><div class="ex-idx">4</div><div class="ex-title"><h4>Plank (doska)</h4><span class="dose">3 série × 30–45 sek</span></div><span class="tag ">Stred tela</span><span class="chev">&#9662;</span></div><div class="ex-body"><div class="ex-inner"><div class="vid"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/pSHjTRCQxIw" title="Plank (doska)" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div><div class="ex-instr"><h5>Ako na to</h5><ol><li>Predlaktia polož na zem, lakte priamo pod ramená.</li><li>Telo drž v jednej rovnej línii od piat po hlavu.</li><li>Stiahni zadok a spevni brucho.</li><li>Pokojne dýchaj a nenechaj boky klesať ani sa dvíhať.</li></ol><div class="cue"><b>Rada trénera:</b> Pevný trup prenáša silu nôh do hokejky.</div><div class="beer"><span class="bicon">🍺</span><span>Plank ako šampión, pivo ako spoluhráč. Minimálne jedno.</span></div></div></div></div></div><div class="ex"><div class="ex-head" onclick="toggleEx(this)"><div class="ex-idx">5</div><div class="ex-title"><h4>Ruské rotácie</h4><span class="dose">3 série × 20 opakovaní</span></div><span class="tag hockey">Pre hokej</span><span class="chev">&#9662;</span></div><div class="ex-body"><div class="ex-inner"><div class="vid"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/wkD8rjkodUI" title="Ruské rotácie" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div><div class="ex-instr"><h5>Ako na to</h5><ol><li>Sadni si a mierne sa zakloň, päty maj hore alebo na zemi.</li><li>Chyť do rúk niečo ťažšie, napríklad knihu či fľašu, a drž to pri hrudníku.</li><li>Otáčaj trup a striedavo sa dotýkaj zeme po oboch stranách.</li><li>Hrudník drž hore a pohyb veď z pása.</li></ol><div class="cue"><b>Rada trénera:</b> Rotačná sila = tvrdšie zápästie a švihová strela.</div><div class="beer"><span class="bicon">🍺</span><span>Teraz rotuj, neskôr si štrngni. To je pivo v banke.</span></div></div></div></div></div><div class="ex"><div class="ex-head" onclick="toggleEx(this)"><div class="ex-idx">6</div><div class="ex-title"><h4>Mŕtvy chrobák</h4><span class="dose">3 série × 10 / strana</span></div><span class="tag ">Stred tela</span><span class="chev">&#9662;</span></div><div class="ex-body"><div class="ex-inner"><div class="vid"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/g_BYB0R-4Ws" title="Mŕtvy chrobák" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div><div class="ex-instr"><h5>Ako na to</h5><ol><li>Ľahni si na chrbát, ruky vystri hore a kolená drž nad bokmi.</li><li>Pritlač driek pevne k zemi.</li><li>Pomaly spúšťaj opačnú ruku a nohu.</li><li>Vráť sa späť a vymeň strany bez toho, aby si sa prehol.</li></ol><div class="cue"><b>Rada trénera:</b> Učí spevňovať stred tela, čo chráni chrbát na ľade.</div><div class="beer"><span class="bicon">🍺</span><span>Pevný stred, pevný grif na pive. Odmena odomknutá.</span></div></div></div></div></div></div><div class="session"><div class="session-meta"><div class="focus">Výbušná sila a agilita</div><div class="intro">Plyometrický tréning. Krátke, výbušné, plný odpočinok medzi sériami. Dostaneš sa k puku prvý — a k barovému pultu skôr ako sa vytvorí rad.</div><span class="pill">⏱ ~30 min</span><span class="pill">🎯 Rýchlosť prvého kroku</span><span class="pill">🔁 3–5 sérií, plný odpočinok</span></div><div class="ex"><div class="ex-head" onclick="toggleEx(this)"><div class="ex-idx">1</div><div class="ex-title"><h4>Výskoky z drepu</h4><span class="dose">4 série × 6 opakovaní</span></div><span class="tag ">Výbušnosť</span><span class="chev">&#9662;</span></div><div class="ex-body"><div class="ex-inner"><div class="vid"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/vnsrOb1uBzo" title="Výskoky z drepu" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div><div class="ex-instr"><h5>Ako na to</h5><ol><li>Klesni do polodrepu a ruky stiahni dozadu.</li><li>Vyskoč rovno nahor, čo najvyššie.</li><li>Dopadni mäkko na pokrčené kolená.</li><li>Pred ďalším skokom sa úplne ustáľ.</li></ol><div class="cue"><b>Rada trénera:</b> Čistá výbušná sila bedier — rovnaký odraz ako prvé prekladanie.</div><div class="beer"><span class="bicon">🍺</span><span>Teraz skáč vysoko, po zápase skoč do baru. Pivo č.1 isté.</span></div></div></div></div></div><div class="ex"><div class="ex-head" onclick="toggleEx(this)"><div class="ex-idx">2</div><div class="ex-title"><h4>Bočné skoky (korčuliarske)</h4><span class="dose">3 série × 8 / strana</span></div><span class="tag hockey">Pre hokej</span><span class="chev">&#9662;</span></div><div class="ex-body"><div class="ex-inner"><div class="vid"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/usZgF8TBWcA" title="Bočné skoky (korčuliarske)" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div><div class="ex-instr"><h5>Ako na to</h5><ol><li>Postav sa na jednu nohu s mierne pokrčeným kolenom.</li><li>Odraz sa do strany na druhú nohu.</li><li>Dopadni mäkko, stlm náraz a udrž rovnováhu.</li><li>Odraz sa naspäť na druhú stranu.</li></ol><div class="cue"><b>Rada trénera:</b> Toto JE korčuliarsky sklz mimo ľadu — buduj ho neustále.</div><div class="beer"><span class="bicon">🍺</span><span>Korčuliarske skoky hotové — korčuľuj do krčmy po odmenu.</span></div></div></div></div></div><div class="ex"><div class="ex-head" onclick="toggleEx(this)"><div class="ex-idx">3</div><div class="ex-title"><h4>Skok do diaľky</h4><span class="dose">4 série × 4 opakovania</span></div><span class="tag ">Výbušnosť</span><span class="chev">&#9662;</span></div><div class="ex-body"><div class="ex-inner"><div class="vid"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/7Du1KbwCdUk" title="Skok do diaľky" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div><div class="ex-instr"><h5>Ako na to</h5><ol><li>Nohy na šírku bokov, ruky stiahni dozadu a mierne sa predkloň.</li><li>Výbušne sa odraz dopredu a nahor, čo najďalej.</li><li>Dopadni mäkko a podrž dopad.</li><li>Pred ďalším skokom sa úplne ustáľ.</li></ol><div class="cue"><b>Rada trénera:</b> Maximálna horizontálna sila — prenáša sa do zrýchlenia.</div><div class="beer"><span class="bicon">🍺</span><span>Skoč ďaleko, krčma nie je ďaleko. Jedno pivo na tvoje meno.</span></div></div></div></div></div><div class="ex"><div class="ex-head" onclick="toggleEx(this)"><div class="ex-idx">4</div><div class="ex-title"><h4>Rýchle nohy (na mieste)</h4><span class="dose">4 série × 20 sek</span></div><span class="tag hockey">Pre hokej</span><span class="chev">&#9662;</span></div><div class="ex-body"><div class="ex-inner"><div class="vid"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/BNKNkYDosrs" title="Rýchle nohy (na mieste)" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div><div class="ex-instr"><h5>Ako na to</h5><ol><li>Postav sa do atletického postoja, kolená uvoľnené a váhu drž na špičkách.</li><li>Čo najrýchlejšie striedaj nohy hore-dole.</li><li>Zostaň ľahký, dotyky maj krátke a rýchle.</li><li>Oči hore a ruky nechaj pracovať.</li></ol><div class="cue"><b>Rada trénera:</b> Rýchlosť nôh a koordinácia pre ostré otáčky a súboje.</div><div class="beer"><span class="bicon">🍺</span><span>Rýchle nohy, rýchlo do baru. Zaslúžiš si rundu.</span></div></div></div></div></div><div class="ex"><div class="ex-head" onclick="toggleEx(this)"><div class="ex-idx">5</div><div class="ex-title"><h4>Burpees</h4><span class="dose">3 série × 10 opakovaní</span></div><span class="tag ">Výbušnosť</span><span class="chev">&#9662;</span></div><div class="ex-body"><div class="ex-inner"><div class="vid"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/auBLPXO8Fww" title="Burpees" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div><div class="ex-instr"><h5>Ako na to</h5><ol><li>Zo stoja sa zohni a polož ruky na zem.</li><li>Vykopni nohy do planku a sprav klik.</li><li>Priskoč nohami naspäť k rukám.</li><li>Výbušne vyskoč nahor a celé to zopakuj.</li></ol><div class="cue"><b>Rada trénera:</b> Výbušný výkon celého tela — a zapáli súťaživého ducha.</div><div class="beer"><span class="bicon">🍺</span><span>Preži burpees, vychutnaj pivo. Férový obchod.</span></div></div></div></div></div></div><div class="session"><div class="session-meta"><div class="focus">Kondícia a motor</div><div class="intro">Hokej sú intervaly: 45 sekúnd naplno, potom odpočinok. Trénuj motor presne tak. Fit hráč nikdy nezmešká rundu po zápase.</div><span class="pill">⏱ ~25 min</span><span class="pill">🎯 Prežiť striedanie</span><span class="pill">🔁 Intervaly</span></div><div class="ex"><div class="ex-head" onclick="toggleEx(this)"><div class="ex-idx">1</div><div class="ex-title"><h4>Horolezec</h4><span class="dose">6 kôl · 30s práca / 30s pauza</span></div><span class="tag ">Stred + kardio</span><span class="chev">&#9662;</span></div><div class="ex-body"><div class="ex-inner"><div class="vid"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/nmwgirgXLYM" title="Horolezec" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div><div class="ex-instr"><h5>Ako na to</h5><ol><li>Začni v pevnom planku.</li><li>Priťahuj striedavo kolená k hrudníku a rýchlo ich vymieňaj.</li><li>Boky drž nízko a stred tela spevnený.</li><li>Udržuj rýchle a stabilné tempo.</li></ol><div class="cue"><b>Rada trénera:</b> Kopíruje pomer práca:odpočinok reálneho striedania — buduj motor regenerácie.</div><div class="beer"><span class="bicon">🍺</span><span>Vydrž horolezca a máš vypité — teda zaslúžené — jedno chladné.</span></div></div></div></div></div><div class="ex"><div class="ex-head" onclick="toggleEx(this)"><div class="ex-idx">2</div><div class="ex-title"><h4>Vysoké kolená šprint</h4><span class="dose">8 kôl · 20s tvrdo / 40s ľahko</span></div><span class="tag hockey">Pre hokej</span><span class="chev">&#9662;</span></div><div class="ex-body"><div class="ex-inner"><div class="vid"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/QPfOZ0e30xg" title="Vysoké kolená šprint" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div><div class="ex-instr"><h5>Ako na to</h5><ol><li>Bež na mieste a dvíhaj kolená až do výšky bokov.</li><li>Pomáhaj si rukami a zostaň na špičkách.</li><li>Počas pracovného úseku choď naplno.</li><li>Medzi úsekmi sa zregeneruj chôdzou alebo pochodom na mieste.</li></ol><div class="cue"><b>Rada trénera:</b> Pomer 20/40 práca:odpočinok kopíruje intenzitu striedania.</div><div class="beer"><span class="bicon">🍺</span><span>Každý šprintový interval = jeden šťastný glg neskôr. Na zdravie.</span></div></div></div></div></div><div class="ex"><div class="ex-head" onclick="toggleEx(this)"><div class="ex-idx">3</div><div class="ex-title"><h4>Burpees</h4><span class="dose">4 série × 12 opakovaní</span></div><span class="tag ">Kondícia</span><span class="chev">&#9662;</span></div><div class="ex-body"><div class="ex-inner"><div class="vid"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/auBLPXO8Fww" title="Burpees" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div><div class="ex-instr"><h5>Ako na to</h5><ol><li>Zo stoja sa zohni a polož ruky na zem.</li><li>Vykopni nohy do planku a sprav klik.</li><li>Priskoč nohami naspäť k rukám.</li><li>Výbušne vyskoč nahor a celé to zopakuj.</li></ol><div class="cue"><b>Rada trénera:</b> Kondícia celého tela bez vybavenia — spravíš ich kdekoľvek.</div><div class="beer"><span class="bicon">🍺</span><span>Burpees hotové, pivný fond doplnený. Vidíme sa v bare.</span></div></div></div></div></div><div class="ex"><div class="ex-head" onclick="toggleEx(this)"><div class="ex-idx">4</div><div class="ex-title"><h4>Člnkový beh</h4><span class="dose">6 šprintov, plný odpočinok</span></div><span class="tag hockey">Pre hokej</span><span class="chev">&#9662;</span></div><div class="ex-body"><div class="ex-inner"><div class="vid"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/l3S7Tyk6HX0" title="Člnkový beh" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div><div class="ex-instr"><h5>Ako na to</h5><ol><li>Vyznač si dva body asi 5 metrov od seba alebo využi chodbu.</li><li>Šprintuj k jednému, dotkni sa zeme a šprintuj naspäť.</li><li>Rýchlo opakuj tam a späť.</li><li>Medzi šprintmi sa zregeneruj chôdzou.</li></ol><div class="cue"><b>Rada trénera:</b> Šprinty so zastavovaním a zmenou smeru — presne ako v zápase.</div><div class="beer"><span class="bicon">🍺</span><span>Odbehni člnkový beh, potom otvor účet. Jedno pivo, zaslúžené.</span></div></div></div></div></div><div class="ex"><div class="ex-head" onclick="toggleEx(this)"><div class="ex-idx">5</div><div class="ex-title"><h4>Plank do kliku</h4><span class="dose">4 série × 40 sek</span></div><span class="tag ">Stred + kardio</span><span class="chev">&#9662;</span></div><div class="ex-body"><div class="ex-inner"><div class="vid"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/56vUOad6Irs" title="Plank do kliku" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div><div class="ex-instr"><h5>Ako na to</h5><ol><li>Začni v planku na predlaktiach.</li><li>Vytlač sa na jednu dlaň, potom na druhú.</li><li>Po jednej ruke sa vráť späť na predlaktia.</li><li>Boky drž stabilne a nehojdaj sa do strán.</li></ol><div class="cue"><b>Rada trénera:</b> Vytrvalosť stredu tela a ramená — jeden lacný cvik na celé telo.</div><div class="beer"><span class="bicon">🍺</span><span>Posledný cvik hotový — prvé pivo natočené. Krčmu máš dnes zaslúženú.</span></div></div></div></div></div></div></div>
+    </section>
 
-<section id="rules">
-  <div class="sec-head">
-    <h3 data-i="rulesH"></h3>
-    <p data-i="rulesP"></p>
-  </div>
-  <div class="grid3" id="ruleCards"></div>
-</section>
+    <section id="rules" style="display:block;">
+      <div class="sec-head">
+        <h3 data-i="rulesH">Základné pravidlá</h3>
+        <p data-i="rulesP">Ako z tréningov vyťažiť maximum a pritom zostať zdravý.</p>
+      </div>
+      <div class="grid3" id="ruleCards"><div class="card"><div class="ic">⛏</div><h4>Technika nad egom</h4><p>Čisté opakovania sú lepšie ako rýchle. Ovládaj každý pohyb. S natrhnutým stehnom skončíš na tribúne — a pivo budeš piť sám.</p></div><div class="card"><div class="ic">↻</div><h4>3–4x / týždeň</h4><p>Striedaj tréningy a medzi náročné dni na nohy vlož deň odpočinku. Pridaj korčuľovanie. A piatok v krčme — ten je povinný.</p></div><div class="card"><div class="ic">⚡</div><h4>Najprv výbuch, potom kontrola</h4><p>Pri silových cvikoch choď nahor rýchlo a prudko, nadol pomaly a pod kontrolou.</p></div><div class="card"><div class="ic">💧</div><h4>Jedz a pi</h4><p>Pi vodu pred tréningom, počas aj po ňom. Bielkoviny dopraj telu do hodiny. A spánok je ten najlacnejší doplnok.</p></div><div class="card"><div class="ic">📈</div><h4>Postupuj pomaly</h4><p>Každý týždeň pridaj zopár opakovaní alebo ťažšiu verziu. Malé, ale pravidelné pokroky vyhrávajú sezónu — a každý si zaslúži jedno pivo.</p></div><div class="card"><div class="ic">🩹</div><h4>Bolesť nie je pokrok</h4><p>Pálenie svalov je v pohode. Ostrá bolesť v kĺbe je signál stop. Necvič cez zranenie — hráč, ktorý nezdvihne ani krígel, je smutný pohľad.</p></div></div>
+    </section>
   </div>
 </div>
 
@@ -1690,7 +1690,14 @@ a:hover{color:var(--cream-bright);}
     <input type="hidden" id="news-edit-id">
     <div class="form-group"><label>Nadpis</label><input type="text" id="news-title" placeholder="Nadpis príspevku"></div>
     <div class="form-group"><label>Text</label><textarea id="news-body" rows="4" style="width:100%;background:var(--ink);border:1px solid var(--line);border-radius:6px;padding:.75rem .9rem;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;resize:vertical;min-height:80px;"></textarea></div>
-    <div class="form-group"><label>Foto URL (nepovinné)</label><input type="url" id="news-img" placeholder="https://..."></div>
+    <div class="form-group">
+      <label>Foto</label>
+      <input type="file" id="news-photo-upload" accept="image/*" style="display:none;" onchange="uploadNewsPhoto(this.files[0])">
+      <button class="btn-admin save" onclick="document.getElementById('news-photo-upload').click()" style="width:100%;padding:.6rem;margin-bottom:.5rem;">📤 Nahrať fotku</button>
+      <div id="news-upload-progress" style="display:none;font-family:'Oswald';font-size:.85rem;color:var(--rust-light);margin-bottom:.5rem;"></div>
+      <input type="url" id="news-img" placeholder="alebo vlož URL fotky">
+      <div id="news-img-preview" style="display:none;margin-top:.5rem;"></div>
+    </div>
     <div class="form-group"><label>YouTube link (nepovinné)</label><input type="url" id="news-yt" placeholder="https://youtu.be/..."></div>
     <div class="modal-actions">
       <button class="btn-admin save" onclick="saveNews()">Uložiť</button>
@@ -1710,7 +1717,6 @@ a:hover{color:var(--cream-bright);}
     <div class="form-group"><label>Popis</label><textarea id="media-desc" rows="3" style="width:100%;background:var(--ink);border:1px solid var(--line);border-radius:6px;padding:.75rem .9rem;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;resize:vertical;"></textarea></div>
     <div class="form-group"><label>YouTube link (nepovinné)</label><input type="url" id="media-yt" placeholder="https://youtu.be/..."></div>
     <div class="form-group"><label>Foto URL (nepovinné)</label><input type="url" id="media-img" placeholder="https://..."></div>
-    <div class="form-group"><label>Poradie <span style="font-weight:400;text-transform:none;letter-spacing:0;">(nižšie číslo = vyššie v zozname)</span></label><input type="number" id="media-order" placeholder="0" value="0"></div>
     <div id="media-photos-section" style="display:none;border-top:1px solid var(--line);margin-top:1rem;padding-top:1rem;">
       <label style="display:block;font-family:'Oswald';font-weight:600;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--bone);margin-bottom:.6rem;">Fotogaléria</label>
       <div id="media-photos-list" style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.8rem;"></div>
@@ -1800,7 +1806,7 @@ a:hover{color:var(--cream-bright);}
 
 <script>
 /* ════════════════════════════════════════════════
-   BRATISLAVA NEANDERTHALS — Unified v3.2.6
+   BRATISLAVA NEANDERTHALS — Unified v3.2.9
    ════════════════════════════════════════════════ */
 const { createClient } = supabase;
 const sb = createClient('https://vchxjbdrromujmzujduo.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjaHhqYmRycm9tdWptenVqZHVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NjAyNDAsImV4cCI6MjA5NjQzNjI0MH0.xGT8sxDD2bDogwCZGYAJ-sGWROt1c7e1M9f9_qrm2WA', {
@@ -1883,10 +1889,11 @@ async function onLogin(user) {
   // Explicitly hide login section
   const loginSec = document.getElementById('sec-login');
   if (loginSec) { loginSec.classList.remove('active'); loginSec.style.display = 'none'; }
-  let restoreSection = 'events';
+  let restoreSection = 'news';
   try {
     const saved = localStorage.getItem('ndrtls-section');
-    if (saved && document.getElementById('sec-' + saved)) restoreSection = saved;
+    // Don't restore login section - go to news instead
+    if (saved && saved !== 'login' && document.getElementById('sec-' + saved)) restoreSection = saved;
   } catch(e) {}
   showSection(restoreSection);
   loadRosterFromDB();
@@ -1967,32 +1974,9 @@ function goHome() {
 
 /* ── TRAINING RENDER (with visible diagnostics) ─── */
 function renderTraining() {
-  const errs = [];
-  const tabsEl = document.getElementById('tabs');
-
-  // Check data availability
-  if (typeof UI === 'undefined')       errs.push('UI data chýba');
-  if (typeof WARM === 'undefined')     errs.push('WARM data chýba');
-  if (typeof RULES === 'undefined')    errs.push('RULES data chýba');
-  if (typeof SESSIONS === 'undefined') errs.push('SESSIONS data chýba');
-
-  if (errs.length) {
-    if (tabsEl) tabsEl.innerHTML = '<p style="color:#bf6d6d;padding:1rem;font-family:Oswald;">Chyba: ' + errs.join(', ') + '</p>';
-    console.error('Training data missing:', errs);
-    return;
-  }
-
-  try { applyStatic(); }
-  catch(e) { errs.push('applyStatic: ' + e.message); console.error('applyStatic', e); }
-
-  try { buildCards(); }
-  catch(e) { errs.push('buildCards: ' + e.message); console.error('buildCards', e); }
-
-  try { buildTabs(); }
-  catch(e) { errs.push('buildTabs: ' + e.message); console.error('buildTabs', e); }
-
-  if (errs.length && tabsEl) {
-    tabsEl.innerHTML = '<p style="color:#bf6d6d;padding:1rem;font-family:Oswald;font-size:.85rem;">' + errs.join('<br>') + '</p>';
+  // Content is static in HTML; only re-render if language changed from default
+  if (LANG !== 'sk') {
+    try { applyStatic(); buildCards(); buildTabs(); } catch(e) { console.error('Training render:', e); }
   }
 }
 
@@ -2022,7 +2006,7 @@ function showSection(id) {
   if (id==='rahl' && !window._rahlLoaded) { window._rahlLoaded=true; loadRAHL(); }
   if (id==='training') renderTraining();
   closeNav(); window.scrollTo(0,0);
-  try { localStorage.setItem('ndrtls-section', id); } catch(e) {}
+  try { if (id !== 'login') localStorage.setItem('ndrtls-section', id); } catch(e) {}
 }
 function handleHash() {
   const hash=window.location.hash;
@@ -2114,6 +2098,36 @@ async function loadAdminNews() {
     </div>`;
   }).join('');
 }
+
+async function uploadNewsPhoto(file) {
+  if (!file) return;
+  const prog = document.getElementById('news-upload-progress');
+  prog.style.display = 'block';
+  prog.textContent = 'Nahrávam…';
+
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+  const safeName = `news/${Date.now()}.${ext}`;
+
+  const { error: upErr } = await sb.storage.from('media').upload(safeName, file, { cacheControl:'3600', upsert:false });
+  if (upErr) {
+    prog.textContent = 'Chyba: ' + upErr.message;
+    prog.style.color = '#bf6d6d';
+    return;
+  }
+  const { data: urlData } = sb.storage.from('media').getPublicUrl(safeName);
+  const publicUrl = urlData?.publicUrl;
+  if (publicUrl) {
+    document.getElementById('news-img').value = publicUrl;
+    const prev = document.getElementById('news-img-preview');
+    prev.style.display = 'block';
+    prev.innerHTML = `<img src="${publicUrl}" style="max-width:100%;border-radius:6px;border:1px solid var(--line);">`;
+    prog.textContent = '✓ Nahraté';
+    prog.style.color = '#6dbf6d';
+    setTimeout(() => prog.style.display = 'none', 2000);
+  }
+  document.getElementById('news-photo-upload').value = '';
+}
+
 function openNewsModal(id) {
   const isEdit=!!id;
   document.getElementById('news-modal-title').textContent=isEdit?'Upraviť oznam':'Nový oznam';
@@ -2123,7 +2137,10 @@ function openNewsModal(id) {
     sb.from('news').select('*').eq('id',id).single().then(({ data:n })=>{
       if (n) { document.getElementById('news-title').value=n.title||''; document.getElementById('news-body').value=n.body||''; document.getElementById('news-img').value=n.image_url||''; document.getElementById('news-yt').value=n.youtube_url||''; }
     });
-  } else ['news-title','news-body','news-img','news-yt'].forEach(i=>document.getElementById(i).value='');
+  } else {
+    ['news-title','news-body','news-img','news-yt'].forEach(i=>document.getElementById(i).value='');
+    const p=document.getElementById('news-img-preview'); if(p){ p.style.display='none'; p.innerHTML=''; }
+  }
   document.getElementById('modal-news').classList.add('show');
 }
 async function saveNews() {
@@ -3738,14 +3755,16 @@ function openMediaModal(id) {
         document.getElementById('media-desc').value = m.description || '';
         document.getElementById('media-yt').value = m.youtube_url || '';
         document.getElementById('media-img').value = m.image_url || '';
-        document.getElementById('media-order').value = m.sort_order ?? 0;
         loadMediaPhotos(id);
       }
     });
   } else {
     ['media-title','media-desc','media-yt','media-img'].forEach(i => document.getElementById(i).value = '');
-    document.getElementById('media-order').value = 0;
-    document.getElementById('media-photos-section').style.display = 'none';
+    // Show upload section with hint for new items
+    const sect = document.getElementById('media-photos-section');
+    sect.style.display = 'block';
+    document.getElementById('media-photos-list').innerHTML =
+      '<p style="color:var(--bone);font-size:.85rem;opacity:.7;">💡 Ulož najprv médium, potom môžeš pridať fotky do galérie.</p>';
   }
   document.getElementById('modal-media').classList.add('show');
 }
@@ -3756,17 +3775,30 @@ async function saveMedia() {
   const description = document.getElementById('media-desc').value.trim() || null;
   const youtube_url = document.getElementById('media-yt').value.trim() || null;
   const image_url = document.getElementById('media-img').value.trim() || null;
-  const sort_order = parseInt(document.getElementById('media-order').value) || 0;
   if (!title) { toast('Zadaj nadpis.', 'error'); return; }
-  const payload = { title, description, youtube_url, image_url, sort_order };
+  const payload = { title, description, youtube_url, image_url };
+  // Auto-assign sort_order for new items (append at end)
+  if (!id) {
+    const { count } = await sb.from('media').select('*', { count: 'exact', head: true });
+    payload.sort_order = count || 0;
+  }
   const { error } = id
     ? await sb.from('media').update(payload).eq('id', parseInt(id))
     : await sb.from('media').insert(payload);
   if (error) { toast('Chyba: ' + error.message, 'error'); return; }
-  closeModal('modal-media');
-  toast(id ? 'Médium upravené ✓' : 'Médium pridané ✓', 'success');
   loadAdminMedia();
   loadPublicMedia();
+  if (!id) {
+    // New item: reopen in edit mode so photos can be added
+    const { data: newest } = await sb.from('media').select('id').order('created_at',{ascending:false}).limit(1);
+    if (newest && newest[0]) {
+      toast('Médium pridané ✓ Teraz môžeš pridať fotky.', 'success');
+      openMediaModal(newest[0].id);
+      return;
+    }
+  }
+  closeModal('modal-media');
+  toast('Médium upravené ✓', 'success');
 }
 
 async function deleteMedia() {
