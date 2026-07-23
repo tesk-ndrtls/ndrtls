@@ -829,7 +829,7 @@ a:hover{color:var(--cream-bright);}
 </head>
 <body>
 
-<div id="version-badge">v3.2.9</div>
+<div id="version-badge">v3.3.0</div>
 <div id="toast"></div>
 <div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
 
@@ -1276,8 +1276,12 @@ a:hover{color:var(--cream-bright);}
         <h4 style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.15em;
           text-transform:uppercase;color:var(--rust-light);margin-bottom:1rem;">Zobrazované meno</h4>
         <div class="form-group">
-          <label>Meno a priezvisko</label>
+          <label>Meno a priezvisko <span style="font-weight:400;text-transform:none;letter-spacing:0;opacity:.7;">(pre prepojenie so súpiskou)</span></label>
           <input type="text" id="profile-name" placeholder="napr. Michal Imrich">
+        </div>
+        <div class="form-group">
+          <label>Prezývka <span style="font-weight:400;text-transform:none;letter-spacing:0;opacity:.7;">(zobrazuje sa v appke)</span></label>
+          <input type="text" id="profile-nickname" placeholder="napr. Miško">
         </div>
         <div class="form-group">
           <label>E-mail</label>
@@ -1806,7 +1810,7 @@ a:hover{color:var(--cream-bright);}
 
 <script>
 /* ════════════════════════════════════════════════
-   BRATISLAVA NEANDERTHALS — Unified v3.2.9
+   BRATISLAVA NEANDERTHALS — Unified v3.3.0
    ════════════════════════════════════════════════ */
 const { createClient } = supabase;
 const sb = createClient('https://vchxjbdrromujmzujduo.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjaHhqYmRycm9tdWptenVqZHVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NjAyNDAsImV4cCI6MjA5NjQzNjI0MH0.xGT8sxDD2bDogwCZGYAJ-sGWROt1c7e1M9f9_qrm2WA', {
@@ -1869,11 +1873,12 @@ async function onLogin(user) {
   currentUser = user;
   const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
   currentProfile = profile;
-  const name = profile?.full_name || user.email.split('@')[0];
+  const fullName = profile?.full_name || user.email.split('@')[0];
+  const name = profile?.nickname || fullName;
   // Try to get player number from roster
   const { data: playerData } = await sb.from('players')
     .select('number')
-    .ilike('name', '%' + name.split(' ').slice(-1)[0] + '%')
+    .ilike('name', '%' + fullName.split(' ').slice(-1)[0] + '%')
     .limit(1);
   const playerNum = playerData?.[0]?.number;
   const avatarText = playerNum || name.split(' ').map(p=>p[0]||'').join('').slice(0,2).toUpperCase()||'?';
@@ -2375,17 +2380,41 @@ async function adminSetRsvp(eid,uid,status,btn) {
 /* ── PROFILE ──────────────────────────────────── */
 async function loadProfile() {
   if (!currentUser) return;
-  document.getElementById('profile-email').value=currentUser.email||'';
-  if (currentProfile) document.getElementById('profile-name').value=currentProfile.full_name||'';
+  document.getElementById('profile-email').value = currentUser.email || '';
+  if (currentProfile) {
+    document.getElementById('profile-name').value = currentProfile.full_name || '';
+    const nickEl = document.getElementById('profile-nickname');
+    if (nickEl) nickEl.value = currentProfile.nickname || '';
+  }
 }
 async function saveProfileName() {
-  const name=document.getElementById('profile-name').value.trim(), msg=document.getElementById('profile-name-msg');
+  const name = document.getElementById('profile-name').value.trim();
+  const nick = (document.getElementById('profile-nickname')?.value || '').trim();
+  const msg  = document.getElementById('profile-name-msg');
   if (!name) { msg.textContent='Zadaj meno.'; msg.style.color='#bf6d6d'; msg.style.display='block'; return; }
-  const { error }=await sb.from('profiles').update({full_name:name}).eq('id',currentUser.id);
-  if (error) { msg.textContent='Chyba: '+error.message; msg.style.color='#bf6d6d'; }
-  else { msg.textContent='Meno uložené ✓'; msg.style.color='#6dbf6d'; if(currentProfile) currentProfile.full_name=name; document.getElementById('user-name').textContent=name; document.getElementById('user-avatar').textContent=name.split(' ').map(p=>p[0]||'').join('').slice(0,2).toUpperCase(); }
-  msg.style.display='block';
-  const goBtn=document.getElementById('btn-go-to-app'); if(goBtn) goBtn.style.display='block';
+
+  const payload = { full_name: name, nickname: nick || null };
+  const { error } = await sb.from('profiles').update(payload).eq('id', currentUser.id);
+
+  if (error) {
+    msg.textContent = 'Chyba: ' + error.message;
+    msg.style.color = '#bf6d6d';
+  } else {
+    msg.textContent = 'Uložené ✓';
+    msg.style.color = '#6dbf6d';
+    if (currentProfile) { currentProfile.full_name = name; currentProfile.nickname = nick || null; }
+    // Display name = nickname if set, otherwise full name
+    const displayName = nick || name;
+    document.getElementById('user-name').textContent = displayName;
+    // Refresh avatar (jersey number lookup uses full_name)
+    const { data: pd } = await sb.from('players').select('number')
+      .ilike('name', '%' + name.split(' ').slice(-1)[0] + '%').limit(1);
+    const num = pd?.[0]?.number;
+    document.getElementById('user-avatar').textContent =
+      num || displayName.split(' ').map(p=>p[0]||'').join('').slice(0,2).toUpperCase();
+  }
+  msg.style.display = 'block';
+  const goBtn = document.getElementById('btn-go-to-app'); if (goBtn) goBtn.style.display='block';
 }
 async function saveProfilePassword() {
   const np=document.getElementById('profile-pass-new').value, cp=document.getElementById('profile-pass-confirm').value, msg=document.getElementById('profile-pass-msg');
