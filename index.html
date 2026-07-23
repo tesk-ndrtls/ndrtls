@@ -829,7 +829,7 @@ a:hover{color:var(--cream-bright);}
 </head>
 <body>
 
-<div id="version-badge">v3.3.1</div>
+<div id="version-badge">v3.3.2</div>
 <div id="toast"></div>
 <div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
 
@@ -1813,7 +1813,7 @@ a:hover{color:var(--cream-bright);}
 
 <script>
 /* ════════════════════════════════════════════════
-   BRATISLAVA NEANDERTHALS — Unified v3.3.1
+   BRATISLAVA NEANDERTHALS — Unified v3.3.2
    ════════════════════════════════════════════════ */
 const { createClient } = supabase;
 const sb = createClient('https://vchxjbdrromujmzujduo.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjaHhqYmRycm9tdWptenVqZHVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NjAyNDAsImV4cCI6MjA5NjQzNjI0MH0.xGT8sxDD2bDogwCZGYAJ-sGWROt1c7e1M9f9_qrm2WA', {
@@ -1840,29 +1840,52 @@ let _sectionHistory = [];
 
 /* ── AUTH ─────────────────────────────────────── */
 async function init() {
+  // Register auth listener FIRST so no event is ever missed
+  sb.auth.onAuthStateChange(async (event, session) => {
+    console.log('[auth]', event, session ? 'session present' : 'no session');
+    if (event === 'PASSWORD_RECOVERY') { showPasswordRecoveryForm(); return; }
+    if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') && session) {
+      if (!currentUser) await onLogin(session.user);
+      return;
+    }
+    if (event === 'SIGNED_OUT') onLogout();
+  });
+
+  // Handle invite / recovery links carrying tokens in the hash
   const hash = window.location.hash;
   if (hash && hash.includes('access_token')) {
     const params = new URLSearchParams(hash.replace('#','?'));
     const at = params.get('access_token'), rt = params.get('refresh_token'), type = params.get('type');
     if (at && rt) {
-      const { data, error } = await sb.auth.setSession({ access_token: at, refresh_token: rt });
-      window.history.replaceState({}, document.title, window.location.pathname);
-      if (!error && data.session) {
-        await onLogin(data.session.user);
-        if (type === 'invite' || type === 'recovery') {
-          showSection('profile');
-          setTimeout(() => {
-            const m = document.getElementById('profile-name-msg');
-            if (m) { m.textContent = type==='invite'?'👋 Vitaj! Nastav si meno a heslo.':'🔑 Nastav si nové heslo.'; m.style.display='block'; m.style.color='var(--rust-light)'; }
-          }, 200);
+      try {
+        const { data, error } = await sb.auth.setSession({ access_token: at, refresh_token: rt });
+        window.history.replaceState({}, document.title, window.location.pathname);
+        if (!error && data.session) {
+          await onLogin(data.session.user);
+          if (type === 'invite' || type === 'recovery') {
+            showSection('profile');
+            setTimeout(() => {
+              const m = document.getElementById('profile-name-msg');
+              if (m) { m.textContent = type==='invite'?'👋 Vitaj! Nastav si meno a heslo.':'🔑 Nastav si nové heslo.'; m.style.display='block'; m.style.color='var(--rust-light)'; }
+            }, 200);
+          }
+          return;
         }
-        return;
-      }
+      } catch(e) { console.error('setSession failed:', e); }
     }
   }
-  const { data: { session } } = await sb.auth.getSession();
-  if (session) { await onLogin(session.user); return; }
-  // Restore last section for public users
+
+  // Restore an existing session from storage
+  try {
+    const { data, error } = await sb.auth.getSession();
+    if (error) console.warn('getSession error:', error.message);
+    if (data?.session?.user) {
+      await onLogin(data.session.user);
+      return;
+    }
+  } catch(e) { console.error('getSession threw:', e); }
+
+  // Not logged in — restore last public section
   const savedPub = lsGet('ndrtls-section');
   const privateSecs = ['events','finance','internal','profile','admin-news','admin-events','admin-payments','admin-media','login'];
   if (savedPub && document.getElementById('sec-' + savedPub) && !privateSecs.includes(savedPub)) {
@@ -1871,54 +1894,69 @@ async function init() {
   } else {
     handleHash();
   }
-  sb.auth.onAuthStateChange(async (event, session) => {
-    if (event==='PASSWORD_RECOVERY') showPasswordRecoveryForm();
-    else if (event==='SIGNED_IN' && session) await onLogin(session.user);
-    else if (event==='SIGNED_OUT') onLogout();
-  });
 }
 
 async function onLogin(user) {
   currentUser = user;
-  const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
+
+  // --- Profile fetch (never let a failure abort the login UI) ---
+  let profile = null;
+  try {
+    const { data, error } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
+    if (error) console.warn('Profile fetch failed:', error.message);
+    profile = data;
+  } catch(e) { console.warn('Profile fetch threw:', e); }
   currentProfile = profile;
+
   const fullName = profile?.full_name || user.email.split('@')[0];
-  const name = profile?.nickname || fullName;
-  // Try to get player number from roster
-  const { data: playerData } = await sb.from('players')
-    .select('number')
-    .ilike('name', '%' + fullName.split(' ').slice(-1)[0] + '%')
-    .limit(1);
-  const playerNum = playerData?.[0]?.number;
-  const avatarText = playerNum || name.split(' ').map(p=>p[0]||'').join('').slice(0,2).toUpperCase()||'?';
-  document.getElementById('user-avatar').textContent = avatarText;
-  document.getElementById('user-name').textContent   = name;
-  document.getElementById('user-badge').style.display = 'flex';
-  document.getElementById('login-header-btn').style.display = 'none';
-  document.getElementById('nav-login-btn').style.display  = 'none';
-  document.getElementById('nav-logout-btn').style.display = 'flex';
-  document.getElementById('nav-zone-section').style.display = 'block';
-  if (currentProfile?.role==='admin') document.getElementById('nav-admin-section').style.display='block';
+  const name     = profile?.nickname  || fullName;
+
+  // --- Jersey number lookup (optional, must not block) ---
+  let playerNum = null;
+  try {
+    const lastName = fullName.split(' ').slice(-1)[0];
+    if (lastName) {
+      const { data: pd } = await sb.from('players').select('number').ilike('name', '%' + lastName + '%').limit(1);
+      playerNum = pd?.[0]?.number || null;
+    }
+  } catch(e) { console.warn('Player lookup failed:', e); }
+
+  const avatarText = playerNum || name.split(' ').map(p=>p[0]||'').join('').slice(0,2).toUpperCase() || '?';
+
+  // --- Header / nav state (guard every element) ---
+  const setEl = (id, fn) => { const el = document.getElementById(id); if (el) fn(el); };
+  setEl('user-avatar',       el => el.textContent = avatarText);
+  setEl('user-name',         el => el.textContent = name);
+  setEl('user-badge',        el => el.style.display = 'flex');
+  setEl('login-header-btn',  el => el.style.display = 'none');
+  setEl('nav-login-btn',     el => el.style.display = 'none');
+  setEl('nav-logout-btn',    el => el.style.display = 'flex');
+  setEl('nav-zone-section',  el => el.style.display = 'block');
+  if (currentProfile?.role === 'admin') setEl('nav-admin-section', el => el.style.display = 'block');
+
   hideSplash();
-  // Explicitly hide login section
-  const loginSec = document.getElementById('sec-login');
-  if (loginSec) { loginSec.classList.remove('active'); loginSec.style.display = 'none'; }
+  setEl('sec-login', el => { el.classList.remove('active'); el.style.display = 'none'; });
+
   let restoreSection = 'news';
   const saved = lsGet('ndrtls-section');
   if (saved && saved !== 'login' && document.getElementById('sec-' + saved)) restoreSection = saved;
   showSection(restoreSection);
+
+  // Background loads — failures here must not affect login state
   loadRosterFromDB();
   loadSeasons();
 }
 
 function onLogout() {
-  currentUser=null; currentProfile=null; rosterData=[];
-  document.getElementById('user-badge').style.display='none';
-  document.getElementById('login-header-btn').style.display='flex';
-  document.getElementById('nav-login-btn').style.display='flex';
-  document.getElementById('nav-logout-btn').style.display='none';
-  document.getElementById('nav-zone-section').style.display='none';
-  document.getElementById('nav-admin-section').style.display='none';
+  currentUser = null; currentProfile = null; rosterData = [];
+  const setEl = (id, fn) => { const el = document.getElementById(id); if (el) fn(el); };
+  setEl('user-badge',       el => el.style.display = 'none');
+  setEl('login-header-btn', el => el.style.display = 'flex');
+  setEl('nav-login-btn',    el => el.style.display = 'flex');
+  setEl('nav-logout-btn',   el => el.style.display = 'none');
+  setEl('nav-zone-section', el => el.style.display = 'none');
+  setEl('nav-admin-section',el => el.style.display = 'none');
+  lsSet('ndrtls-section', 'news');
   loadRosterFromDB();
   showSection('news');
 }
