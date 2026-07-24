@@ -829,7 +829,7 @@ a:hover{color:var(--cream-bright);}
 </head>
 <body>
 
-<div id="version-badge">v3.3.2</div>
+<div id="version-badge">v3.3.3</div>
 <div id="toast"></div>
 <div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
 
@@ -1813,7 +1813,7 @@ a:hover{color:var(--cream-bright);}
 
 <script>
 /* ════════════════════════════════════════════════
-   BRATISLAVA NEANDERTHALS — Unified v3.3.2
+   BRATISLAVA NEANDERTHALS — Unified v3.3.3
    ════════════════════════════════════════════════ */
 const { createClient } = supabase;
 const sb = createClient('https://vchxjbdrromujmzujduo.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjaHhqYmRycm9tdWptenVqZHVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NjAyNDAsImV4cCI6MjA5NjQzNjI0MH0.xGT8sxDD2bDogwCZGYAJ-sGWROt1c7e1M9f9_qrm2WA', {
@@ -1830,6 +1830,36 @@ function lsGet(key) {
 }
 function lsSet(key, val) {
   try { window.localStorage.setItem(key, val); } catch(e) {}
+}
+
+/* If a Supabase session token is already in storage, this visitor is
+   logged in. Hide the splash immediately so it never flashes before
+   init() restores the session. */
+function hasStoredSession() {
+  try {
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const k = window.localStorage.key(i);
+      if (k && k.startsWith('sb-') && k.endsWith('-auth-token')) {
+        const v = window.localStorage.getItem(k);
+        if (v && v.length > 20) return true;
+      }
+    }
+  } catch(e) {}
+  return false;
+}
+
+if (hasStoredSession()) {
+  const applyEarly = () => {
+    const s = document.getElementById('splash');
+    const m = document.getElementById('main-site');
+    if (s) s.style.display = 'none';
+    if (m) m.style.display = 'block';
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyEarly);
+  } else {
+    applyEarly();
+  }
 }
 
 let currentUser    = null;
@@ -3626,7 +3656,7 @@ function closeGallery() {
 }
 
 // Swipe support
-document.addEventListener('DOMContentLoaded', () => {
+function initGallerySwipe() {
   const vp = document.getElementById('gl-viewport');
   if (!vp) return;
   vp.addEventListener('touchstart', e => { _touchStartX = e.changedTouches[0].screenX; }, { passive: true });
@@ -3641,7 +3671,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'ArrowLeft') galleryPrev();
     if (e.key === 'Escape') closeGallery();
   });
-});
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initGallerySwipe);
+} else {
+  initGallerySwipe();
+}
 
 
 /* ── MEDIA MANAGEMENT (admin) ─────────────────── */
@@ -3898,12 +3933,23 @@ const UI_MAIN={
 };
 
 /* ── INIT ─────────────────────────────────────── */
-document.addEventListener('DOMContentLoaded', () => {
-  // Apply lang labels to data-i elements
-  const u=UI_MAIN[LANG]||UI_MAIN.sk;
-  document.querySelectorAll('[data-i]').forEach(el=>{ if(u[el.dataset.i]) el.textContent=u[el.dataset.i]; });
-  init();
-});
+function boot() {
+  // Apply language labels (must never block init)
+  try {
+    const u = UI_MAIN[LANG] || UI_MAIN.sk;
+    document.querySelectorAll('[data-i]').forEach(el => { if (u[el.dataset.i]) el.textContent = u[el.dataset.i]; });
+  } catch(e) { console.warn('Lang labels failed:', e); }
+
+  init().catch(e => console.error('init() failed:', e));
+}
+
+// The script sits at the end of <body>, so DOMContentLoaded may have
+// already fired. Check readyState instead of relying on the event.
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', boot);
+} else {
+  boot();
+}
 </script>
 </body>
 </html>
