@@ -841,6 +841,7 @@ a:hover{color:var(--cream-bright);}
       <div class="nav-item" onclick="showSection('admin-media')" id="nav-admin-media"><span class="nav-ic">📸</span><span>Správa médií</span></div>
       <div class="nav-item" onclick="showSection('admin-events')" id="nav-admin-events"><span class="nav-ic">⚙</span><span>Správa udalostí</span></div>
       <div class="nav-item" onclick="showSection('admin-payments')" id="nav-admin-payments"><span class="nav-ic">⚙</span><span>Správa financií</span></div>
+      <div class="nav-item" onclick="showSection('admin-contacts')" id="nav-admin-contacts"><span class="nav-ic">📩</span><span>Prihlášky</span></div>
     </div>
   </div>
   <div style="margin-top:auto;padding-bottom:.5rem;">
@@ -1425,7 +1426,7 @@ a:hover{color:var(--cream-bright);}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Bratislava Neanderthals</div>
   <div style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.6.7</div>
+  <div id="version-badge">v3.7.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -1816,11 +1817,34 @@ a:hover{color:var(--cream-bright);}
   </div>
 </div>
 
+<div class="page-section" id="sec-admin-contacts">
+  <div class="sec-wrap">
+    <div class="sec-head">
+      <h2>Prihlášky</h2>
+      <p>Prihlášky odoslané cez kontaktný formulár.</p>
+    </div>
+    <div id="admin-contacts-list">
+      <div class="empty-state"><span class="spinner"></span></div>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ════════════════════════════════════════════════
-   BRATISLAVA NEANDERTHALS — Unified v3.6.7
+   BRATISLAVA NEANDERTHALS — Unified v3.7.0
    ════════════════════════════════════════════════ */
 const FINANCE_PROXY_URL = 'https://trenuj.ndrtls.com/finance-proxy.php';
+const CONTACT_NOTIFY_URL = 'https://trenuj.ndrtls.com/contact-notify.php';
+const CONTACT_NOTIFY_SECRET = 'rPhuEptxtz08SxJydpdPkcg-dQpo6TTchg0WzqswEKM';
+// Profily patriace iným aplikáciám (napr. Our Journey) / vyňatí používatelia — nikde ich nezobrazujeme.
+const IGNORED_IDS = ['80f29581-c2a4-4a27-8631-156cfe271a8c'];
+const _ignoreSet = new Set(IGNORED_IDS);
+function filterIgnored(rows) {
+  return (rows || []).filter(r => {
+    const id = r && (r.id || r.user_id);
+    return !_ignoreSet.has(id);
+  });
+}
 const { createClient } = supabase;
 /* Capture auth params from the URL before the Supabase client can consume
    them. Supabase uses several link formats depending on project settings:
@@ -2146,6 +2170,7 @@ function showSection(id) {
   if (id==='profile') loadProfile();
   if (id==='admin-events') loadAdminEvents();
   if (id==='admin-payments') { loadAdminPayments(); admTab('overview'); }
+  if (id==='admin-contacts') loadAdminContacts();
   if (id==='admin-news') loadAdminNews();
   if (id==='admin-users') loadAdminUsers();
   if (id==='admin-media') loadAdminMedia();
@@ -2245,11 +2270,8 @@ async function loadAdminUsers() {
       list.innerHTML = '<div class="empty-state"><p style="color:#bf6d6d;">Chyba načítania: ' + error.message + '</p></div>';
       return;
     }
-    // Profily patriace iným aplikáciám (napr. Our Journey) — nezapočítavame ich.
-    // Filtrujeme podľa user ID (stabilné, funguje aj pre profily bez mena).
-    const IGNORED_IDS = ['80f29581-c2a4-4a27-8631-156cfe271a8c'];
-    const ignoreSet = new Set(IGNORED_IDS);
-    profiles = (profiles || []).filter(p => !ignoreSet.has(p.id));
+    // Profily patriace iným aplikáciám / vyňatí používatelia — nezapočítavame ich.
+    profiles = filterIgnored(profiles);
     if (!profiles?.length) {
       list.innerHTML = '<div class="empty-state"><div class="es-icon">👥</div><p>Žiadni používatelia.</p></div>';
       if (stats) stats.innerHTML = '';
@@ -2468,6 +2490,54 @@ function playVideo(containerId, ytId) {
   el.style.cursor = 'default';
 }
 
+/* ── ADMIN: PRIHLÁŠKY ─────────────────────────── */
+async function loadAdminContacts() {
+  const box = document.getElementById('admin-contacts-list');
+  if (!box) return;
+  box.innerHTML = '<div class="empty-state"><span class="spinner"></span></div>';
+  const { data, error } = await sb.from('contact_requests')
+    .select('*').order('created_at', { ascending: false });
+  if (error) {
+    box.innerHTML = '<div class="empty-state"><p>Chyba pri načítaní prihlášok.</p></div>';
+    return;
+  }
+  if (!data || !data.length) {
+    box.innerHTML = '<div class="empty-state"><div class="es-icon">📩</div><p>Zatiaľ žiadne prihlášky.</p></div>';
+    return;
+  }
+  const months = ['jan','feb','mar','apr','máj','jún','júl','aug','sep','okt','nov','dec'];
+  const posLabels = { utocnik:'Útočník', obranca:'Obranca', brankar:'Brankár' };
+  box.innerHTML = data.map(c => {
+    const d = c.created_at ? new Date(c.created_at) : null;
+    const dateStr = d ? `${d.getDate()}. ${months[d.getMonth()]} ${d.getFullYear()}` : '';
+    const posStr = c.position ? (posLabels[c.position] || c.position) : '—';
+    const msg = (c.message || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return `<div class="event-card" style="flex-direction:column;align-items:stretch;gap:.6rem;">
+      <div style="display:flex;align-items:baseline;gap:.8rem;flex-wrap:wrap;">
+        <h4 style="margin:0;color:var(--cream-bright);">${(c.name||'—').replace(/</g,'&lt;')}</h4>
+        <span style="font-family:'Oswald';font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--rust-light);">${posStr}</span>
+        <span style="margin-left:auto;font-family:'Oswald';font-size:.75rem;color:var(--bone);">${dateStr}</span>
+      </div>
+      <div style="font-family:'Barlow Condensed';font-size:.95rem;color:var(--bone);">
+        <a href="mailto:${c.email}" style="color:var(--rust-light);">${(c.email||'').replace(/</g,'&lt;')}</a>
+      </div>
+      <div style="font-family:'Barlow Condensed';font-size:1rem;color:var(--cream);white-space:pre-wrap;">${msg}</div>
+      <div style="display:flex;gap:.5rem;justify-content:flex-end;">
+        <a class="btn-sm" href="mailto:${c.email}" style="color:var(--cream-bright);text-decoration:none;">✉ Odpovedať</a>
+        <button class="btn-sm" onclick="deleteContactRequest(${c.id})" style="color:#bf6d6d;">🗑 Vymazať</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function deleteContactRequest(id) {
+  if (!confirm('Vymazať túto prihlášku?')) return;
+  const { error } = await sb.from('contact_requests').delete().eq('id', id);
+  if (error) { toast('Chyba: ' + error.message, 'error'); return; }
+  toast('Prihláška vymazaná', 'success');
+  loadAdminContacts();
+}
+
 async function submitContact() {
   const name=document.getElementById('cf-name').value.trim();
   const email=document.getElementById('cf-email').value.trim();
@@ -2480,6 +2550,16 @@ async function submitContact() {
   btn.disabled=true; btn.textContent='Odosielam…';
   const msgFull = (phone ? 'Tel: '+phone+'\n' : '') + msg;
   const { error }=await sb.from('contact_requests').insert({name,email,position:pos||null,message:msgFull});
+  // Notifikácia na tesk@ (best-effort — ak zlyhá, prihláška je aj tak uložená v DB)
+  if (!error) {
+    try {
+      fetch(CONTACT_NOTIFY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ secret: CONTACT_NOTIFY_SECRET, name, email, position: pos||'', message: msgFull })
+      }).catch(()=>{});
+    } catch(e) {}
+  }
   btn.disabled=false; btn.textContent='Odoslať prihlášku';
   res.textContent=error?'Chyba. Napíš priamo na tesk@ndrtls.com':'✓ Prihláška odoslaná! Ozveme sa ti čoskoro.';
   res.style.color=error?'#bf6d6d':'#6dbf6d'; res.style.display='block';
@@ -2646,7 +2726,8 @@ async function openLineup(eid, et) {
       const { data:rs } = await sb.from('rsvp').select('user_id').eq('event_id',eid).eq('status','yes');
       const ids = (rs||[]).map(r=>r.user_id);
       if (ids.length) {
-        const { data:profs } = await sb.from('profiles').select('id, full_name').in('id', ids);
+        const { data:profsRaw } = await sb.from('profiles').select('id, full_name').in('id', ids);
+        const profs = filterIgnored(profsRaw);
         const names = (profs||[]).map(p=>(p.full_name||'').trim()).filter(Boolean);
         if (names.length) _lAttend = names;
       } else {
@@ -2760,7 +2841,8 @@ async function showAdminRsvpPanel(eventId) {
   const list=document.getElementById('ar-players-list');
   list.innerHTML='<div class="empty-state"><span class="spinner"></span></div>';
   document.getElementById('modal-admin-rsvp').classList.add('show');
-  const { data:profiles }=await sb.from('profiles').select('id,full_name');
+  const { data:profilesRaw }=await sb.from('profiles').select('id,full_name');
+  const profiles = filterIgnored(profilesRaw);
   const { data:rsvps }=await sb.from('rsvp').select('user_id,status').eq('event_id',eventId);
   const rm={}; (rsvps||[]).forEach(r=>rm[r.user_id]=r.status);
   if (!profiles?.length) { list.innerHTML='<p style="text-align:center;color:var(--bone);padding:1rem;">Žiadni hráči.</p>'; return; }
@@ -2937,7 +3019,8 @@ async function loadEvents() {
   const { data: rsvpYes } = await sb.from('rsvp')
     .select('event_id, user_id').eq('status', 'yes');
   // Get all profiles for name lookup
-  const { data: allProfiles } = await sb.from('profiles').select('id, full_name');
+  const { data: allProfilesRaw } = await sb.from('profiles').select('id, full_name');
+  const allProfiles = filterIgnored(allProfilesRaw);
   const profileMap = {};
   (allProfiles || []).forEach(p => profileMap[p.id] = p.full_name || p.id.slice(0,6));
   const namesMap = {};
@@ -3188,7 +3271,8 @@ async function renderAdmOverview() {
   tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:1.5rem"><span class="spinner"></span></td></tr>';
 
   // Get all profiles with user_id
-  const { data: profiles } = await sb.from('profiles').select('id, full_name');
+  const { data: profilesRaw } = await sb.from('profiles').select('id, full_name');
+  const profiles = filterIgnored(profilesRaw);
   if (!profiles?.length) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:1.5rem;color:var(--bone)">Žiadni hráči.</td></tr>'; return; }
 
   // Get all season payments
@@ -3321,7 +3405,8 @@ async function renderAdmManual() {
     '</tbody></table>';
 
   // Populate player dropdown
-  const { data: profiles } = await sb.from('profiles').select('id, full_name');
+  const { data: profilesRaw } = await sb.from('profiles').select('id, full_name');
+  const profiles = filterIgnored(profilesRaw);
   const sel = document.getElementById('sp-user');
   if (sel && profiles) {
     sel.innerHTML = '<option value="">— vyber hráča —</option>' +
@@ -3346,7 +3431,8 @@ async function openCloseGameModal(eventId, seasonId, title) {
   }
 
   // Also get all profiles as fallback
-  const { data: allProfiles } = await sb.from('profiles').select('id, full_name');
+  const { data: allProfilesRaw } = await sb.from('profiles').select('id, full_name');
+  const allProfiles = filterIgnored(allProfilesRaw);
   const rsvpIds = new Set((rsvps||[]).map(r => r.user_id));
 
   list.innerHTML = (allProfiles||[]).map(p => `
@@ -3394,7 +3480,8 @@ async function closeGame() {
   if (grErr) { toast('Chyba: ' + grErr.message, 'error'); return; }
 
   // Get all profiles to mark absences too
-  const { data: allProfiles } = await sb.from('profiles').select('id');
+  const { data: allProfilesRaw } = await sb.from('profiles').select('id');
+  const allProfiles = filterIgnored(allProfilesRaw);
   const allIds = (allProfiles||[]).map(p => p.id);
   const playedSet = new Set(playedUserIds);
 
