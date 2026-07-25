@@ -1139,25 +1139,12 @@ a:hover{color:var(--cream-bright);}
       </div>
       <div class="fin-kpi">
         <div class="val" id="fin-charged-total">—</div>
-        <div class="lbl">Zaúčtované</div>
+        <div class="lbl">Stálo ma</div>
       </div>
     </div>
 
-    <!-- Tabs -->
-    <div style="display:flex;gap:0;border-bottom:2px solid var(--maroon);margin-bottom:1.2rem;">
-      <button onclick="finTab('games')" id="fin-tab-games"
-        style="font-family:'Oswald';font-weight:700;font-size:.8rem;letter-spacing:.1em;
-        text-transform:uppercase;padding:.6rem 1.2rem;border:0;cursor:pointer;
-        background:var(--maroon);color:var(--cream-bright);border-radius:6px 6px 0 0;">
-        Zápasy
-      </button>
-      <button onclick="finTab('payments')" id="fin-tab-payments"
-        style="font-family:'Oswald';font-weight:700;font-size:.8rem;letter-spacing:.1em;
-        text-transform:uppercase;padding:.6rem 1.2rem;border:0;cursor:pointer;
-        background:var(--charcoal);color:var(--bone);border-radius:6px 6px 0 0;">
-        Platby
-      </button>
-    </div>
+    <!-- Tabs removed: single per-season table -->
+    <div style="border-bottom:2px solid var(--maroon);margin-bottom:1.2rem;"></div>
 
     <!-- Games tab -->
     <div id="fin-panel-games">
@@ -1165,8 +1152,11 @@ a:hover{color:var(--cream-bright);}
         <table class="fin-table">
           <thead>
             <tr>
-              <th>Dátum</th><th>Zápas</th><th>Stav</th>
-              <th style="text-align:right">Suma</th>
+              <th>Sezóna</th>
+              <th style="text-align:center">Zápasy</th>
+              <th style="text-align:right">Stálo</th>
+              <th style="text-align:right">Zaplatené</th>
+              <th style="text-align:right">Zostatok</th>
             </tr>
           </thead>
           <tbody id="fin-games-tbody">
@@ -1435,7 +1425,7 @@ a:hover{color:var(--cream-bright);}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Bratislava Neanderthals</div>
   <div style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.6.3</div>
+  <div id="version-badge">v3.6.4</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -1828,8 +1818,9 @@ a:hover{color:var(--cream-bright);}
 
 <script>
 /* ════════════════════════════════════════════════
-   BRATISLAVA NEANDERTHALS — Unified v3.6.3
+   BRATISLAVA NEANDERTHALS — Unified v3.6.4
    ════════════════════════════════════════════════ */
+const FINANCE_PROXY_URL = 'https://trenuj.ndrtls.com/finance-proxy.php';
 const { createClient } = supabase;
 /* Capture auth params from the URL before the Supabase client can consume
    them. Supabase uses several link formats depending on project settings:
@@ -3044,44 +3035,110 @@ async function loadSeasons() {
   });
 }
 
-function getFinSeasonId() {
-  return parseInt(document.getElementById('fin-season-select')?.value) || allSeasons.find(s=>s.status==='active')?.id;
-}
 function getAdmSeasonId() {
   return parseInt(document.getElementById('adm-season-select')?.value) || allSeasons.find(s=>s.status==='active')?.id;
 }
 
-let finActiveTab = 'games';
-function finTab(tab) {
-  finActiveTab = tab;
-  ['games','payments'].forEach(t => {
-    const btn = document.getElementById('fin-tab-'+t);
-    const panel = document.getElementById('fin-panel-'+t);
-    if (btn) btn.style.background = t===tab ? 'var(--maroon)' : 'var(--charcoal)';
-    if (btn) btn.style.color = t===tab ? 'var(--cream-bright)' : 'var(--bone)';
-    if (panel) panel.style.display = t===tab ? 'block' : 'none';
-  });
-  if (tab === 'payments') renderFinPayments();
-}
-
-
 async function loadFinance() {
-  if (!allSeasons || !allSeasons.length) { await loadSeasons(); }
-  const seasonId = getFinSeasonId();
-  if (!seasonId) {
-    const el = document.getElementById('finance-subtitle');
-    if (el) el.textContent = 'Žiadne sezóny nie sú k dispozícii.';
+  const subtitle = document.getElementById('finance-subtitle');
+  const summary  = document.getElementById('fin-summary');
+  const gTbody   = document.getElementById('fin-games-tbody');
+  const pTbody   = document.getElementById('fin-payments-tbody');
+
+  if (subtitle) subtitle.textContent = 'Načítavam…';
+  if (gTbody) gTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:1.5rem"><span class="spinner"></span></td></tr>';
+
+  // Získaj access token prihláseného používateľa
+  let token = null;
+  try {
+    const { data } = await sb.auth.getSession();
+    token = data?.session?.access_token || null;
+  } catch(e) {}
+  if (!token) {
+    if (subtitle) subtitle.textContent = 'Prihlás sa pre zobrazenie financií.';
     return;
   }
-  const season = allSeasons.find(s => s.id === seasonId);
-  document.getElementById('finance-subtitle').textContent =
-    `Tvoj prehľad za sezónu ${season?.name || ''}.`;
 
-  await Promise.all([renderFinGames(seasonId), renderFinPayments(seasonId)]);
+  // Načítaj z proxy
+  let payload;
+  try {
+    const res = await fetch(FINANCE_PROXY_URL, { headers: { 'Authorization': 'Bearer ' + token } });
+    if (res.status === 401) { if (subtitle) subtitle.textContent = 'Prihlásenie vypršalo. Prihlás sa znova.'; return; }
+    if (!res.ok) throw new Error('proxy ' + res.status);
+    payload = await res.json();
+  } catch(e) {
+    if (subtitle) subtitle.textContent = 'Financie sa nepodarilo načítať. Skús neskôr.';
+    if (gTbody) gTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:1.5rem;color:var(--bone)">Chyba načítania.</td></tr>';
+    return;
+  }
+
+  _finData = payload;
+
+  if (!payload.matched || !payload.seasons || !payload.seasons.length) {
+    if (subtitle) subtitle.textContent = 'Zatiaľ pre teba nemáme finančné záznamy.';
+    if (summary) summary.style.display = 'none';
+    if (gTbody) gTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:1.5rem;color:var(--bone)">Žiadne záznamy. Ak si nový, ozvi sa financmajstrovi.</td></tr>';
+    if (pTbody) pTbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:1.5rem;color:var(--bone)">—</td></tr>';
+    return;
+  }
+
+  if (summary) summary.style.display = '';
+
+  // Naplň selektor sezón (najnovšia prvá)
+  const sel = document.getElementById('fin-season-select');
+  const seasons = payload.seasons.slice().reverse();
+  const prev = sel && sel.value;
+  if (sel) {
+    sel.onchange = renderFinSeason;
+    sel.innerHTML = '<option value="__all">Všetky sezóny (súčet)</option>' +
+      seasons.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+    // predvoľ najnovšiu sezónu
+    sel.value = (prev && [...sel.options].some(o=>o.value===prev)) ? prev : seasons[0].name;
+  }
+
+  renderFinSeason();
+}
+
+let _finData = null;
+
+function renderFinSeason() {
+  if (!_finData) return;
+  const sel = document.getElementById('fin-season-select');
+  const pick = sel ? sel.value : '__all';
+  const subtitle = document.getElementById('finance-subtitle');
+  const seasons = _finData.seasons;
+
+  let games=0, cost=0, paid=0, balance=0, rows=[];
+
+  if (pick === '__all') {
+    seasons.forEach(s => {
+      games += s.games; cost += s.cost; paid += s.paid; balance += s.balance;
+      rows.push(s);
+    });
+    if (subtitle) subtitle.textContent = 'Súhrn za všetky sezóny.';
+  } else {
+    const s = seasons.find(x => x.name === pick);
+    if (s) { games=s.games; cost=s.cost; paid=s.paid; balance=s.balance; rows=[s]; }
+    if (subtitle) subtitle.textContent = `Prehľad za sezónu ${pick}.`;
+  }
+
+  updateFinKpis(balance, games, paid, cost);
+
+  // Tabuľka "po sezónach" (v paneli games)
+  const gTbody = document.getElementById('fin-games-tbody');
+  if (gTbody) {
+    gTbody.innerHTML = rows.map(s => `<tr>
+      <td style="color:var(--cream-bright);font-family:'Oswald';font-weight:600">${s.name}</td>
+      <td style="text-align:center;color:var(--bone)">${s.games}</td>
+      <td style="text-align:right;color:#bf6d6d;font-family:'Oswald'">${s.cost.toFixed(2)} €</td>
+      <td style="text-align:right;color:#6dbf6d;font-family:'Oswald'">${s.paid.toFixed(2)} €</td>
+      <td style="text-align:right;font-family:'Oswald';font-weight:700;color:${s.balance>=0?'#6dbf6d':'#bf6d6d'}">${s.balance>=0?'+':''}${s.balance.toFixed(2)} €</td>
+    </tr>`).join('');
+  }
 }
 
 function finTab(tab) {
-  finActiveTab = tab;
+  // ponechané kvôli spätnej kompatibilite — jediný panel teraz
   ['games','payments'].forEach(t => {
     const btn = document.getElementById('fin-tab-'+t);
     const panel = document.getElementById('fin-panel-'+t);
@@ -3089,91 +3146,21 @@ function finTab(tab) {
     if (btn) btn.style.color = t===tab ? 'var(--cream-bright)' : 'var(--bone)';
     if (panel) panel.style.display = t===tab ? 'block' : 'none';
   });
-  if (tab === 'payments') renderFinPayments();
 }
 
-async function renderFinGames(seasonId) {
-  seasonId = seasonId || getFinSeasonId();
-  const tbody = document.getElementById('fin-games-tbody');
-  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:1.5rem"><span class="spinner"></span></td></tr>';
-
-  // Get closed games for this season with my attendance
-  const { data: attended } = await sb.from('game_attendance')
-    .select('*, game_results(*, events(title, date))')
-    .eq('user_id', currentUser.id);
-
-  // Filter by season
-  const myGames = (attended || []).filter(a => a.game_results?.season_id === seasonId);
-
-  if (!myGames.length) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:1.5rem;color:var(--bone)">Žiadne uzavreté zápasy.</td></tr>';
-    updateFinKpis(0, 0, 0, 0);
-    return;
-  }
-
-  const months = ['jan','feb','mar','apr','máj','jún','júl','aug','sep','okt','nov','dec'];
-  let totalCharged = 0, gamesPlayed = 0;
-
-  tbody.innerHTML = myGames
-    .sort((a,b) => new Date(a.game_results.events.date) - new Date(b.game_results.events.date))
-    .map(a => {
-      const d = new Date(a.game_results.events.date);
-      const dateStr = d.getDate() + '. ' + months[d.getMonth()];
-      const charged = parseFloat(a.amount_charged || 0);
-      totalCharged += charged;
-      if (a.status === 'played') gamesPlayed++;
-      const statusLabel = a.status === 'played' ? '✓ Hral' : '— Nehral';
-      const statusColor = a.status === 'played' ? 'var(--cream-bright)' : 'var(--bone)';
-      return `<tr>
-        <td style="color:var(--bone)">${dateStr}</td>
-        <td style="color:var(--cream-bright)">${a.game_results.events.title}</td>
-        <td style="color:${statusColor}">${statusLabel}</td>
-        <td style="text-align:right;font-family:'Oswald';font-weight:700;color:${charged>0?'#bf6d6d':'var(--bone)'}">
-          ${charged > 0 ? '-' + charged.toFixed(2) + ' €' : '—'}
-        </td>
-      </tr>`;
-    }).join('');
-
-  // Get payments for balance
-  const { data: payments } = await sb.from('season_payments')
-    .select('amount').eq('user_id', currentUser.id).eq('season_id', seasonId);
-  const totalPaid = (payments || []).reduce((s,p) => s + parseFloat(p.amount), 0);
-  const balance = totalPaid - totalCharged;
-
-  updateFinKpis(balance, gamesPlayed, totalPaid, totalCharged);
+function updateFinKpis(balance, games, paid, charged) {
+  const set = (id, val, cls) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = val;
+    if (cls) el.style.color = cls;
+  };
+  set('fin-balance', (balance>=0?'+':'') + balance.toFixed(2) + ' €', balance>=0 ? '#6dbf6d' : '#bf6d6d');
+  set('fin-games-played', games);
+  set('fin-paid-total', paid.toFixed(2) + ' €');
+  set('fin-charged-total', charged.toFixed(2) + ' €');
 }
 
-async function renderFinPayments(seasonId) {
-  seasonId = seasonId || getFinSeasonId();
-  if (finActiveTab !== 'payments') return;
-  const tbody = document.getElementById('fin-payments-tbody');
-  tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:1.5rem"><span class="spinner"></span></td></tr>';
-
-  const { data } = await sb.from('season_payments')
-    .select('*').eq('user_id', currentUser.id).eq('season_id', seasonId)
-    .order('created_at', {ascending: false});
-
-  const months = ['jan','feb','mar','apr','máj','jún','júl','aug','sep','okt','nov','dec'];
-  const typeLabels = {startovne:'Startovné', splatka:'Splátka za ligu', vratenie:'Vrátenie', ine:'Iné'};
-
-  if (!data?.length) {
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:1.5rem;color:var(--bone)">Žiadne platby.</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = data.map(p => {
-    const d = new Date(p.created_at);
-    const dateStr = d.getDate() + '. ' + months[d.getMonth()] + ' ' + d.getFullYear();
-    const amt = parseFloat(p.amount);
-    return `<tr>
-      <td style="color:var(--bone)">${dateStr}</td>
-      <td style="color:var(--cream-bright)">${typeLabels[p.type]||p.type}${p.description ? ' — ' + p.description : ''}</td>
-      <td style="text-align:right;font-family:'Oswald';font-weight:700;color:${amt>=0?'#6dbf6d':'#bf6d6d'}">
-        ${amt>=0?'+':''}${amt.toFixed(2)} €
-      </td>
-    </tr>`;
-  }).join('');
-}
 
 async function loadAdminPayments() {
   await renderAdmOverview();
@@ -4207,7 +4194,7 @@ async function updateMediaPhotoCount(mediaId) {
 async function loadAdminMedia() {
   const list = document.getElementById('admin-media-list');
   if (!list) return;
-  const { data, error } = await sb.from('media').select('*').order('created_at', { ascending: false });
+  const { data, error } = await sb.from('media').select('*').order('sort_order', { ascending: true, nullsFirst: false }).order('created_at', { ascending: false });
   if (error) {
     // Table might not exist yet
     list.innerHTML = '<div class="empty-state"><div class="es-icon">📸</div><p>Zatiaľ žiadne médiá. Pridaj prvé cez tlačidlo vyššie.</p></div>';
