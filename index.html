@@ -826,7 +826,7 @@ a:hover{color:var(--cream-bright);}
     <div class="nav-divider"></div>
     <div class="nav-group">
       <div class="nav-group-label">Hráčska zóna</div>
-      <div class="nav-item" onclick="showSection('events')" id="nav-events"><span class="nav-ic">📅</span><span>Rozpis & RSVP</span></div>
+      <div class="nav-item" onclick="showSection('events')" id="nav-events"><span class="nav-ic">📅</span><span>Udalosti</span></div>
       <div class="nav-item" onclick="showSection('finance')" id="nav-finance"><span class="nav-ic">💰</span><span>Financie</span></div>
       <div class="nav-item" onclick="showSection('internal')" id="nav-internal"><span class="nav-ic">🔒</span><span>Interné info</span></div>
       <div class="nav-item" onclick="showSection('profile')" id="nav-profile"><span class="nav-ic">👤</span><span>Môj profil</span></div>
@@ -982,7 +982,7 @@ a:hover{color:var(--cream-bright);}
       <div class="contact-card"><div class="cc-icon">🏒</div><h4>GM / Tréner</h4><p><a href="mailto:sakinder@ndrtls.com">sakinder@ndrtls.com</a></p></div>
       <div class="contact-card"><div class="cc-icon">🏆</div><h4>Kapitán / Financmajster</h4><p><a href="mailto:stehno@ndrtls.com">stehno@ndrtls.com</a></p></div>
       <div class="contact-card"><div class="cc-icon">📱</div><h4>PR / Social media</h4><p><a href="mailto:konty@ndrtls.com">konty@ndrtls.com</a></p></div>
-      <div class="contact-card"><div class="cc-icon">⚙</div><h4>Admin</h4><p><a href="mailto:admin@ndrtls.com">admin@ndrtls.com</a></p></div>
+      <div class="contact-card"><div class="cc-icon">⚙</div><h4>Admin</h4><p><a href="mailto:tesk@ndrtls.com">tesk@ndrtls.com</a></p></div>
     </div>
   </div>
 </div>
@@ -1091,7 +1091,7 @@ a:hover{color:var(--cream-bright);}
 <div class="page-section" id="sec-events">
   <div class="sec-wrap">
     <div class="sec-head">
-      <h2>Rozpis &amp; Prihlasovanie</h2>
+      <h2>Udalosti</h2>
       <p>Prihlás sa na zápasy, tréningy a akcie. Tvoja účasť sa ukladá okamžite.</p>
     </div>
     <div id="events-admin-bar" class="admin-bar" style="display:none">
@@ -1211,7 +1211,7 @@ a:hover{color:var(--cream-bright);}
           📱 <strong>PR / Social media:</strong><br>
           <a href="mailto:konty@ndrtls.com" style="color:var(--rust-light)">konty@ndrtls.com</a><br><br>
           ⚙ <strong>Admin / Tréner:</strong><br>
-          <a href="mailto:admin@ndrtls.com" style="color:var(--rust-light)">admin@ndrtls.com</a>
+          <a href="mailto:tesk@ndrtls.com" style="color:var(--rust-light)">tesk@ndrtls.com</a>
         </p>
       </div>
       <div class="card">
@@ -1425,7 +1425,7 @@ a:hover{color:var(--cream-bright);}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Bratislava Neanderthals</div>
   <div style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.6.4</div>
+  <div id="version-badge">v3.6.5</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -1818,7 +1818,7 @@ a:hover{color:var(--cream-bright);}
 
 <script>
 /* ════════════════════════════════════════════════
-   BRATISLAVA NEANDERTHALS — Unified v3.6.4
+   BRATISLAVA NEANDERTHALS — Unified v3.6.5
    ════════════════════════════════════════════════ */
 const FINANCE_PROXY_URL = 'https://trenuj.ndrtls.com/finance-proxy.php';
 const { createClient } = supabase;
@@ -2481,7 +2481,7 @@ async function submitContact() {
   const msgFull = (phone ? 'Tel: '+phone+'\n' : '') + msg;
   const { error }=await sb.from('contact_requests').insert({name,email,position:pos||null,message:msgFull});
   btn.disabled=false; btn.textContent='Odoslať prihlášku';
-  res.textContent=error?'Chyba. Napíš priamo na admin@ndrtls.com':'✓ Prihláška odoslaná! Ozveme sa ti čoskoro.';
+  res.textContent=error?'Chyba. Napíš priamo na tesk@ndrtls.com':'✓ Prihláška odoslaná! Ozveme sa ti čoskoro.';
   res.style.color=error?'#bf6d6d':'#6dbf6d'; res.style.display='block';
   if (!error) { ['cf-name','cf-email','cf-phone','cf-msg'].forEach(i=>{ const el=document.getElementById(i); if(el) el.value=''; }); document.getElementById('cf-pos').value=''; }
 }
@@ -2732,15 +2732,19 @@ function assignPlayer(pid) { if (!_lAS) return; const key=_lAS.dataset.line+'_'+
 function enableLineupEdit() { _lEd=true; document.getElementById('lineup-edit-btn').style.display='none'; document.getElementById('lineup-save-btn').style.display='inline-block'; document.getElementById('lineup-auto-btn').style.display='inline-block'; document.querySelectorAll('.player-slot').forEach(s=>{ s.style.cursor='pointer'; s.style.outline='1px dashed rgba(138,58,30,.4)'; }); }
 async function saveLineup() { _lEd=false; document.getElementById('lineup-edit-btn').style.display='inline-block'; document.getElementById('lineup-save-btn').style.display='none'; document.getElementById('lineup-auto-btn').style.display='none'; document.getElementById('lineup-picker').style.display='none'; document.querySelectorAll('.player-slot').forEach(s=>{ s.style.cursor=''; s.style.outline=''; }); const { error }=await sb.from('game_results').upsert({event_id:_lEId,season_id:2,notes:JSON.stringify(_lD)},{onConflict:'event_id'}); if (error) { toast('Chyba: '+error.message,'error'); return; } toast('Zostava uložená ✓','success'); }
 function autoLineup() {
-  // Prefer players who confirmed attendance; fall back to full roster if none
-  const pool = (_lAttend && rosterData.some(_lIsAttending))
-    ? rosterData.filter(_lIsAttending)
-    : rosterData;
+  // LEN prihlásení (RSVP=yes). Ak sa nikto neprihlásil, zostava ostáva prázdna.
+  const pool = (_lAttend) ? rosterData.filter(_lIsAttending) : [];
   const byPts = (a,b) => (b.points||0)-(a.points||0);
   const g = pool.filter(p=>p.position==='B').sort(byPts);
   const d = pool.filter(p=>p.position==='O').sort(byPts);
   const f = pool.filter(p=>p.position==='\u00da').sort(byPts);
   _lD = {};
+  if (!pool.length) {
+    renderLineup();
+    if (!_lEd) enableLineupEdit();
+    toast('Zatiaľ sa nikto neprihlásil.','info');
+    return;
+  }
   if (g[0]) _lD['goalie_G'] = {playerId:g[0].id,name:g[0].name,number:g[0].number||'\u2014'};
   [['d1','LD'],['d1','RD'],['d2','LD'],['d2','RD']].forEach(([l,p],i)=>{
     if (d[i]) _lD[l+'_'+p] = {playerId:d[i].id,name:d[i].name,number:d[i].number||'\u2014'};
@@ -2750,8 +2754,7 @@ function autoLineup() {
   });
   renderLineup();
   if (!_lEd) enableLineupEdit();
-  const note = (_lAttend && pool !== rosterData) ? ' (z prihl\u00e1sen\u00fdch)' : '';
-  toast('Zostava navrhnut\u00e1 \u26a1' + note,'success'); }
+  toast('Zostava navrhnutá \u26a1 (z prihlásených)','success'); }
 
 /* ── ADMIN RSVP ───────────────────────────────── */
 async function showAdminRsvpPanel(eventId) {
@@ -2905,7 +2908,7 @@ const typeLabels = { zapas: 'Zápas', trening: 'Tréning', turnaj: 'Turnaj', akc
 
 async function loadEvents() {
   const { data: events, error } = await sb
-    .from('events').select('*').order('date', { ascending: true });
+    .from('events').select('*').order('date', { ascending: false });
 
   const list = document.getElementById('events-list');
 
@@ -2951,6 +2954,9 @@ async function loadEvents() {
 
   list.innerHTML = events.map(ev => {
     const d = new Date(ev.date);
+    const _today = new Date(); _today.setHours(0,0,0,0);
+    const _evDay = new Date(d); _evDay.setHours(0,0,0,0);
+    const isPast = _evDay < _today;
     const day = d.getDate();
     const mon = months[d.getMonth()];
     const time = d.toLocaleTimeString('sk', {hour:'2-digit',minute:'2-digit'});
@@ -2966,7 +2972,7 @@ async function loadEvents() {
           style="margin-left:auto;color:var(--rust-light);" title="Upraviť">✏</button>`
       : '';
 
-    return `<div class="event-card" id="ecard-${ev.id}" style="flex-direction:column;align-items:stretch;cursor:default;">
+    return `<div class="event-card${isPast?' past-event':''}" id="ecard-${ev.id}" style="flex-direction:column;align-items:stretch;cursor:default;${isPast?'opacity:.5;':''}">
       <div style="display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap;">
         <div class="ev-date">${day}<span>${mon}</span></div>
         <div class="ev-info" style="flex:1">
