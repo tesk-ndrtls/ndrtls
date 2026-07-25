@@ -1425,7 +1425,7 @@ a:hover{color:var(--cream-bright);}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Bratislava Neanderthals</div>
   <div style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.6.6</div>
+  <div id="version-badge">v3.6.7</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -1818,7 +1818,7 @@ a:hover{color:var(--cream-bright);}
 
 <script>
 /* ════════════════════════════════════════════════
-   BRATISLAVA NEANDERTHALS — Unified v3.6.6
+   BRATISLAVA NEANDERTHALS — Unified v3.6.7
    ════════════════════════════════════════════════ */
 const FINANCE_PROXY_URL = 'https://trenuj.ndrtls.com/finance-proxy.php';
 const { createClient } = supabase;
@@ -2608,25 +2608,21 @@ async function savePlayerCard() {
 let _lEId=null,_lEd=false,_lD={},_lAS=null,_lAttend=null,_lShowAll=false;
 
 /* Match a roster player (players table) to a confirmed attendee (profiles table).
-   The two tables are linked only by name, so compare on normalised surname. */
+   The two tables are linked only by name. Compare on the FULL normalised name
+   (diacritics + spaces ignored) so that people sharing a surname are not confused. */
 function _lNorm(s) {
   return (s||'').toString().toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g,'')  // strip diacritics
-    .replace(/[^a-z\s]/g,'').trim();
+    .replace(/[^a-z0-9]/g,'').trim();                 // keep only a-z0-9 (spaces removed too)
 }
 function _lIsAttending(player) {
   if (!_lAttend) return true;               // RSVP unknown → don't filter
   const pn = _lNorm(player.name);
   if (!pn) return false;
-  const pParts = pn.split(/\s+/).filter(Boolean);
-  const pSur = pParts[pParts.length-1];
+  // presná zhoda celého mena (bez diakritiky, bez medzier)
   return _lAttend.some(full => {
     const fn = _lNorm(full);
-    if (!fn) return false;
-    if (fn === pn) return true;
-    const fParts = fn.split(/\s+/).filter(Boolean);
-    const fSur = fParts[fParts.length-1];
-    return !!pSur && !!fSur && pSur === fSur;
+    return fn && fn === pn;
   });
 }
 async function openLineup(eid, et) {
