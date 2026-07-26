@@ -1468,7 +1468,7 @@ a:hover{color:var(--cream-bright);}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.8.1</div>
+  <div id="version-badge">v3.8.2</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -1702,6 +1702,48 @@ a:hover{color:var(--cream-bright);}
   </div>
 </div>
 
+<!-- ══ EDIT USER MODAL (admin) ══ -->
+<div class="modal-overlay" id="modal-user-edit">
+  <div class="modal">
+    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem;">
+      <h3 style="margin:0;font-size:1.5rem;">Upraviť hráča</h3>
+      <button onclick="closeModal('modal-user-edit')"
+        style="margin-left:auto;background:none;border:0;color:var(--bone);
+        font-size:1.4rem;cursor:pointer;line-height:1;">✕</button>
+    </div>
+    <input type="hidden" id="ue-id">
+    <div class="form-group">
+      <label>Meno a priezvisko</label>
+      <input type="text" id="ue-name" placeholder="napr. Lukáš Vondráček">
+    </div>
+    <div class="form-group">
+      <label>Prezývka <span style="font-weight:400;text-transform:none;letter-spacing:0;opacity:.7;">(nepovinné)</span></label>
+      <input type="text" id="ue-nick" placeholder="napr. Tesk">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;">
+      <div class="form-group">
+        <label>Post</label>
+        <select id="ue-pos" style="width:100%;background:var(--ink);
+          border:1px solid var(--line);border-radius:6px;padding:.75rem .9rem;
+          color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;">
+          <option value="Ú">Útočník</option>
+          <option value="O">Obranca</option>
+          <option value="B">Brankár</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Číslo dresu</label>
+        <input type="number" id="ue-num" placeholder="napr. 96" min="0" max="99">
+      </div>
+    </div>
+    <div id="ue-msg" style="display:none;margin:.4rem 0 .8rem;font-family:'Oswald';font-size:.85rem;"></div>
+    <div class="modal-actions">
+      <button class="btn-admin save" onclick="saveUserEdit()">✓ Uložiť</button>
+      <button class="btn-admin cancel" onclick="closeModal('modal-user-edit')">Zrušiť</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ ADMIN RSVP MODAL ══ -->
 <div class="modal-overlay" id="modal-admin-rsvp">
   <div class="modal">
@@ -1861,7 +1903,7 @@ a:hover{color:var(--cream-bright);}
 
 <script>
 /* ════════════════════════════════════════════════
-   BRATISLAVA NEANDERTHALS — Unified v3.8.1
+   BRATISLAVA NEANDERTHALS — Unified v3.8.2
    ════════════════════════════════════════════════ */
 const FINANCE_PROXY_URL = 'https://trenuj.ndrtls.com/finance-proxy.php';
 const CONTACT_NOTIFY_URL = 'https://trenuj.ndrtls.com/contact-notify.php';
@@ -2400,42 +2442,44 @@ async function loadAdminUsers() {
   }
 }
 
-async function adminEditNameFromBtn(btn) {
+function adminEditNameFromBtn(btn) {
   const uid  = btn.dataset.uid;
   const cur  = decodeURIComponent(btn.dataset.name || '');
   const nick = decodeURIComponent(btn.dataset.nick || '');
-  const pos  = decodeURIComponent(btn.dataset.pos || '');
+  const pos  = decodeURIComponent(btn.dataset.pos || '') || 'Ú';
   const num  = decodeURIComponent(btn.dataset.num || '');
-  adminEditName(uid, cur, nick, pos, num);
+  document.getElementById('ue-id').value = uid;
+  document.getElementById('ue-name').value = cur;
+  document.getElementById('ue-nick').value = nick;
+  document.getElementById('ue-pos').value = ['Ú','O','B'].includes(pos) ? pos : 'Ú';
+  document.getElementById('ue-num').value = num;
+  const msg = document.getElementById('ue-msg'); if (msg) msg.style.display = 'none';
+  document.getElementById('modal-user-edit').classList.add('show');
 }
 
-async function adminEditName(userId, currentName, currentNick, currentPos, currentNum) {
-  const name = prompt('Meno a priezvisko:', currentName || '');
-  if (name === null) return;                       // cancelled
-  const trimmed = name.trim();
-  if (!trimmed) { toast('Meno nemôže byť prázdne', 'error'); return; }
+async function saveUserEdit() {
+  const userId = document.getElementById('ue-id').value;
+  const name   = document.getElementById('ue-name').value.trim();
+  const nick   = document.getElementById('ue-nick').value.trim();
+  const posV   = document.getElementById('ue-pos').value || 'Ú';
+  const numRaw = document.getElementById('ue-num').value.trim();
+  const msg    = document.getElementById('ue-msg');
+  const showMsg = (t,ok) => { if (msg) { msg.textContent = t; msg.style.color = ok ? '#6dbf6d' : '#bf6d6d'; msg.style.display = 'block'; } };
 
-  const nick = prompt('Prezývka (nepovinné):', currentNick || '');
-  if (nick === null) return;                        // cancelled
+  if (!name) { showMsg('Meno nemôže byť prázdne.', false); return; }
+  const numV = numRaw ? parseInt(numRaw) : null;
 
-  const posIn = prompt('Post — napíš Ú (útočník), O (obranca) alebo B (brankár):', currentPos || 'Ú');
-  if (posIn === null) return;
-  const posV = ({'u':'Ú','ú':'Ú','o':'O','b':'B'})[posIn.trim().toLowerCase()] || 'Ú';
-
-  const numIn = prompt('Číslo dresu (nepovinné):', (currentNum!=='' && currentNum!=null) ? currentNum : '');
-  if (numIn === null) return;
-  const numV = numIn.trim() ? parseInt(numIn.trim()) : null;
-
-  const payload = { full_name: trimmed, nickname: nick.trim() || null, position: posV, number: (numV!=null && !isNaN(numV)) ? numV : null };
+  const payload = { full_name: name, nickname: nick || null, position: posV, number: (numV!=null && !isNaN(numV)) ? numV : null };
   const { error } = await sb.from('profiles').update(payload).eq('id', userId);
-  if (error) { toast('Chyba: ' + error.message, 'error'); return; }
+  if (error) { showMsg('Chyba: ' + error.message, false); return; }
 
-  // Keep own badge in sync if the admin edited their own profile
+  // Sync vlastný badge, ak admin upravil sám seba
   if (userId === currentUser?.id) {
-    if (currentProfile) { currentProfile.full_name = trimmed; currentProfile.nickname = payload.nickname; currentProfile.position = posV; currentProfile.number = payload.number; }
+    if (currentProfile) { currentProfile.full_name = name; currentProfile.nickname = payload.nickname; currentProfile.position = posV; currentProfile.number = payload.number; }
     const un = document.getElementById('user-name');
-    if (un) un.textContent = payload.nickname || trimmed;
+    if (un) un.textContent = payload.nickname || name;
   }
+  closeModal('modal-user-edit');
   toast('Hráč uložený ✓', 'success');
   loadAdminUsers();
 }
