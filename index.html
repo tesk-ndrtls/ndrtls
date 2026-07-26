@@ -362,6 +362,62 @@ header{
 .standings-table .highlight td{background:rgba(107,31,42,.25); border-left:3px solid var(--maroon);}
 .standings-table .highlight td:first-child{color:var(--cream-bright);}
 .pts{font-family:'Oswald'; font-weight:700; color:var(--cream-bright);}
+.standings-table tr[data-eid], .schedule-table tr[data-eid]{cursor:pointer;}
+.schedule-table tr[data-eid]:hover td:first-child::before{content:'▸ '; color:var(--rust-light);}
+
+/* ── MATCH DETAIL ── */
+.md-modal{max-width:760px;}
+.md-scoreline{display:flex; align-items:center; justify-content:center; gap:1.1rem; margin-bottom:1rem;}
+.md-team{flex:1; text-align:center; font-family:'Oswald'; font-weight:700; text-transform:uppercase;
+  color:var(--cream-bright); font-size:1.05rem; line-height:1.15;}
+.md-team.nea{color:var(--rust-light);}
+.md-score{font-family:'Anton'; font-size:2.4rem; color:var(--cream-bright); letter-spacing:.04em; white-space:nowrap;}
+.md-periods{text-align:center; color:var(--bone); font-size:.82rem; letter-spacing:.08em; margin-bottom:1.2rem;}
+.md-video{position:relative; width:100%; aspect-ratio:16/9; background:var(--ink);
+  border:1px solid var(--line); border-radius:10px; overflow:hidden; margin-bottom:1.4rem;}
+.md-video iframe{position:absolute; inset:0; width:100%; height:100%; border:0;}
+.md-video-none{display:flex; align-items:center; justify-content:center; height:100%;
+  color:var(--bone); font-size:.9rem; text-align:center; padding:1rem;}
+.md-sec-label{font-family:'Oswald'; font-weight:700; text-transform:uppercase;
+  color:var(--rust-light); font-size:.78rem; letter-spacing:.2em; margin:1.4rem 0 .8rem;}
+/* timeline */
+.md-timeline{position:relative; margin-left:.4rem;}
+.md-tl-item{position:relative; padding:.55rem 0 .55rem 2.6rem; border-left:2px solid var(--line);}
+.md-tl-item:last-child{border-left-color:transparent;}
+.md-tl-item.clickable{cursor:pointer; border-radius:0 8px 8px 0;}
+.md-tl-item.clickable:hover{background:rgba(107,31,42,.15);}
+.md-tl-dot{position:absolute; left:-9px; top:.7rem; width:16px; height:16px; border-radius:50%;
+  display:grid; place-items:center; font-size:.62rem; background:var(--charcoal); border:2px solid var(--rust);}
+.md-tl-item.goal .md-tl-dot{border-color:#6dbf6d; background:rgba(45,80,45,.6);}
+.md-tl-item.penalty .md-tl-dot{border-color:var(--rust-light); background:rgba(138,58,30,.4);}
+.md-tl-time{position:absolute; left:.1rem; top:.55rem; font-family:'Oswald'; font-weight:700;
+  font-size:.7rem; color:var(--bone); display:none;}
+.md-tl-head{display:flex; align-items:baseline; gap:.5rem; flex-wrap:wrap;}
+.md-tl-clock{font-family:'Oswald'; font-weight:700; color:var(--bone); font-size:.8rem; min-width:4.4rem;}
+.md-tl-title{font-family:'Oswald'; font-weight:600; color:var(--cream-bright); font-size:.98rem;}
+.md-tl-title .num{color:var(--rust-light); font-weight:700;}
+.md-tl-badge{font-size:.62rem; font-weight:700; text-transform:uppercase; letter-spacing:.1em;
+  padding:.12rem .45rem; border-radius:4px; margin-left:auto;}
+.md-tl-item.goal .md-tl-badge{background:rgba(45,80,45,.5); color:#8fd18f;}
+.md-tl-item.penalty .md-tl-badge{background:rgba(138,58,30,.35); color:var(--rust-light);}
+.md-tl-sub{color:var(--bone); font-size:.84rem; margin-top:.15rem; line-height:1.35;}
+.md-tl-score{font-family:'Anton'; font-size:.92rem; color:var(--cream-bright); margin-left:.4rem;}
+.md-tl-play{color:var(--rust-light); font-size:.72rem; margin-top:.2rem; display:inline-flex; align-items:center; gap:.3rem;}
+.md-empty{color:var(--bone); font-size:.9rem; padding:.8rem 0;}
+/* box score */
+.md-box-team{font-family:'Oswald'; font-weight:700; text-transform:uppercase;
+  color:var(--cream-bright); font-size:.92rem; margin:1rem 0 .5rem;}
+.md-box-team.nea{color:var(--rust-light);}
+.md-box{width:100%; border-collapse:collapse; margin-bottom:1rem; min-width:420px;}
+.md-box th{font-family:'Oswald'; font-weight:700; font-size:.66rem; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--rust-light); padding:.4rem .55rem;
+  border-bottom:1px solid var(--maroon); text-align:center;}
+.md-box th:nth-child(2){text-align:left;}
+.md-box td{padding:.42rem .55rem; border-bottom:1px solid var(--line); font-size:.9rem;
+  text-align:center; color:var(--bone);}
+.md-box td:nth-child(2){text-align:left; color:var(--cream-bright);}
+.md-box tr.roster-match td:nth-child(2){color:var(--rust-light); font-weight:600;}
+.md-box-wrap{overflow-x:auto;}
 
 /* ── FOOTER ── */
 footer{
@@ -943,6 +999,22 @@ a:hover{color:var(--cream-bright);}
   </div>
 </div>
 
+<!-- ── MATCH DETAIL MODAL ── -->
+<div class="modal-overlay" id="modal-match-detail">
+  <div class="modal md-modal">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.4rem;">
+      <h3 id="md-title" style="margin:0;font-size:1.3rem;">Detail zápasu</h3>
+      <button onclick="closeModal('modal-match-detail')"
+        style="background:none;border:0;color:var(--bone);font-size:1.6rem;cursor:pointer;line-height:1;">&times;</button>
+    </div>
+    <div id="md-body">
+      <div style="text-align:center;padding:2.5rem;color:var(--bone);">
+        <span class="spinner"></span> <span style="margin-left:.6rem;">Načítavam…</span>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ── MEDIA ── -->
 <div class="page-section" id="sec-media">
   <div class="sec-wrap">
@@ -1471,7 +1543,7 @@ a:hover{color:var(--cream-bright);}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.8.3</div>
+  <div id="version-badge">v3.9.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -1907,7 +1979,7 @@ a:hover{color:var(--cream-bright);}
 
 <script>
 /* ════════════════════════════════════════════════
-   BRATISLAVA NEANDERTHALS — Unified v3.8.3
+   BRATISLAVA NEANDERTHALS — Unified v3.9.0
    ════════════════════════════════════════════════ */
 const FINANCE_PROXY_URL = 'https://trenuj.ndrtls.com/finance-proxy.php';
 const CONTACT_NOTIFY_URL = 'https://trenuj.ndrtls.com/contact-notify.php';
@@ -2710,7 +2782,12 @@ async function loadRAHL() {
           : d;
         const resClass = m.result === 'V' ? 'result-w' : m.result === 'P' ? 'result-l' : 'result-u';
         const resLabel = m.result === 'V' ? 'V' : m.result === 'P' ? 'P' : 'R';
-        return '<tr>' +
+        // Resolve szalh event id (proxy may expose it under different keys)
+        const eid = m.event_id || m.szalh_id || m.eventId || m.id || null;
+        const clickAttrs = eid
+          ? ' data-eid="' + eid + '" onclick="openMatchDetail(' + eid + ')"'
+          : '';
+        return '<tr' + clickAttrs + '>' +
           '<td style="color:var(--bone)">' + dateStr + '</td>' +
           '<td style="color:var(--cream-bright)">' + m.opponent + '</td>' +
           '<td style="font-family:Oswald;font-weight:700">' + m.score + '</td>' +
@@ -2732,6 +2809,271 @@ async function loadRAHL() {
     document.getElementById('rahl-loading').style.display = 'none';
     document.getElementById('rahl-error').style.display = 'block';
   }
+}
+
+/* ── MATCH DETAIL (časť C) ─────────────────────────
+   Skladá 3 vrstvy dát pre každú udalosť:
+     1. szalh (základ z match-detail-proxy.php — nikdy sa neukladá)
+     2. auto-override zo súpisky (spárovanie mena s aktívnym ndrtls userom)
+     3. admin override z match_details.overrides (podľa kľúča udalosti — vždy vyhráva)
+   Video-časy (video_offsets) a youtube_id override prichádzajú z match_details.  */
+const MATCH_DETAIL_PROXY = 'https://trenuj.ndrtls.com/match-detail-proxy.php';
+let _mdEsc; // lazy html escaper
+function mdEsc(s){
+  if (s == null) return '';
+  if (!_mdEsc) _mdEsc = document.createElement('div');
+  _mdEsc.textContent = String(s);
+  return _mdEsc.innerHTML;
+}
+// Normalizuj meno na porovnanie: bez diakritiky, medzier, malé písmená
+function mdNormName(s){
+  if (!s) return '';
+  return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase().replace(/[^a-z0-9]/g,'');
+}
+// szalh pozícia (rôzne skratky) → ndrtls kód (B/O/Ú)
+function mdNormPos(p){
+  if (!p) return '';
+  const s = String(p).trim().toLowerCase();
+  if (s.startsWith('b') || s.startsWith('g')) return 'B';           // brankár / goalie
+  if (s.startsWith('o') || s.startsWith('d')) return 'O';           // obranca / defense
+  if (s.startsWith('ú') || s.startsWith('u') || s.startsWith('f') || s.startsWith('a')) return 'Ú'; // útočník / forward
+  return '';
+}
+
+let _mdProfilesCache = null;
+async function mdGetActiveProfiles(){
+  if (_mdProfilesCache) return _mdProfilesCache;
+  try {
+    const { data } = await sb.from('profiles').select('full_name,nickname,position,number');
+    const rows = (data || []).filter(p => p.full_name && p.full_name.trim());
+    // Index podľa normalizovaného mena (celé meno + priezvisko)
+    const idx = new Map();
+    rows.forEach(p => {
+      const parts = p.full_name.trim().split(/\s+/);
+      const last = parts[parts.length-1] || '';
+      const full = mdNormName(p.full_name);
+      if (full) idx.set(full, p);
+      const ln = mdNormName(last);
+      if (ln && !idx.has(ln)) idx.set(ln, p);      // priezvisko len ak nekoliduje
+    });
+    _mdProfilesCache = idx;
+  } catch(e){ console.warn('mdGetActiveProfiles failed:', e); _mdProfilesCache = new Map(); }
+  return _mdProfilesCache;
+}
+
+// Vrstva 2: auto-override zo súpisky. Spáruje szalh meno s aktívnym userom.
+function mdApplyRoster(name, profIdx){
+  if (!name || !profIdx) return null;
+  const full = mdNormName(name);
+  if (profIdx.has(full)) return profIdx.get(full);
+  const parts = String(name).trim().split(/\s+/);
+  const last = mdNormName(parts[parts.length-1] || '');
+  if (last && profIdx.has(last)) return profIdx.get(last);
+  return null;
+}
+
+// Poskladaj jednu udalosť cez 3 vrstvy → { num, name, pos }
+function mdComposePlayer(base, profIdx, ov){
+  let num  = base.player_num  != null ? base.player_num  : '';
+  let name = base.player_name != null ? base.player_name : '';
+  let pos  = '';
+  // 2. súpiska
+  const hit = mdApplyRoster(name, profIdx);
+  if (hit){
+    if (hit.number != null && hit.number !== '') num = hit.number;
+    if (hit.position) pos = hit.position;
+  }
+  // 3. admin override (vždy vyhráva)
+  if (ov){
+    if (ov.player_num  != null && ov.player_num  !== '') num  = ov.player_num;
+    if (ov.player_name != null && ov.player_name !== '') name = ov.player_name;
+    if (ov.pos         != null && ov.pos         !== '') pos  = ov.pos;
+  }
+  return { num, name, pos };
+}
+
+function mdComposeAssists(assists, profIdx, ov){
+  // admin override asistencií (ak zadané) má prednosť pred szalh
+  const src = (ov && Array.isArray(ov.assists)) ? ov.assists : (assists || []);
+  return src.map(a => {
+    let num = a.num != null ? a.num : '';
+    let name = a.name != null ? a.name : '';
+    const hit = mdApplyRoster(name, profIdx);
+    if (hit && hit.number != null && hit.number !== '') num = hit.number;
+    return { num, name };
+  });
+}
+
+let _mdCurrent = null; // { data, details } aktuálne otvoreného zápasu (pre video seek)
+
+async function openMatchDetail(eventId){
+  const overlay = document.getElementById('modal-match-detail');
+  const body = document.getElementById('md-body');
+  const titleEl = document.getElementById('md-title');
+  titleEl.textContent = 'Detail zápasu';
+  body.innerHTML = '<div style="text-align:center;padding:2.5rem;color:var(--bone);">'
+    + '<span class="spinner"></span> <span style="margin-left:.6rem;">Načítavam…</span></div>';
+  overlay.classList.add('show');
+
+  try {
+    // Paralelne: szalh proxy + admin override z Supabase + aktívne profily
+    const [proxyRes, detailsRes, profIdx] = await Promise.all([
+      fetch(MATCH_DETAIL_PROXY + '?id=' + encodeURIComponent(eventId)),
+      sb.from('match_details').select('*').eq('event_id', eventId).maybeSingle(),
+      mdGetActiveProfiles()
+    ]);
+    if (!proxyRes.ok) throw new Error('proxy HTTP ' + proxyRes.status);
+    const data = await proxyRes.json();
+    const details = (detailsRes && detailsRes.data) || {};
+    _mdCurrent = { data, details, profIdx };
+    renderMatchDetail(data, details, profIdx);
+  } catch(e){
+    console.error('Match detail load error:', e);
+    body.innerHTML = '<div class="md-empty" style="text-align:center;padding:2rem;">'
+      + 'Detail zápasu sa nepodarilo načítať.<br>'
+      + '<a href="https://szalh.sk" target="_blank" style="color:var(--rust-light);">Otvoriť szalh.sk ↗</a></div>';
+  }
+}
+
+function renderMatchDetail(data, details, profIdx){
+  const body = document.getElementById('md-body');
+  const titleEl = document.getElementById('md-title');
+  const teams = data.teams || {};
+  const homeName = teams.home || 'Domáci';
+  const awayName = teams.away || 'Hostia';
+  const isNeaTeam = n => mdNormName(n).includes('neandert');
+  titleEl.textContent = (data.round ? data.round + ' · ' : '') + homeName + ' — ' + awayName;
+
+  const fin = data.final || {};
+  const per = Array.isArray(data.period_scores) ? data.period_scores : [];
+  const periodsStr = per.length
+    ? per.map(p => (p.home != null ? p.home : '?') + ':' + (p.away != null ? p.away : '?')).join('  ·  ')
+    : '';
+
+  // Video: override youtube_id má prednosť pred szalh
+  const ytId = details.youtube_id || data.youtube || '';
+  const offsets = details.video_offsets || {};
+  const overrides = details.overrides || {};
+
+  let html = '';
+
+  // Scoreline
+  html += '<div class="md-scoreline">'
+    + '<div class="md-team' + (isNeaTeam(homeName) ? ' nea' : '') + '">' + mdEsc(homeName) + '</div>'
+    + '<div class="md-score">' + (fin.home != null ? fin.home : '–') + ':' + (fin.away != null ? fin.away : '–') + '</div>'
+    + '<div class="md-team' + (isNeaTeam(awayName) ? ' nea' : '') + '">' + mdEsc(awayName) + '</div>'
+    + '</div>';
+  const metaBits = [];
+  if (data.date) metaBits.push(mdEsc(data.date));
+  if (periodsStr) metaBits.push('po tretinách ' + periodsStr);
+  if (metaBits.length) html += '<div class="md-periods">' + metaBits.join('  ·  ') + '</div>';
+
+  // Video
+  if (ytId){
+    html += '<div class="md-video"><iframe id="md-yt" loading="lazy" '
+      + 'src="https://www.youtube-nocookie.com/embed/' + mdEsc(ytId) + '?rel=0" '
+      + 'title="Záznam zápasu" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" '
+      + 'allowfullscreen></iframe></div>';
+  } else {
+    html += '<div class="md-video"><div class="md-video-none">Video zatiaľ nie je priradené.</div></div>';
+  }
+
+  // Timeline
+  html += '<div class="md-sec-label">Priebeh zápasu</div>';
+  const events = Array.isArray(data.events) ? data.events : [];
+  if (events.length){
+    html += '<div class="md-timeline">';
+    events.forEach(ev => {
+      const key = ev.key || ((ev.period != null ? ev.period : '?') + '_' + (ev.time || '?') + '_' + (ev.type || '?'));
+      const ov = overrides[key];
+      const isGoal = ev.type === 'goal';
+      const cls = isGoal ? 'goal' : 'penalty';
+      const player = mdComposePlayer(ev, profIdx, ov);
+      const offset = offsets[key];
+      const canSeek = !!(offset && ytId);
+      const clockTxt = (ev.period != null ? ev.period + '. tretina · ' : '') + (ev.time || '');
+      const numTxt = player.num !== '' ? '<span class="num">#' + mdEsc(player.num) + '</span> ' : '';
+      const nameTxt = player.name ? mdEsc(player.name) : '<span style="color:var(--bone)">(neznámy hráč)</span>';
+
+      let subParts = [];
+      if (isGoal){
+        const assists = mdComposeAssists(ev.assists, profIdx, ov);
+        if (assists.length){
+          subParts.push('Asistencie: ' + assists.map(a =>
+            (a.num !== '' ? '#' + mdEsc(a.num) + ' ' : '') + mdEsc(a.name)).join(', '));
+        }
+        if (ev.situation) subParts.push(mdEsc(ev.situation));
+        if (ev.home_score != null && ev.away_score != null)
+          subParts.push('<span class="md-tl-score">' + ev.home_score + ':' + ev.away_score + '</span>');
+      } else {
+        if (ev.reason) subParts.push(mdEsc(ev.reason));
+        if (ev.situation) subParts.push(mdEsc(ev.situation));
+      }
+
+      html += '<div class="md-tl-item ' + cls + (canSeek ? ' clickable' : '') + '"'
+        + (canSeek ? ' onclick="mdSeek(\'' + mdEsc(offset) + '\')"' : '') + '>'
+        + '<div class="md-tl-dot">' + (isGoal ? '🥅' : '⛔') + '</div>'
+        + '<div class="md-tl-head">'
+        +   '<span class="md-tl-clock">' + mdEsc(clockTxt) + '</span>'
+        +   '<span class="md-tl-title">' + numTxt + nameTxt + '</span>'
+        +   '<span class="md-tl-badge">' + (isGoal ? 'Gól' : 'Trest') + '</span>'
+        + '</div>'
+        + (subParts.length ? '<div class="md-tl-sub">' + subParts.join(' · ') + '</div>' : '')
+        + (canSeek ? '<span class="md-tl-play">▶ prehrať vo videu (' + mdEsc(offset) + ')</span>' : '')
+        + '</div>';
+    });
+    html += '</div>';
+  } else {
+    html += '<div class="md-empty">Priebeh zápasu nie je k dispozícii.</div>';
+  }
+
+  // Box score
+  html += '<div class="md-sec-label">Štatistiky hráčov</div>';
+  const box = Array.isArray(data.boxscore) ? data.boxscore : [];
+  if (box.length){
+    box.forEach(team => {
+      const tName = team.team || '';
+      html += '<div class="md-box-team' + (isNeaTeam(tName) ? ' nea' : '') + '">' + mdEsc(tName) + '</div>';
+      html += '<div class="md-box-wrap"><table class="md-box">'
+        + '<thead><tr><th>#</th><th>Hráč</th><th>G</th><th>A</th><th>B</th><th>TM</th></tr></thead><tbody>';
+      const players = Array.isArray(team.players) ? team.players : [];
+      players.forEach(pl => {
+        const hit = mdApplyRoster(pl.name, profIdx);
+        const num = (hit && hit.number != null && hit.number !== '') ? hit.number
+                    : (pl.num != null ? pl.num : '');
+        html += '<tr' + (hit ? ' class="roster-match"' : '') + '>'
+          + '<td>' + mdEsc(num) + '</td>'
+          + '<td>' + mdEsc(pl.name || '') + '</td>'
+          + '<td>' + (pl.goals   != null ? pl.goals   : 0) + '</td>'
+          + '<td>' + (pl.assists != null ? pl.assists : 0) + '</td>'
+          + '<td>' + (pl.points  != null ? pl.points  : ((pl.goals||0)+(pl.assists||0))) + '</td>'
+          + '<td>' + (pl.pim     != null ? pl.pim     : 0) + '</td>'
+          + '</tr>';
+      });
+      html += '</tbody></table></div>';
+    });
+  } else {
+    html += '<div class="md-empty">Box score nie je k dispozícii.</div>';
+  }
+
+  body.innerHTML = html;
+}
+
+// Prehraj video od zadaného času zápasu-vo-videu (mm:ss alebo hh:mm:ss)
+function mdSeek(offset){
+  const parts = String(offset).split(':').map(n => parseInt(n,10) || 0);
+  let secs = 0;
+  if (parts.length === 3) secs = parts[0]*3600 + parts[1]*60 + parts[2];
+  else if (parts.length === 2) secs = parts[0]*60 + parts[1];
+  else secs = parts[0] || 0;
+  const iframe = document.getElementById('md-yt');
+  if (!iframe || !_mdCurrent) return;
+  const ytId = _mdCurrent.details.youtube_id || _mdCurrent.data.youtube;
+  iframe.src = 'https://www.youtube-nocookie.com/embed/' + ytId
+    + '?rel=0&start=' + secs + '&autoplay=1';
+  // scroll video do zorného poľa v rámci modálu
+  iframe.closest('.md-video').scrollIntoView({ behavior:'smooth', block:'center' });
 }
 
 
