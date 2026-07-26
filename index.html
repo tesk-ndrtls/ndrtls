@@ -524,6 +524,10 @@ footer .f-small{font-size:.78rem; letter-spacing:.1em; text-transform:uppercase;
   }
 .spinner{display:inline-block;width:14px;height:14px;vertical-align:-2px;border:2px solid rgba(205,191,159,.25);border-top-color:var(--rust-light);border-radius:50%;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg)}}
+#ptr-indicator{position:fixed;top:0;left:0;right:0;height:0;display:flex;align-items:center;justify-content:center;z-index:200;pointer-events:none;overflow:hidden;transition:height .18s ease;}
+#ptr-indicator.ptr-visible{height:56px;}
+#ptr-spinner{width:26px;height:26px;border:3px solid rgba(205,191,159,.25);border-top-color:var(--rust-light);border-radius:50%;opacity:.9;transition:transform .05s linear;}
+#ptr-indicator.ptr-spin #ptr-spinner{animation:spin .7s linear infinite;}
 
 /* ── GLOBAL LINK COLOR FIX ─────────────────── */
 a{color:var(--rust-light);text-decoration:none;}
@@ -805,6 +809,7 @@ a:hover{color:var(--cream-bright);}
 <body>
 
 <div id="toast"></div>
+<div id="ptr-indicator" aria-hidden="true"><div id="ptr-spinner"></div></div>
 <div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
 
 <!-- ══ SIDE NAV ══ -->
@@ -1422,11 +1427,24 @@ a:hover{color:var(--cream-bright);}
 </div>
 
 
+<div class="page-section" id="sec-admin-contacts">
+  <div class="sec-wrap">
+    <div class="sec-head">
+      <h2>Prihlášky</h2>
+      <p>Prihlášky odoslané cez kontaktný formulár.</p>
+    </div>
+    <div id="admin-contacts-list">
+      <div class="empty-state"><span class="spinner"></span></div>
+    </div>
+  </div>
+</div>
+
+
 <footer>
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
-  <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Bratislava Neanderthals</div>
+  <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.7.0</div>
+  <div id="version-badge">v3.7.2</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -1817,21 +1835,9 @@ a:hover{color:var(--cream-bright);}
   </div>
 </div>
 
-<div class="page-section" id="sec-admin-contacts">
-  <div class="sec-wrap">
-    <div class="sec-head">
-      <h2>Prihlášky</h2>
-      <p>Prihlášky odoslané cez kontaktný formulár.</p>
-    </div>
-    <div id="admin-contacts-list">
-      <div class="empty-state"><span class="spinner"></span></div>
-    </div>
-  </div>
-</div>
-
 <script>
 /* ════════════════════════════════════════════════
-   BRATISLAVA NEANDERTHALS — Unified v3.7.0
+   BRATISLAVA NEANDERTHALS — Unified v3.7.2
    ════════════════════════════════════════════════ */
 const FINANCE_PROXY_URL = 'https://trenuj.ndrtls.com/finance-proxy.php';
 const CONTACT_NOTIFY_URL = 'https://trenuj.ndrtls.com/contact-notify.php';
@@ -2532,8 +2538,12 @@ async function loadAdminContacts() {
 
 async function deleteContactRequest(id) {
   if (!confirm('Vymazať túto prihlášku?')) return;
-  const { error } = await sb.from('contact_requests').delete().eq('id', id);
+  const { data, error } = await sb.from('contact_requests').delete().eq('id', id).select();
   if (error) { toast('Chyba: ' + error.message, 'error'); return; }
+  if (!data || !data.length) {
+    toast('Nepodarilo sa vymazať (chýba oprávnenie).', 'error');
+    return;
+  }
   toast('Prihláška vymazaná', 'success');
   loadAdminContacts();
 }
@@ -4135,6 +4145,52 @@ function galleryPrev() { _galleryIndex = (_galleryIndex - 1 + _galleryPhotos.len
 function closeGallery() {
   document.getElementById('gallery-lightbox').style.display = 'none';
   document.body.style.overflow = '';
+}
+
+/* ── PULL TO REFRESH (pre PWA na ploche, kde natívny pull nefunguje) ── */
+function initPullToRefresh() {
+  const ind = document.getElementById('ptr-indicator');
+  const sp  = document.getElementById('ptr-spinner');
+  if (!ind || !sp) return;
+  const THRESHOLD = 70;   // koľko treba potiahnuť na spustenie
+  const MAX = 90;
+  let startY = 0, pulling = false, dist = 0;
+
+  const scroller = () => document.scrollingElement || document.documentElement;
+
+  window.addEventListener('touchstart', e => {
+    if (scroller().scrollTop > 0) { pulling = false; return; }
+    startY = e.touches[0].clientY;
+    pulling = true; dist = 0;
+  }, { passive: true });
+
+  window.addEventListener('touchmove', e => {
+    if (!pulling) return;
+    dist = e.touches[0].clientY - startY;
+    if (dist <= 0) { ind.classList.remove('ptr-visible'); return; }
+    const shown = Math.min(dist, MAX);
+    ind.style.height = shown + 'px';
+    ind.classList.add('ptr-visible');
+    sp.style.transform = 'rotate(' + (dist * 3) + 'deg)';
+  }, { passive: true });
+
+  window.addEventListener('touchend', () => {
+    if (!pulling) return;
+    pulling = false;
+    if (dist >= THRESHOLD) {
+      ind.classList.add('ptr-spin','ptr-visible');
+      ind.style.height = '56px';
+      setTimeout(() => location.reload(), 350);
+    } else {
+      ind.classList.remove('ptr-visible');
+      ind.style.height = '';
+    }
+  }, { passive: true });
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initPullToRefresh);
+} else {
+  initPullToRefresh();
 }
 
 // Swipe support
