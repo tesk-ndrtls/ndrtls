@@ -102,6 +102,7 @@ header{
   background:rgba(15,11,9,.97); border-right:2px solid var(--maroon);
   transform:translateX(-100%); transition:transform .3s ease;
   display:flex; flex-direction:column; overflow-y:auto;
+  overscroll-behavior:contain; -webkit-overflow-scrolling:touch;
   padding-bottom:env(safe-area-inset-bottom,0px);
   padding-left:env(safe-area-inset-left,0px);
 }
@@ -419,6 +420,35 @@ header{
 .md-box tr.roster-match td:nth-child(2){color:var(--rust-light); font-weight:600;}
 .md-box-wrap{overflow-x:auto;}
 
+/* ── MATCH DETAIL: ADMIN EDIT ── */
+.md-admin{margin-top:1.6rem; border:1px solid var(--maroon); border-radius:12px;
+  padding:1.1rem 1rem; background:rgba(107,31,42,.08);}
+.md-admin-title{font-family:'Oswald'; font-weight:700; text-transform:uppercase;
+  letter-spacing:.12em; font-size:.82rem; color:var(--rust-light); margin-bottom:.9rem;}
+.md-admin-sub{font-family:'Oswald'; font-weight:700; text-transform:uppercase;
+  letter-spacing:.1em; font-size:.7rem; color:var(--bone); margin:1rem 0 .5rem;}
+.md-admin-row{margin-bottom:.6rem;}
+.md-admin-lbl{display:block; font-family:'Oswald'; font-weight:600; font-size:.66rem;
+  letter-spacing:.08em; text-transform:uppercase; color:var(--bone); margin-bottom:.25rem;}
+.md-admin-inp{width:100%; background:rgba(21,17,15,.7); border:1px solid var(--line);
+  border-radius:6px; padding:.5rem .65rem; color:var(--cream); font-family:'Barlow Condensed';
+  font-size:.95rem;}
+.md-admin-inp:focus{outline:none; border-color:var(--rust-light);}
+.md-admin-hint{color:var(--bone); font-size:.72rem; margin-top:.25rem;}
+.md-admin-ev{border:1px solid var(--line); border-radius:8px; padding:.6rem .65rem;
+  margin-bottom:.55rem; background:rgba(21,17,15,.35);}
+.md-admin-ev-head{font-size:.85rem; color:var(--cream-bright); margin-bottom:.5rem;
+  display:flex; align-items:center; gap:.4rem; flex-wrap:wrap;}
+.md-admin-key{font-family:monospace; font-size:.66rem; color:var(--bone);
+  background:rgba(0,0,0,.3); padding:.1rem .35rem; border-radius:4px;}
+.md-admin-grid{display:grid; grid-template-columns:1fr 60px; gap:.5rem;}
+.md-admin-wide{grid-column:1 / -1;}
+.md-admin-actions{display:flex; align-items:center; gap:.8rem; margin-top:1rem;}
+.md-admin-status{font-family:'Oswald'; font-size:.8rem; color:var(--bone);}
+.md-admin-status.ok{color:#8fd18f;}
+.md-admin-status.err{color:var(--rust-light);}
+.md-admin-note{color:var(--bone); font-size:.72rem; margin-top:.7rem; line-height:1.4;}
+
 /* ── FOOTER ── */
 footer{
   position:relative; z-index:2; text-align:center;
@@ -580,9 +610,9 @@ footer .f-small{font-size:.78rem; letter-spacing:.1em; text-transform:uppercase;
   }
 .spinner{display:inline-block;width:14px;height:14px;vertical-align:-2px;border:2px solid rgba(205,191,159,.25);border-top-color:var(--rust-light);border-radius:50%;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg)}}
-#ptr-indicator{position:fixed;top:0;left:0;right:0;height:0;display:flex;align-items:center;justify-content:center;z-index:200;pointer-events:none;overflow:hidden;transition:height .18s ease;}
-#ptr-indicator.ptr-visible{height:56px;}
-#ptr-spinner{width:26px;height:26px;border:3px solid rgba(205,191,159,.25);border-top-color:var(--rust-light);border-radius:50%;opacity:.9;transition:transform .05s linear;}
+#ptr-indicator{position:fixed;top:0;left:0;right:0;height:0;display:flex;align-items:flex-end;justify-content:center;z-index:2147483000;pointer-events:none;overflow:hidden;transition:height .18s ease;padding-top:env(safe-area-inset-top,0px);box-sizing:border-box;}
+#ptr-indicator.ptr-visible{height:calc(64px + env(safe-area-inset-top,0px));}
+#ptr-spinner{width:34px;height:34px;margin-bottom:12px;border:4px solid rgba(205,191,159,.3);border-top-color:var(--rust-light);border-radius:50%;opacity:1;background:rgba(21,17,15,.55);box-shadow:0 2px 10px rgba(0,0,0,.5);transition:transform .05s linear;}
 #ptr-indicator.ptr-spin #ptr-spinner{animation:spin .7s linear infinite;}
 
 /* ── GLOBAL LINK COLOR FIX ─────────────────── */
@@ -605,9 +635,12 @@ a:hover{color:var(--cream-bright);}
 .btn-rsvp.yes:hover,.btn-rsvp.yes.active{background:#4a8a4a;color:var(--cream-bright);border-color:#4a8a4a;}
 .btn-rsvp.no{background:rgba(138,74,74,.2);color:#bf6d6d;border:1px solid rgba(138,74,74,.4);}
 .btn-rsvp.no:hover,.btn-rsvp.no.active{background:#8a4a4a;color:var(--cream-bright);border-color:#8a4a4a;}
-.modal-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:1rem;}
+.modal-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:1rem;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
 .modal-overlay.show{display:flex;}
-.modal{background:var(--charcoal);border:1px solid var(--maroon);border-radius:14px;padding:2rem;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;}
+/* Scroll-lock pozadia, keď je otvorená vrstva (modal / menu / lightbox).
+   Scrolluje sa len vnútro aktívnej vrstvy, pozadie stojí. */
+body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
+.modal{background:var(--charcoal);border:1px solid var(--maroon);border-radius:14px;padding:2rem;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
 .modal h3{font-family:'Anton';font-size:1.6rem;text-transform:uppercase;color:var(--cream-bright);margin-bottom:1.2rem;}
 .modal-actions{display:flex;gap:.6rem;margin-top:1.4rem;flex-wrap:wrap;}
 .admin-bar{background:var(--maroon-deep);border:1px solid var(--rust);border-radius:8px;padding:.7rem 1rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;}
@@ -2926,7 +2959,7 @@ async function openMatchDetail(eventId){
     if (!proxyRes.ok) throw new Error('proxy HTTP ' + proxyRes.status);
     const data = await proxyRes.json();
     const details = (detailsRes && detailsRes.data) || {};
-    _mdCurrent = { data, details, profIdx };
+    _mdCurrent = { data, details, profIdx, eventId };
     renderMatchDetail(data, details, profIdx);
   } catch(e){
     console.error('Match detail load error:', e);
@@ -3057,7 +3090,138 @@ function renderMatchDetail(data, details, profIdx){
     html += '<div class="md-empty">Box score nie je k dispozícii.</div>';
   }
 
+  // ── ADMIN EDIT (len admin) ──
+  if (currentProfile?.role === 'admin') {
+    html += mdRenderAdmin(data, details, events, offsets, overrides);
+  }
+
   body.innerHTML = html;
+}
+
+/* Admin editačný panel: YouTube ID + per-event video offset a override strelca/asistencií.
+   Kľúč udalosti: period_time_type (napr. 2_31:53_goal). Zápis do match_details. */
+function mdRenderAdmin(data, details, events, offsets, overrides){
+  const ytId = details.youtube_id || '';
+  let h = '<div class="md-admin">';
+  h += '<div class="md-admin-title">✎ Administrácia zápasu</div>';
+
+  // YouTube ID
+  h += '<div class="md-admin-row">'
+     + '<label class="md-admin-lbl">YouTube ID / link</label>'
+     + '<input id="mda-yt" class="md-admin-inp" placeholder="napr. dQw4w9WgXcQ" value="' + mdEsc(ytId) + '">'
+     + '<div class="md-admin-hint">Vlož 11-znakové ID alebo celý odkaz — ID sa vytiahne automaticky.</div>'
+     + '</div>';
+
+  // Per-event editory
+  if (Array.isArray(events) && events.length){
+    h += '<div class="md-admin-sub">Udalosti — video-čas a oprava strelca</div>';
+    events.forEach((ev) => {
+      const key = ev.key || ((ev.period != null ? ev.period : '?') + '_' + (ev.time || '?') + '_' + (ev.type || '?'));
+      const ov = overrides[key] || {};
+      const isGoal = ev.type === 'goal';
+      const clockTxt = (ev.period != null ? ev.period + '. tretina · ' : '') + (ev.time || '');
+      const baseName = ev.player_name != null ? ev.player_name : '';
+      const baseNum  = ev.player_num  != null ? ev.player_num  : '';
+      const baseAssists = (ov && Array.isArray(ov.assists))
+        ? ov.assists
+        : (Array.isArray(ev.assists) ? ev.assists : []);
+      const assistsStr = baseAssists.map(a => (a && a.name != null ? a.name : '')).filter(Boolean).join(', ');
+
+      h += '<div class="md-admin-ev" data-key="' + mdEsc(key) + '" data-type="' + (isGoal ? 'goal' : 'penalty') + '">'
+         + '<div class="md-admin-ev-head">' + (isGoal ? '🥅' : '⛔') + ' ' + mdEsc(clockTxt)
+         +   ' <span class="md-admin-key">' + mdEsc(key) + '</span></div>'
+         + '<div class="md-admin-grid">'
+         +   '<div><label class="md-admin-lbl">Video-čas</label>'
+         +     '<input class="md-admin-inp mda-offset" placeholder="31:20" value="' + mdEsc(offsets[key] || '') + '"></div>'
+         +   '<div><label class="md-admin-lbl">#</label>'
+         +     '<input class="md-admin-inp mda-num" placeholder="' + mdEsc(baseNum) + '" value="' + mdEsc(ov.player_num != null ? ov.player_num : '') + '"></div>'
+         +   '<div class="md-admin-wide"><label class="md-admin-lbl">Strelec' + (isGoal ? '' : ' / hráč') + '</label>'
+         +     '<input class="md-admin-inp mda-name" placeholder="' + mdEsc(baseName || '—') + '" value="' + mdEsc(ov.player_name != null ? ov.player_name : '') + '"></div>';
+      if (isGoal){
+        h += '<div class="md-admin-wide"><label class="md-admin-lbl">Asistencie (mená oddelené čiarkou)</label>'
+           +   '<input class="md-admin-inp mda-assists" placeholder="prázdne = zo szalh" value="' + mdEsc((ov && Array.isArray(ov.assists)) ? assistsStr : '') + '"></div>';
+      }
+      h += '</div></div>';
+    });
+  }
+
+  h += '<div class="md-admin-actions">'
+     + '<button class="btn-primary" onclick="mdSaveAdmin()" id="mda-save">Uložiť zmeny</button>'
+     + '<span id="mda-status" class="md-admin-status"></span>'
+     + '</div>';
+  h += '<div class="md-admin-note">Prázdne pole = ponechá hodnotu zo szalh / súpisky. Vyplnené pole vždy prepíše.</div>';
+  h += '</div>';
+  return h;
+}
+
+// Vytiahni 11-znakové YouTube ID z linku alebo vráť vstup ak už je ID
+function mdParseYtId(v){
+  if (!v) return '';
+  v = String(v).trim();
+  if (/^[A-Za-z0-9_-]{11}$/.test(v)) return v;
+  const m = v.match(/(?:v=|\/embed\/|youtu\.be\/|\/shorts\/)([A-Za-z0-9_-]{11})/);
+  return m ? m[1] : v;
+}
+
+async function mdSaveAdmin(){
+  if (!_mdCurrent) return;
+  const eventId = _mdCurrent.eventId;
+  const statusEl = document.getElementById('mda-status');
+  const saveBtn  = document.getElementById('mda-save');
+  if (saveBtn) saveBtn.disabled = true;
+  if (statusEl){ statusEl.textContent = 'Ukladám…'; statusEl.className = 'md-admin-status'; }
+
+  // YouTube ID
+  const ytRaw = (document.getElementById('mda-yt')?.value || '').trim();
+  const youtube_id = ytRaw ? mdParseYtId(ytRaw) : null;
+
+  // Zozbieraj offsety a overrides z DOM
+  const video_offsets = {};
+  const overrides = {};
+  document.querySelectorAll('.md-admin-ev').forEach(row => {
+    const key = row.getAttribute('data-key');
+    const type = row.getAttribute('data-type');
+    const offset = (row.querySelector('.mda-offset')?.value || '').trim();
+    if (offset) video_offsets[key] = offset;
+
+    const num  = (row.querySelector('.mda-num')?.value  || '').trim();
+    const name = (row.querySelector('.mda-name')?.value || '').trim();
+    const assistsRaw = (row.querySelector('.mda-assists')?.value || '').trim();
+
+    const ov = {};
+    if (num)  ov.player_num  = num;
+    if (name) ov.player_name = name;
+    if (type === 'goal' && assistsRaw){
+      ov.assists = assistsRaw.split(',').map(s => s.trim()).filter(Boolean).map(n => ({ name: n }));
+    }
+    if (Object.keys(ov).length) overrides[key] = ov;
+  });
+
+  const payload = {
+    event_id: eventId,
+    youtube_id,
+    video_offsets,
+    overrides
+  };
+
+  try {
+    const { error } = await sb.from('match_details').upsert(payload, { onConflict: 'event_id' });
+    if (error) throw error;
+    _mdCurrent.details = payload;
+    if (statusEl){ statusEl.textContent = 'Uložené ✓'; statusEl.className = 'md-admin-status ok'; }
+    toast('Detail zápasu uložený ✓','success');
+    // zapamätaj scroll pozíciu, aby prekreslenie neposkočilo hore
+    const scroller = document.getElementById('md-body')?.closest('.modal');
+    const sy = scroller ? scroller.scrollTop : 0;
+    renderMatchDetail(_mdCurrent.data, payload, _mdCurrent.profIdx);
+    if (scroller) scroller.scrollTop = sy;
+  } catch(e){
+    console.error('match_details save error:', e);
+    if (statusEl){ statusEl.textContent = 'Chyba: ' + (e.message || 'nepodarilo sa uložiť'); statusEl.className = 'md-admin-status err'; }
+    toast('Uloženie zlyhalo','error');
+  } finally {
+    if (saveBtn) saveBtn.disabled = false;
+  }
 }
 
 // Prehraj video od zadaného času zápasu-vo-videu (mm:ss alebo hh:mm:ss)
@@ -4564,31 +4728,83 @@ function closeGallery() {
   document.body.style.overflow = '';
 }
 
+/* ── SCROLL-LOCK POZADIA ──
+   Keď je otvorená ľubovoľná vrstva (modal / burger menu / lightbox), zamkneme
+   scroll pozadia. Scrolluje sa len vnútro aktívnej vrstvy. Zachováme scroll
+   pozíciu, aby stránka po zatvorení neposkočila hore. */
+(function initScrollLock(){
+  let locked = false;
+  let savedY = 0;
+
+  const anyLayerOpen = () =>
+    !!document.querySelector('.modal-overlay.show') ||
+    document.getElementById('sidenav')?.classList.contains('open') ||
+    document.getElementById('gallery-lightbox')?.style.display === 'flex';
+
+  function apply(){
+    const open = anyLayerOpen();
+    if (open && !locked){
+      savedY = window.scrollY || document.documentElement.scrollTop || 0;
+      document.body.style.top = (-savedY) + 'px';
+      document.body.classList.add('layer-open');
+      locked = true;
+    } else if (!open && locked){
+      document.body.classList.remove('layer-open');
+      document.body.style.top = '';
+      window.scrollTo(0, savedY);
+      locked = false;
+    }
+  }
+
+  const start = () => {
+    const obs = new MutationObserver(apply);
+    obs.observe(document.body, {
+      subtree: true, attributes: true,
+      attributeFilter: ['class', 'style']
+    });
+    apply();
+  };
+  if (document.readyState === 'loading')
+    document.addEventListener('DOMContentLoaded', start);
+  else start();
+})();
+
 /* ── PULL TO REFRESH (pre PWA na ploche, kde natívny pull nefunguje) ── */
 function initPullToRefresh() {
   const ind = document.getElementById('ptr-indicator');
   const sp  = document.getElementById('ptr-spinner');
   if (!ind || !sp) return;
-  const THRESHOLD = 70;   // koľko treba potiahnuť na spustenie
-  const MAX = 90;
+  const DEADZONE  = 24;   // prvých pár px prstom ignorujeme (znížená citlivosť)
+  const THRESHOLD = 100;  // efektívne potiahnutie potrebné na spustenie
+  const MAX = 110;
+  const DAMP = 0.55;      // tlmenie — ťah je „ťažší“
   let startY = 0, pulling = false, dist = 0;
 
   const scroller = () => document.scrollingElement || document.documentElement;
 
+  // Pull-to-refresh sa nesmie spustiť, keď je otvorené burger menu alebo modal/lightbox
+  const isBlocked = () =>
+    document.getElementById('sidenav')?.classList.contains('open') ||
+    document.querySelector('.modal-overlay.show') ||
+    document.getElementById('gallery-lightbox')?.style.display === 'flex';
+
   window.addEventListener('touchstart', e => {
-    if (scroller().scrollTop > 0) { pulling = false; return; }
+    if (isBlocked() || scroller().scrollTop > 0) { pulling = false; return; }
     startY = e.touches[0].clientY;
     pulling = true; dist = 0;
   }, { passive: true });
 
   window.addEventListener('touchmove', e => {
     if (!pulling) return;
-    dist = e.touches[0].clientY - startY;
-    if (dist <= 0) { ind.classList.remove('ptr-visible'); return; }
+    if (isBlocked()) { pulling = false; ind.classList.remove('ptr-visible'); ind.style.height = ''; return; }
+    const raw = e.touches[0].clientY - startY;
+    // aplikuj dead-zone + tlmenie
+    dist = raw > DEADZONE ? (raw - DEADZONE) * DAMP : 0;
+    if (dist <= 0) { ind.classList.remove('ptr-visible'); ind.style.height=''; return; }
     const shown = Math.min(dist, MAX);
-    ind.style.height = shown + 'px';
+    ind.style.height = 'calc(' + shown + 'px + env(safe-area-inset-top,0px))';
     ind.classList.add('ptr-visible');
-    sp.style.transform = 'rotate(' + (dist * 3) + 'deg)';
+    sp.style.transform = 'rotate(' + (dist * 2.4) + 'deg)';
   }, { passive: true });
 
   window.addEventListener('touchend', () => {
@@ -4596,7 +4812,7 @@ function initPullToRefresh() {
     pulling = false;
     if (dist >= THRESHOLD) {
       ind.classList.add('ptr-spin','ptr-visible');
-      ind.style.height = '56px';
+      ind.style.height = 'calc(64px + env(safe-area-inset-top,0px))';
       setTimeout(() => location.reload(), 350);
     } else {
       ind.classList.remove('ptr-visible');
