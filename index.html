@@ -897,8 +897,9 @@ a:hover{color:var(--cream-bright);}
 <div class="page-section" id="sec-roster">
   <div class="sec-wrap">
     <div class="sec-head"><h2 data-i="rosterH">A-tím · Súpiska</h2><p data-i="rosterP">Bratislava Neanderthals · RAHL1</p></div>
-    <div id="roster-admin-bar" style="display:none;" class="admin-bar">
-      <span class="admin-label">&#9881; Admin</span>
+    <div style="background:var(--charcoal);border:1px solid var(--line);border-left:3px solid var(--rust);border-radius:8px;padding:.7rem .9rem;margin-bottom:1.2rem;display:flex;gap:.6rem;align-items:flex-start;">
+      <span style="font-size:1rem;line-height:1.2;flex-shrink:0;">ℹ️</span>
+      <span style="font-family:'Barlow Condensed';font-size:.92rem;color:var(--bone);line-height:1.35;">Súpiska a štatistiky sú zo sezóny <strong style="color:var(--cream);">2025/26</strong> a načítavajú sa priamo z ligovej stránky <a href="https://szalh.sk/league/2025/RAHL1" target="_blank" style="color:var(--rust-light);">szalh.sk ↗</a>. Slúžia len informatívne.</span>
     </div>
     <div style="overflow-x:auto;">
       <table class="player-table">
@@ -1056,6 +1057,7 @@ a:hover{color:var(--cream-bright);}
           <select id="ob-position" style="width:100%;background:var(--charcoal);border:1px solid var(--line);border-radius:8px;padding:.8rem;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;">
             <option value="Ú">Útočník</option>
             <option value="O">Obranca</option>
+            <option value="H">Obojživelník (Ú/O)</option>
             <option value="B">Brankár</option>
           </select>
         </div>
@@ -1297,6 +1299,7 @@ a:hover{color:var(--cream-bright);}
           <select id="profile-position" style="width:100%;background:var(--charcoal);border:1px solid var(--line);border-radius:8px;padding:.8rem;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;">
             <option value="Ú">Útočník</option>
             <option value="O">Obranca</option>
+            <option value="H">Obojživelník (Ú/O)</option>
             <option value="B">Brankár</option>
           </select>
         </div>
@@ -1468,7 +1471,7 @@ a:hover{color:var(--cream-bright);}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.8.2</div>
+  <div id="version-badge">v3.8.3</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -1728,6 +1731,7 @@ a:hover{color:var(--cream-bright);}
           color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;">
           <option value="Ú">Útočník</option>
           <option value="O">Obranca</option>
+          <option value="H">Obojživelník (Ú/O)</option>
           <option value="B">Brankár</option>
         </select>
       </div>
@@ -1903,7 +1907,7 @@ a:hover{color:var(--cream-bright);}
 
 <script>
 /* ════════════════════════════════════════════════
-   BRATISLAVA NEANDERTHALS — Unified v3.8.2
+   BRATISLAVA NEANDERTHALS — Unified v3.8.3
    ════════════════════════════════════════════════ */
 const FINANCE_PROXY_URL = 'https://trenuj.ndrtls.com/finance-proxy.php';
 const CONTACT_NOTIFY_URL = 'https://trenuj.ndrtls.com/contact-notify.php';
@@ -2279,8 +2283,6 @@ async function loadRosterFromDB() {
     if (!data?.length) { tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:1rem;color:var(--bone);">Žiadni hráči.</td></tr>'; return; }
     rosterData=data;
     renderRosterTable();
-    const adminBar=document.getElementById('roster-admin-bar');
-    if (adminBar && currentProfile?.role==='admin') adminBar.style.display='flex';
   } catch(e) {
     if (tbody) tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:1rem;color:#bf6d6d;">Chyba: '+e.message+'</td></tr>';
   }
@@ -2414,7 +2416,7 @@ async function loadAdminUsers() {
         '" data-num="' + encodeURIComponent(p.number != null ? p.number : '') +
         '" style="color:var(--cream);" title="Upraviť hráča">✎ Upraviť</button>';
 
-      const posLabel = ({'Ú':'Útočník','O':'Obranca','B':'Brankár'})[p.position] || '—';
+      const posLabel = ({'Ú':'Útočník','O':'Obranca','B':'Brankár','H':'Obojživelník'})[p.position] || '—';
       const numLabel = (p.number!=null && p.number!=='') ? ('#'+p.number) : '';
       const posInfo = '<div style="font-family:\'Oswald\';font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--bone);margin-top:.25rem;">' +
         posLabel + (numLabel ? ' · ' + numLabel : '') +
@@ -2841,8 +2843,8 @@ function lineupSlotClick(slot) {
   document.getElementById('lineup-picker-label').textContent =
     slot.dataset.line.toUpperCase() + ' \u00b7 ' + slot.dataset.pos;
 
-  const pm = {'G':['B'],'LD':['O'],'RD':['O'],'LW':['\u00da'],'C':['\u00da'],'RW':['\u00da']};
-  const al = pm[slot.dataset.pos] || ['B','O','\u00da'];
+  const pm = {'G':['B'],'LD':['O','H'],'RD':['O','H'],'LW':['\u00da','H'],'C':['\u00da','H'],'RW':['\u00da','H']};
+  const al = pm[slot.dataset.pos] || ['B','O','\u00da','H'];
 
   // Kandidáti = prihlásení registrovaní na danú pozíciu; ak nikto, ponúkni všetkých prihlásených
   let cand = _lPool.filter(p => al.includes(p.position));
@@ -2884,10 +2886,18 @@ function autoLineup() {
   // LEN prihlásení registrovaní používatelia. Ak sa nikto neprihlásil → prázdna zostava.
   const pool = _lPool.slice();
   const g = pool.filter(p=>p.position==='B');
-  const d = pool.filter(p=>p.position==='O');
-  const f = pool.filter(p=>p.position==='\u00da');
-  const un = pool.filter(p=>!['B','O','\u00da'].includes(p.position)); // bez pozície → k útočníkom
-  const fAll = f.concat(un);
+  const pureD = pool.filter(p=>p.position==='O');
+  const pureF = pool.filter(p=>p.position==='\u00da');
+  const hybrids = pool.filter(p=>p.position==='H');        // Ú/O — vedia vzadu aj vpredu
+  const noPos = pool.filter(p=>!['B','O','\u00da','H'].includes(p.position)); // bez postu → k útočníkom
+
+  // Rozdeľ hybridov tam, kde treba: najprv doplň obranu (potreba 4), zvyšok k útoku
+  const D = pureD.slice();
+  const F = pureF.concat(noPos);
+  let hi = 0;
+  while (D.length < 4 && hi < hybrids.length) { D.push(hybrids[hi++]); }
+  for (; hi < hybrids.length; hi++) { F.push(hybrids[hi]); }
+
   _lD = {};
   if (!pool.length) {
     renderLineup();
@@ -2897,8 +2907,8 @@ function autoLineup() {
   }
   const put = (key,p)=>{ _lD[key]={playerId:p.id,name:_lDisplayName(p),number:p.number||'\u2014'}; };
   if (g[0]) put('goalie_G', g[0]);
-  [['d1','LD'],['d1','RD'],['d2','LD'],['d2','RD']].forEach(([l,p],i)=>{ if (d[i]) put(l+'_'+p, d[i]); });
-  [['f1','LW'],['f1','C'],['f1','RW'],['f2','LW'],['f2','C'],['f2','RW'],['f3','LW'],['f3','C'],['f3','RW']].forEach(([l,p],i)=>{ if (fAll[i]) put(l+'_'+p, fAll[i]); });
+  [['d1','LD'],['d1','RD'],['d2','LD'],['d2','RD']].forEach(([l,p],i)=>{ if (D[i]) put(l+'_'+p, D[i]); });
+  [['f1','LW'],['f1','C'],['f1','RW'],['f2','LW'],['f2','C'],['f2','RW'],['f3','LW'],['f3','C'],['f3','RW']].forEach(([l,p],i)=>{ if (F[i]) put(l+'_'+p, F[i]); });
   renderLineup();
   if (!_lEd) enableLineupEdit();
   toast('Zostava navrhnutá \u26a1 (z prihlásených)','success'); }
