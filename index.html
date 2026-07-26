@@ -1052,6 +1052,18 @@ a:hover{color:var(--cream-bright);}
           <input type="text" id="ob-nickname" placeholder="napr. Tesk">
         </div>
         <div class="form-group">
+          <label>Post</label>
+          <select id="ob-position" style="width:100%;background:var(--charcoal);border:1px solid var(--line);border-radius:8px;padding:.8rem;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;">
+            <option value="Ú">Útočník</option>
+            <option value="O">Obranca</option>
+            <option value="B">Brankár</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Číslo dresu <span style="font-weight:400;text-transform:none;letter-spacing:0;opacity:.7;">(nepovinné)</span></label>
+          <input type="number" id="ob-number" placeholder="napr. 96" min="0" max="99">
+        </div>
+        <div class="form-group">
           <label>Nové heslo</label>
           <input type="password" id="ob-pass" placeholder="min. 6 znakov" autocomplete="new-password">
         </div>
@@ -1281,6 +1293,18 @@ a:hover{color:var(--cream-bright);}
           <input type="text" id="profile-nickname" placeholder="napr. Miško">
         </div>
         <div class="form-group">
+          <label>Post</label>
+          <select id="profile-position" style="width:100%;background:var(--charcoal);border:1px solid var(--line);border-radius:8px;padding:.8rem;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;">
+            <option value="Ú">Útočník</option>
+            <option value="O">Obranca</option>
+            <option value="B">Brankár</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Číslo dresu <span style="font-weight:400;text-transform:none;letter-spacing:0;opacity:.7;">(nepovinné)</span></label>
+          <input type="number" id="profile-number" placeholder="napr. 96" min="0" max="99">
+        </div>
+        <div class="form-group">
           <label>E-mail</label>
           <input type="email" id="profile-email" disabled
             style="opacity:.5;cursor:not-allowed;">
@@ -1444,7 +1468,7 @@ a:hover{color:var(--cream-bright);}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.7.2</div>
+  <div id="version-badge">v3.8.1</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -1837,7 +1861,7 @@ a:hover{color:var(--cream-bright);}
 
 <script>
 /* ════════════════════════════════════════════════
-   BRATISLAVA NEANDERTHALS — Unified v3.7.2
+   BRATISLAVA NEANDERTHALS — Unified v3.8.1
    ════════════════════════════════════════════════ */
 const FINANCE_PROXY_URL = 'https://trenuj.ndrtls.com/finance-proxy.php';
 const CONTACT_NOTIFY_URL = 'https://trenuj.ndrtls.com/contact-notify.php';
@@ -2344,13 +2368,23 @@ async function loadAdminUsers() {
       const editBtn = '<button class="btn-sm" onclick="adminEditNameFromBtn(this)" data-uid="' + p.id +
         '" data-name="' + encodeURIComponent(p.full_name || '') +
         '" data-nick="' + encodeURIComponent(p.nickname || '') +
-        '" style="color:var(--cream);" title="Upraviť meno">✎ Meno</button>';
+        '" data-pos="' + encodeURIComponent(p.position || '') +
+        '" data-num="' + encodeURIComponent(p.number != null ? p.number : '') +
+        '" style="color:var(--cream);" title="Upraviť hráča">✎ Upraviť</button>';
+
+      const posLabel = ({'Ú':'Útočník','O':'Obranca','B':'Brankár'})[p.position] || '—';
+      const numLabel = (p.number!=null && p.number!=='') ? ('#'+p.number) : '';
+      const posInfo = '<div style="font-family:\'Oswald\';font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--bone);margin-top:.25rem;">' +
+        posLabel + (numLabel ? ' · ' + numLabel : '') +
+        ((!p.position && (p.number==null||p.number==='')) ? ' <span style="color:#bf6d6d;">(nevyplnené)</span>' : '') +
+        '</div>';
 
       return '<div style="background:var(--charcoal);border:1px solid var(--line);border-radius:8px;padding:.8rem 1rem;margin-bottom:.6rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">' +
         '<div style="flex:1;min-width:180px;">' +
           '<div style="font-family:\'Oswald\';font-weight:600;color:' + (act ? 'var(--cream-bright)' : 'var(--bone)') + ';">' +
             name + '<span style="font-size:.8rem;color:var(--bone);">' + nick + '</span></div>' +
           '<div style="margin-top:.3rem;">' + badge + adminBadge + '</div>' +
+          posInfo +
         '</div>' +
         '<div style="text-align:center;min-width:70px;">' +
           '<div style="font-family:\'Anton\';font-size:1.1rem;color:var(--cream);line-height:1;">' + yes + '/' + total + '</div>' +
@@ -2370,10 +2404,12 @@ async function adminEditNameFromBtn(btn) {
   const uid  = btn.dataset.uid;
   const cur  = decodeURIComponent(btn.dataset.name || '');
   const nick = decodeURIComponent(btn.dataset.nick || '');
-  adminEditName(uid, cur, nick);
+  const pos  = decodeURIComponent(btn.dataset.pos || '');
+  const num  = decodeURIComponent(btn.dataset.num || '');
+  adminEditName(uid, cur, nick, pos, num);
 }
 
-async function adminEditName(userId, currentName, currentNick) {
+async function adminEditName(userId, currentName, currentNick, currentPos, currentNum) {
   const name = prompt('Meno a priezvisko:', currentName || '');
   if (name === null) return;                       // cancelled
   const trimmed = name.trim();
@@ -2382,17 +2418,25 @@ async function adminEditName(userId, currentName, currentNick) {
   const nick = prompt('Prezývka (nepovinné):', currentNick || '');
   if (nick === null) return;                        // cancelled
 
-  const payload = { full_name: trimmed, nickname: nick.trim() || null };
+  const posIn = prompt('Post — napíš Ú (útočník), O (obranca) alebo B (brankár):', currentPos || 'Ú');
+  if (posIn === null) return;
+  const posV = ({'u':'Ú','ú':'Ú','o':'O','b':'B'})[posIn.trim().toLowerCase()] || 'Ú';
+
+  const numIn = prompt('Číslo dresu (nepovinné):', (currentNum!=='' && currentNum!=null) ? currentNum : '');
+  if (numIn === null) return;
+  const numV = numIn.trim() ? parseInt(numIn.trim()) : null;
+
+  const payload = { full_name: trimmed, nickname: nick.trim() || null, position: posV, number: (numV!=null && !isNaN(numV)) ? numV : null };
   const { error } = await sb.from('profiles').update(payload).eq('id', userId);
   if (error) { toast('Chyba: ' + error.message, 'error'); return; }
 
   // Keep own badge in sync if the admin edited their own profile
   if (userId === currentUser?.id) {
-    if (currentProfile) { currentProfile.full_name = trimmed; currentProfile.nickname = payload.nickname; }
+    if (currentProfile) { currentProfile.full_name = trimmed; currentProfile.nickname = payload.nickname; currentProfile.position = posV; currentProfile.number = payload.number; }
     const un = document.getElementById('user-name');
-    if (un) un.textContent = trimmed;
+    if (un) un.textContent = payload.nickname || trimmed;
   }
-  toast('Meno uložené ✓', 'success');
+  toast('Hráč uložený ✓', 'success');
   loadAdminUsers();
 }
 
@@ -2695,30 +2739,18 @@ async function savePlayerCard() {
 }
 
 /* ── LINEUP ───────────────────────────────────── */
-let _lEId=null,_lEd=false,_lD={},_lAS=null,_lAttend=null,_lShowAll=false;
+/* Pracujeme VÝHRADNE s registrovanými používateľmi (profiles), ktorí sú prihlásení
+   (RSVP=yes). Súpiska z RAHL (players) sa tu nepoužíva — je len informatívna. */
+let _lEId=null,_lEd=false,_lD={},_lAS=null,_lPool=[],_lHasRsvp=false;
 
-/* Match a roster player (players table) to a confirmed attendee (profiles table).
-   The two tables are linked only by name. Compare on the FULL normalised name
-   (diacritics + spaces ignored) so that people sharing a surname are not confused. */
-function _lNorm(s) {
-  return (s||'').toString().toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')  // strip diacritics
-    .replace(/[^a-z0-9]/g,'').trim();                 // keep only a-z0-9 (spaces removed too)
+// Zobrazované meno: prezývka, inak celé meno
+function _lDisplayName(p) {
+  return (p.nickname && p.nickname.trim()) ? p.nickname.trim() : (p.full_name || '').trim();
 }
-function _lIsAttending(player) {
-  if (!_lAttend) return true;               // RSVP unknown → don't filter
-  const pn = _lNorm(player.name);
-  if (!pn) return false;
-  // presná zhoda celého mena (bez diakritiky, bez medzier)
-  return _lAttend.some(full => {
-    const fn = _lNorm(full);
-    return fn && fn === pn;
-  });
-}
+
 async function openLineup(eid, et) {
   try {
-    _lEId=eid; _lEd=false; _lShowAll=false;
-    // Title: use passed value (legacy calls) or look it up from cached event
+    _lEId=eid; _lEd=false;
     let title = '';
     if (et) { try { title = decodeURIComponent(et); } catch(e) { title = et; } }
     if (!title) title = (window['_ev_'+eid] && window['_ev_'+eid].title) || 'Zostava';
@@ -2730,24 +2762,21 @@ async function openLineup(eid, et) {
     document.getElementById('lineup-auto-btn').style.display='none';
     const { data }=await sb.from('game_results').select('notes').eq('event_id',eid).maybeSingle();
     _lD={}; if (data?.notes) { try { _lD=JSON.parse(data.notes); } catch(e){} }
-    // Load who confirmed attendance (RSVP = yes) so the picker can offer only them
-    _lAttend = null;
+
+    // Pool = registrovaní používatelia, ktorí potvrdili účasť (RSVP=yes)
+    _lPool = [];
+    _lHasRsvp = false;
     try {
       const { data:rs } = await sb.from('rsvp').select('user_id').eq('event_id',eid).eq('status','yes');
       const ids = (rs||[]).map(r=>r.user_id);
+      _lHasRsvp = true;
       if (ids.length) {
-        const { data:profsRaw } = await sb.from('profiles').select('id, full_name').in('id', ids);
-        const profs = filterIgnored(profsRaw);
-        const names = (profs||[]).map(p=>(p.full_name||'').trim()).filter(Boolean);
-        if (names.length) _lAttend = names;
-      } else {
-        _lAttend = [];
+        const { data:profsRaw } = await sb.from('profiles')
+          .select('id, full_name, nickname, position, number').in('id', ids);
+        _lPool = filterIgnored(profsRaw);
       }
-    } catch(e) { console.warn('[lineup] RSVP load failed, showing full roster', e); }
-    // Roster may not be loaded yet (needed to build the lineup)
-    if (!rosterData || !rosterData.length) {
-      try { await loadRosterFromDB(); } catch(e) { console.warn('[lineup] roster load failed', e); }
-    }
+    } catch(e) { console.warn('[lineup] RSVP/profiles load failed', e); }
+
     renderLineup(); document.getElementById('modal-lineup').classList.add('show');
     if (isA && Object.keys(_lD).length===0) autoLineup();
   } catch (err) {
@@ -2758,7 +2787,7 @@ async function openLineup(eid, et) {
 function renderLineup() {
   document.querySelectorAll('.player-slot').forEach(slot=>{
     const key=slot.dataset.line+'_'+slot.dataset.pos, p=_lD[key];
-    if (p) { slot.classList.remove('empty'); slot.classList.add('filled'); slot.querySelector('.slot-num').textContent=p.number||'—'; slot.querySelector('.slot-name').textContent=p.name?p.name.split(' ').map((w,i)=>i===0?w[0]+'.':w).join(' '):p.number; }
+    if (p) { slot.classList.remove('empty'); slot.classList.add('filled'); slot.querySelector('.slot-num').textContent=p.number||'—'; slot.querySelector('.slot-name').textContent=p.name||p.number||''; }
     else { slot.classList.remove('filled'); slot.classList.add('empty'); slot.querySelector('.slot-num').textContent='+'; slot.querySelector('.slot-name').textContent='voľné'; }
   });
 }
@@ -2771,18 +2800,9 @@ function lineupSlotClick(slot) {
   const pm = {'G':['B'],'LD':['O'],'RD':['O'],'LW':['\u00da'],'C':['\u00da'],'RW':['\u00da']};
   const al = pm[slot.dataset.pos] || ['B','O','\u00da'];
 
-  // Candidates for this position
-  let cand = rosterData.filter(p => al.includes(p.position));
-  if (!cand.length) cand = rosterData;
-
-  // Restrict to players who confirmed attendance, unless the user asked for all
-  let filtered = cand;
-  let hiddenCount = 0;
-  if (!_lShowAll && _lAttend) {
-    const att = cand.filter(_lIsAttending);
-    hiddenCount = cand.length - att.length;
-    filtered = att;
-  }
+  // Kandidáti = prihlásení registrovaní na danú pozíciu; ak nikto, ponúkni všetkých prihlásených
+  let cand = _lPool.filter(p => al.includes(p.position));
+  if (!cand.length) cand = _lPool.slice();
 
   const used = new Set(Object.values(_lD).map(p => p.playerId));
   const list = document.getElementById('lineup-picker-list');
@@ -2790,41 +2810,40 @@ function lineupSlotClick(slot) {
   const rows = [];
   rows.push('<div onclick="assignPlayer(null)" style="padding:.4rem .6rem;border:1px solid var(--line);border-radius:6px;cursor:pointer;font-family:\'Oswald\';font-size:.8rem;color:var(--bone);grid-column:1/-1;text-align:center;background:var(--charcoal);">\u2715 Odstr\u00e1ni\u0165</div>');
 
-  if (!filtered.length) {
-    rows.push('<div style="grid-column:1/-1;text-align:center;padding:.6rem;color:var(--bone);font-family:\'Oswald\';font-size:.78rem;">\u017diadny prihl\u00e1sen\u00fd hr\u00e1\u010d na t\u00fato poz\u00edciu.</div>');
+  if (!cand.length) {
+    rows.push('<div style="grid-column:1/-1;text-align:center;padding:.6rem;color:var(--bone);font-family:\'Oswald\';font-size:.78rem;">\u017diadny prihl\u00e1sen\u00fd hr\u00e1\u010d.</div>');
   }
 
-  filtered.forEach(p => {
+  cand.forEach(p => {
     const u = used.has(p.id) ? 'opacity:.4;pointer-events:none;' : '';
-    rows.push('<div onclick="assignPlayer(' + p.id + ')" style="padding:.4rem .6rem;border:1px solid var(--line);border-radius:6px;cursor:pointer;background:var(--charcoal);' + u + '"><span style="font-family:\'Anton\';color:var(--maroon);margin-right:.3rem;">' + (p.number || '\u2014') + '</span><span style="font-family:\'Oswald\';font-size:.82rem;color:var(--cream-bright);">' + p.name.split(' ').slice(-1)[0] + '</span></div>');
+    const nm = _lDisplayName(p);
+    rows.push('<div onclick="assignPlayer(\'' + p.id + '\')" style="padding:.4rem .6rem;border:1px solid var(--line);border-radius:6px;cursor:pointer;background:var(--charcoal);' + u + '"><span style="font-family:\'Anton\';color:var(--maroon);margin-right:.3rem;">' + (p.number || '\u2014') + '</span><span style="font-family:\'Oswald\';font-size:.82rem;color:var(--cream-bright);">' + nm + '</span></div>');
   });
-
-  // Toggle between "only attending" and the full roster
-  if (_lAttend && (hiddenCount > 0 || _lShowAll)) {
-    const label = _lShowAll
-      ? '\u2713 Zobrazi\u0165 len prihl\u00e1sen\u00fdch'
-      : '+ Zobrazi\u0165 v\u0161etk\u00fdch (' + hiddenCount + ' skryt\u00fdch)';
-    rows.push('<div onclick="lineupToggleAll()" style="grid-column:1/-1;text-align:center;padding:.4rem .6rem;margin-top:.3rem;border:1px dashed var(--line);border-radius:6px;cursor:pointer;font-family:\'Oswald\';font-size:.75rem;color:var(--rust-light);">' + label + '</div>');
-  }
 
   list.innerHTML = rows.join('');
   document.getElementById('lineup-picker').style.display = 'block';
 }
-function lineupToggleAll() {
-  _lShowAll = !_lShowAll;
-  if (_lAS) lineupSlotClick(_lAS);
-}
 
-function assignPlayer(pid) { if (!_lAS) return; const key=_lAS.dataset.line+'_'+_lAS.dataset.pos; if (pid===null) delete _lD[key]; else { const p=rosterData.find(x=>x.id===pid); if(p) _lD[key]={playerId:p.id,name:p.name,number:p.number||'—'}; } document.getElementById('lineup-picker').style.display='none'; _lAS=null; renderLineup(); }
+function assignPlayer(pid) {
+  if (!_lAS) return;
+  const key=_lAS.dataset.line+'_'+_lAS.dataset.pos;
+  if (pid===null || pid==='null') { delete _lD[key]; }
+  else {
+    const p=_lPool.find(x=>String(x.id)===String(pid));
+    if(p) _lD[key]={playerId:p.id,name:_lDisplayName(p),number:p.number||'—'};
+  }
+  document.getElementById('lineup-picker').style.display='none'; _lAS=null; renderLineup();
+}
 function enableLineupEdit() { _lEd=true; document.getElementById('lineup-edit-btn').style.display='none'; document.getElementById('lineup-save-btn').style.display='inline-block'; document.getElementById('lineup-auto-btn').style.display='inline-block'; document.querySelectorAll('.player-slot').forEach(s=>{ s.style.cursor='pointer'; s.style.outline='1px dashed rgba(138,58,30,.4)'; }); }
 async function saveLineup() { _lEd=false; document.getElementById('lineup-edit-btn').style.display='inline-block'; document.getElementById('lineup-save-btn').style.display='none'; document.getElementById('lineup-auto-btn').style.display='none'; document.getElementById('lineup-picker').style.display='none'; document.querySelectorAll('.player-slot').forEach(s=>{ s.style.cursor=''; s.style.outline=''; }); const { error }=await sb.from('game_results').upsert({event_id:_lEId,season_id:2,notes:JSON.stringify(_lD)},{onConflict:'event_id'}); if (error) { toast('Chyba: '+error.message,'error'); return; } toast('Zostava uložená ✓','success'); }
 function autoLineup() {
-  // LEN prihlásení (RSVP=yes). Ak sa nikto neprihlásil, zostava ostáva prázdna.
-  const pool = (_lAttend) ? rosterData.filter(_lIsAttending) : [];
-  const byPts = (a,b) => (b.points||0)-(a.points||0);
-  const g = pool.filter(p=>p.position==='B').sort(byPts);
-  const d = pool.filter(p=>p.position==='O').sort(byPts);
-  const f = pool.filter(p=>p.position==='\u00da').sort(byPts);
+  // LEN prihlásení registrovaní používatelia. Ak sa nikto neprihlásil → prázdna zostava.
+  const pool = _lPool.slice();
+  const g = pool.filter(p=>p.position==='B');
+  const d = pool.filter(p=>p.position==='O');
+  const f = pool.filter(p=>p.position==='\u00da');
+  const un = pool.filter(p=>!['B','O','\u00da'].includes(p.position)); // bez pozície → k útočníkom
+  const fAll = f.concat(un);
   _lD = {};
   if (!pool.length) {
     renderLineup();
@@ -2832,13 +2851,10 @@ function autoLineup() {
     toast('Zatiaľ sa nikto neprihlásil.','info');
     return;
   }
-  if (g[0]) _lD['goalie_G'] = {playerId:g[0].id,name:g[0].name,number:g[0].number||'\u2014'};
-  [['d1','LD'],['d1','RD'],['d2','LD'],['d2','RD']].forEach(([l,p],i)=>{
-    if (d[i]) _lD[l+'_'+p] = {playerId:d[i].id,name:d[i].name,number:d[i].number||'\u2014'};
-  });
-  [['f1','LW'],['f1','C'],['f1','RW'],['f2','LW'],['f2','C'],['f2','RW'],['f3','LW'],['f3','C'],['f3','RW']].forEach(([l,p],i)=>{
-    if (f[i]) _lD[l+'_'+p] = {playerId:f[i].id,name:f[i].name,number:f[i].number||'\u2014'};
-  });
+  const put = (key,p)=>{ _lD[key]={playerId:p.id,name:_lDisplayName(p),number:p.number||'\u2014'}; };
+  if (g[0]) put('goalie_G', g[0]);
+  [['d1','LD'],['d1','RD'],['d2','LD'],['d2','RD']].forEach(([l,p],i)=>{ if (d[i]) put(l+'_'+p, d[i]); });
+  [['f1','LW'],['f1','C'],['f1','RW'],['f2','LW'],['f2','C'],['f2','RW'],['f3','LW'],['f3','C'],['f3','RW']].forEach(([l,p],i)=>{ if (fAll[i]) put(l+'_'+p, fAll[i]); });
   renderLineup();
   if (!_lEd) enableLineupEdit();
   toast('Zostava navrhnutá \u26a1 (z prihlásených)','success'); }
@@ -2851,12 +2867,12 @@ async function showAdminRsvpPanel(eventId) {
   const list=document.getElementById('ar-players-list');
   list.innerHTML='<div class="empty-state"><span class="spinner"></span></div>';
   document.getElementById('modal-admin-rsvp').classList.add('show');
-  const { data:profilesRaw }=await sb.from('profiles').select('id,full_name');
-  const profiles = filterIgnored(profilesRaw);
+  const { data:profilesRaw }=await sb.from('profiles').select('id,full_name,nickname');
+  const profiles = filterIgnored(profilesRaw).sort((a,b)=>(a.full_name||'').localeCompare(b.full_name||'','sk'));
   const { data:rsvps }=await sb.from('rsvp').select('user_id,status').eq('event_id',eventId);
   const rm={}; (rsvps||[]).forEach(r=>rm[r.user_id]=r.status);
   if (!profiles?.length) { list.innerHTML='<p style="text-align:center;color:var(--bone);padding:1rem;">Žiadni hráči.</p>'; return; }
-  list.innerHTML=profiles.map(p=>{ const name=p.full_name||p.id.slice(0,8), status=rm[p.id]||null; return `<div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid var(--line);"><span style="color:var(--cream-bright);font-family:'Oswald';">${name}</span><div style="display:flex;gap:.4rem;"><button class="btn-rsvp yes ${status==='yes'?'active':''}" onclick="adminSetRsvp(${eventId},'${p.id}','yes',this)">✓</button><button class="btn-rsvp no ${status==='no'?'active':''}" onclick="adminSetRsvp(${eventId},'${p.id}','no',this)">✗</button></div></div>`; }).join('');
+  list.innerHTML=profiles.map(p=>{ const name=(p.nickname&&p.nickname.trim())?p.nickname.trim():(p.full_name||p.id.slice(0,8)), status=rm[p.id]||null; return `<div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid var(--line);"><span style="color:var(--cream-bright);font-family:'Oswald';">${name}</span><div style="display:flex;gap:.4rem;"><button class="btn-rsvp yes ${status==='yes'?'active':''}" onclick="adminSetRsvp(${eventId},'${p.id}','yes',this)">✓</button><button class="btn-rsvp no ${status==='no'?'active':''}" onclick="adminSetRsvp(${eventId},'${p.id}','no',this)">✗</button></div></div>`; }).join('');
 }
 async function adminSetRsvp(eid,uid,status,btn) {
   btn.closest('div').querySelectorAll('.btn-rsvp').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
@@ -2891,6 +2907,8 @@ function showOnboarding(type) {
 async function saveOnboarding() {
   const name  = (document.getElementById('ob-name')?.value || '').trim();
   const nick  = (document.getElementById('ob-nickname')?.value || '').trim();
+  const posV  = document.getElementById('ob-position')?.value || 'Ú';
+  const numV  = (document.getElementById('ob-number')?.value || '').trim();
   const pass  = document.getElementById('ob-pass')?.value || '';
   const pass2 = document.getElementById('ob-pass2')?.value || '';
   const msg   = document.getElementById('ob-msg');
@@ -2917,10 +2935,10 @@ async function saveOnboarding() {
   // 2. Save the profile
   try {
     const { error } = await sb.from('profiles')
-      .update({ full_name: name, nickname: nick || null })
+      .update({ full_name: name, nickname: nick || null, position: posV, number: numV ? parseInt(numV) : null })
       .eq('id', currentUser.id);
     if (error) console.warn('Profile save failed:', error.message);
-    if (currentProfile) { currentProfile.full_name = name; currentProfile.nickname = nick || null; }
+    if (currentProfile) { currentProfile.full_name = name; currentProfile.nickname = nick || null; currentProfile.position = posV; currentProfile.number = numV ? parseInt(numV) : null; }
   } catch(e) { console.warn('Profile save threw:', e); }
 
   // 3. Refresh the header badge
@@ -2949,15 +2967,21 @@ async function loadProfile() {
     document.getElementById('profile-name').value = currentProfile.full_name || '';
     const nickEl = document.getElementById('profile-nickname');
     if (nickEl) nickEl.value = currentProfile.nickname || '';
+    const posEl = document.getElementById('profile-position');
+    if (posEl) posEl.value = currentProfile.position || 'Ú';
+    const numEl = document.getElementById('profile-number');
+    if (numEl) numEl.value = (currentProfile.number != null) ? currentProfile.number : '';
   }
 }
 async function saveProfileName() {
   const name = document.getElementById('profile-name').value.trim();
   const nick = (document.getElementById('profile-nickname')?.value || '').trim();
+  const posV = document.getElementById('profile-position')?.value || 'Ú';
+  const numV = (document.getElementById('profile-number')?.value || '').trim();
   const msg  = document.getElementById('profile-name-msg');
   if (!name) { msg.textContent='Zadaj meno.'; msg.style.color='#bf6d6d'; msg.style.display='block'; return; }
 
-  const payload = { full_name: name, nickname: nick || null };
+  const payload = { full_name: name, nickname: nick || null, position: posV, number: numV ? parseInt(numV) : null };
   const { error } = await sb.from('profiles').update(payload).eq('id', currentUser.id);
 
   if (error) {
@@ -2966,16 +2990,13 @@ async function saveProfileName() {
   } else {
     msg.textContent = 'Uložené ✓';
     msg.style.color = '#6dbf6d';
-    if (currentProfile) { currentProfile.full_name = name; currentProfile.nickname = nick || null; }
+    if (currentProfile) { currentProfile.full_name = name; currentProfile.nickname = nick || null; currentProfile.position = posV; currentProfile.number = numV ? parseInt(numV) : null; }
     // Display name = nickname if set, otherwise full name
     const displayName = nick || name;
     document.getElementById('user-name').textContent = displayName;
-    // Refresh avatar (jersey number lookup uses full_name)
-    const { data: pd } = await sb.from('players').select('number')
-      .ilike('name', '%' + name.split(' ').slice(-1)[0] + '%').limit(1);
-    const num = pd?.[0]?.number;
+    // Avatar = číslo dresu z profilu, inak iniciály
     document.getElementById('user-avatar').textContent =
-      num || displayName.split(' ').map(p=>p[0]||'').join('').slice(0,2).toUpperCase();
+      (numV || (currentProfile && currentProfile.number)) || displayName.split(' ').map(p=>p[0]||'').join('').slice(0,2).toUpperCase();
   }
   msg.style.display = 'block';
   const goBtn = document.getElementById('btn-go-to-app'); if (goBtn) goBtn.style.display='block';
@@ -3028,11 +3049,11 @@ async function loadEvents() {
   // Get names of who's going (for display)
   const { data: rsvpYes } = await sb.from('rsvp')
     .select('event_id, user_id').eq('status', 'yes');
-  // Get all profiles for name lookup
-  const { data: allProfilesRaw } = await sb.from('profiles').select('id, full_name');
+  // Get all profiles for name lookup — zobrazujeme prezývku, inak celé meno
+  const { data: allProfilesRaw } = await sb.from('profiles').select('id, full_name, nickname');
   const allProfiles = filterIgnored(allProfilesRaw);
   const profileMap = {};
-  (allProfiles || []).forEach(p => profileMap[p.id] = p.full_name || p.id.slice(0,6));
+  (allProfiles || []).forEach(p => profileMap[p.id] = (p.nickname && p.nickname.trim()) ? p.nickname.trim() : (p.full_name || p.id.slice(0,6)));
   const namesMap = {};
   (rsvpYes || []).forEach(r => {
     if (!namesMap[r.event_id]) namesMap[r.event_id] = [];
