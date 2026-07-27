@@ -399,6 +399,7 @@ header{
 .md-tl-title .num{color:var(--rust-light); font-weight:700;}
 .md-tl-badge{font-size:.62rem; font-weight:700; text-transform:uppercase; letter-spacing:.1em;
   padding:.12rem .45rem; border-radius:4px; margin-left:auto;}
+.md-tl-item:has(.md-tl-edit) .md-tl-head{padding-right:34px;}
 .md-tl-item.goal .md-tl-badge{background:rgba(45,80,45,.5); color:#8fd18f;}
 .md-tl-item.penalty .md-tl-badge{background:rgba(138,58,30,.35); color:var(--rust-light);}
 .md-tl-sub{color:var(--bone); font-size:.84rem; margin-top:.15rem; line-height:1.35;}
@@ -420,34 +421,46 @@ header{
 .md-box tr.roster-match td:nth-child(2){color:var(--rust-light); font-weight:600;}
 .md-box-wrap{overflow-x:auto;}
 
-/* ── MATCH DETAIL: ADMIN EDIT ── */
-.md-admin{margin-top:1.6rem; border:1px solid var(--maroon); border-radius:12px;
-  padding:1.1rem 1rem; background:rgba(107,31,42,.08);}
-.md-admin-title{font-family:'Oswald'; font-weight:700; text-transform:uppercase;
-  letter-spacing:.12em; font-size:.82rem; color:var(--rust-light); margin-bottom:.9rem;}
-.md-admin-sub{font-family:'Oswald'; font-weight:700; text-transform:uppercase;
-  letter-spacing:.1em; font-size:.7rem; color:var(--bone); margin:1rem 0 .5rem;}
-.md-admin-row{margin-bottom:.6rem;}
+/* ── MATCH DETAIL: ADMIN EDIT (per akcia) ── */
+/* zdieľané prvky */
 .md-admin-lbl{display:block; font-family:'Oswald'; font-weight:600; font-size:.66rem;
   letter-spacing:.08em; text-transform:uppercase; color:var(--bone); margin-bottom:.25rem;}
 .md-admin-inp{width:100%; background:rgba(21,17,15,.7); border:1px solid var(--line);
   border-radius:6px; padding:.5rem .65rem; color:var(--cream); font-family:'Barlow Condensed';
-  font-size:.95rem;}
+  font-size:.95rem; box-sizing:border-box;}
 .md-admin-inp:focus{outline:none; border-color:var(--rust-light);}
-.md-admin-hint{color:var(--bone); font-size:.72rem; margin-top:.25rem;}
-.md-admin-ev{border:1px solid var(--line); border-radius:8px; padding:.6rem .65rem;
-  margin-bottom:.55rem; background:rgba(21,17,15,.35);}
-.md-admin-ev-head{font-size:.85rem; color:var(--cream-bright); margin-bottom:.5rem;
-  display:flex; align-items:center; gap:.4rem; flex-wrap:wrap;}
-.md-admin-key{font-family:monospace; font-size:.66rem; color:var(--bone);
-  background:rgba(0,0,0,.3); padding:.1rem .35rem; border-radius:4px;}
-.md-admin-grid{display:grid; grid-template-columns:1fr 60px; gap:.5rem;}
+.md-admin-hint{color:var(--bone); font-size:.72rem; margin-top:.3rem; line-height:1.4;}
 .md-admin-wide{grid-column:1 / -1;}
-.md-admin-actions{display:flex; align-items:center; gap:.8rem; margin-top:1rem;}
-.md-admin-status{font-family:'Oswald'; font-size:.8rem; color:var(--bone);}
-.md-admin-status.ok{color:#8fd18f;}
-.md-admin-status.err{color:var(--rust-light);}
-.md-admin-note{color:var(--bone); font-size:.72rem; margin-top:.7rem; line-height:1.4;}
+
+/* YouTube ID pod videom */
+.md-yt-admin{margin:.6rem 0 1.2rem; padding:.7rem .8rem; border:1px solid var(--maroon);
+  border-radius:10px; background:rgba(107,31,42,.08);}
+.md-yt-admin-row{display:flex; gap:.5rem; align-items:stretch;}
+.md-yt-admin-row .md-admin-inp{flex:1;}
+.md-yt-save,.md-ed-save,.md-ed-cancel{font-family:'Oswald'; font-weight:700; font-size:.72rem;
+  letter-spacing:.06em; text-transform:uppercase; border:0; border-radius:6px;
+  padding:.5rem .8rem; cursor:pointer; white-space:nowrap;}
+.md-yt-save,.md-ed-save{background:var(--rust); color:var(--cream-bright);}
+.md-yt-save:hover,.md-ed-save:hover{background:var(--rust-light);}
+.md-ed-cancel{background:rgba(205,191,159,.12); color:var(--bone);}
+.md-ed-cancel:hover{background:rgba(205,191,159,.22);}
+
+/* ✎ tlačidlo na akcii */
+.md-tl-edit{position:absolute; top:.4rem; right:0; z-index:2;
+  background:rgba(107,31,42,.25); border:1px solid var(--maroon); color:var(--rust-light);
+  width:26px; height:26px; border-radius:6px; cursor:pointer; font-size:.8rem;
+  display:flex; align-items:center; justify-content:center; line-height:1; padding:0;}
+.md-tl-edit:hover{background:var(--rust); color:var(--cream-bright);}
+
+/* inline editor akcie */
+.md-tl-editor{display:none; margin-top:.6rem; padding:.7rem; border:1px solid var(--maroon);
+  border-radius:8px; background:rgba(21,17,15,.5); cursor:default;}
+.md-tl-editor.open{display:block;}
+.md-tl-editor-grid{display:grid; grid-template-columns:1fr 60px; gap:.5rem;}
+.md-tl-editor-actions{display:flex; align-items:center; gap:.5rem; margin-top:.7rem;}
+.md-ed-status{font-family:'Oswald'; font-size:.75rem; color:var(--bone);}
+.md-ed-status.ok{color:#8fd18f;}
+.md-ed-status.err{color:var(--rust-light);}
 
 /* ── FOOTER ── */
 footer{
@@ -3011,6 +3024,17 @@ function renderMatchDetail(data, details, profIdx){
   } else {
     html += '<div class="md-video"><div class="md-video-none">Video zatiaľ nie je priradené.</div></div>';
   }
+  // Admin: YouTube ID pre celý zápas
+  if (currentProfile?.role === 'admin'){
+    html += '<div class="md-yt-admin">'
+      + '<label class="md-admin-lbl">YouTube ID / link (celý zápas)</label>'
+      + '<div class="md-yt-admin-row">'
+      +   '<input id="mda-yt" class="md-admin-inp" placeholder="napr. dQw4w9WgXcQ" value="' + mdEsc(details.youtube_id || '') + '">'
+      +   '<button class="md-yt-save" onclick="mdSaveYt()">Uložiť video</button>'
+      + '</div>'
+      + '<div class="md-admin-hint">Vlož 11-znakové ID alebo celý odkaz — ID sa vytiahne automaticky.</div>'
+      + '</div>';
+  }
 
   // Timeline
   html += '<div class="md-sec-label">Priebeh zápasu</div>';
@@ -3044,8 +3068,14 @@ function renderMatchDetail(data, details, profIdx){
         if (ev.situation) subParts.push(mdEsc(ev.situation));
       }
 
+      const isAdmin = currentProfile?.role === 'admin';
+      const editBtn = isAdmin
+        ? '<button class="md-tl-edit" title="Upraviť akciu" onclick="event.stopPropagation();mdToggleEvent(\'' + mdEsc(key) + '\')">✎</button>'
+        : '';
+
       html += '<div class="md-tl-item ' + cls + (canSeek ? ' clickable' : '') + '"'
         + (canSeek ? ' onclick="mdSeek(\'' + mdEsc(offset) + '\')"' : '') + '>'
+        + editBtn
         + '<div class="md-tl-dot">' + (isGoal ? '🥅' : '⛔') + '</div>'
         + '<div class="md-tl-head">'
         +   '<span class="md-tl-clock">' + mdEsc(clockTxt) + '</span>'
@@ -3054,6 +3084,7 @@ function renderMatchDetail(data, details, profIdx){
         + '</div>'
         + (subParts.length ? '<div class="md-tl-sub">' + subParts.join(' · ') + '</div>' : '')
         + (canSeek ? '<span class="md-tl-play">▶ prehrať vo videu (' + mdEsc(offset) + ')</span>' : '')
+        + (isAdmin ? mdEventEditor(ev, key, offset, ov, isGoal) : '')
         + '</div>';
     });
     html += '</div>';
@@ -3090,68 +3121,48 @@ function renderMatchDetail(data, details, profIdx){
     html += '<div class="md-empty">Box score nie je k dispozícii.</div>';
   }
 
-  // ── ADMIN EDIT (len admin) ──
-  if (currentProfile?.role === 'admin') {
-    html += mdRenderAdmin(data, details, events, offsets, overrides);
-  }
-
   body.innerHTML = html;
 }
 
-/* Admin editačný panel: YouTube ID + per-event video offset a override strelca/asistencií.
-   Kľúč udalosti: period_time_type (napr. 2_31:53_goal). Zápis do match_details. */
-function mdRenderAdmin(data, details, events, offsets, overrides){
-  const ytId = details.youtube_id || '';
-  let h = '<div class="md-admin">';
-  h += '<div class="md-admin-title">✎ Administrácia zápasu</div>';
+/* Inline editor pre JEDNU akciu (skrytý, rozbalí sa cez ✎).
+   Kľúč akcie: period_time_type (napr. 2_31:53_goal). */
+function mdEventEditor(ev, key, offset, ov, isGoal){
+  ov = ov || {};
+  const baseName = ev.player_name != null ? ev.player_name : '';
+  const baseNum  = ev.player_num  != null ? ev.player_num  : '';
+  const baseAssists = (ov && Array.isArray(ov.assists))
+    ? ov.assists
+    : (Array.isArray(ev.assists) ? ev.assists : []);
+  const assistsStr = baseAssists.map(a => (a && a.name != null ? a.name : '')).filter(Boolean).join(', ');
 
-  // YouTube ID
-  h += '<div class="md-admin-row">'
-     + '<label class="md-admin-lbl">YouTube ID / link</label>'
-     + '<input id="mda-yt" class="md-admin-inp" placeholder="napr. dQw4w9WgXcQ" value="' + mdEsc(ytId) + '">'
-     + '<div class="md-admin-hint">Vlož 11-znakové ID alebo celý odkaz — ID sa vytiahne automaticky.</div>'
-     + '</div>';
-
-  // Per-event editory
-  if (Array.isArray(events) && events.length){
-    h += '<div class="md-admin-sub">Udalosti — video-čas a oprava strelca</div>';
-    events.forEach((ev) => {
-      const key = ev.key || ((ev.period != null ? ev.period : '?') + '_' + (ev.time || '?') + '_' + (ev.type || '?'));
-      const ov = overrides[key] || {};
-      const isGoal = ev.type === 'goal';
-      const clockTxt = (ev.period != null ? ev.period + '. tretina · ' : '') + (ev.time || '');
-      const baseName = ev.player_name != null ? ev.player_name : '';
-      const baseNum  = ev.player_num  != null ? ev.player_num  : '';
-      const baseAssists = (ov && Array.isArray(ov.assists))
-        ? ov.assists
-        : (Array.isArray(ev.assists) ? ev.assists : []);
-      const assistsStr = baseAssists.map(a => (a && a.name != null ? a.name : '')).filter(Boolean).join(', ');
-
-      h += '<div class="md-admin-ev" data-key="' + mdEsc(key) + '" data-type="' + (isGoal ? 'goal' : 'penalty') + '">'
-         + '<div class="md-admin-ev-head">' + (isGoal ? '🥅' : '⛔') + ' ' + mdEsc(clockTxt)
-         +   ' <span class="md-admin-key">' + mdEsc(key) + '</span></div>'
-         + '<div class="md-admin-grid">'
-         +   '<div><label class="md-admin-lbl">Video-čas</label>'
-         +     '<input class="md-admin-inp mda-offset" placeholder="31:20" value="' + mdEsc(offsets[key] || '') + '"></div>'
-         +   '<div><label class="md-admin-lbl">#</label>'
-         +     '<input class="md-admin-inp mda-num" placeholder="' + mdEsc(baseNum) + '" value="' + mdEsc(ov.player_num != null ? ov.player_num : '') + '"></div>'
-         +   '<div class="md-admin-wide"><label class="md-admin-lbl">Strelec' + (isGoal ? '' : ' / hráč') + '</label>'
-         +     '<input class="md-admin-inp mda-name" placeholder="' + mdEsc(baseName || '—') + '" value="' + mdEsc(ov.player_name != null ? ov.player_name : '') + '"></div>';
-      if (isGoal){
-        h += '<div class="md-admin-wide"><label class="md-admin-lbl">Asistencie (mená oddelené čiarkou)</label>'
-           +   '<input class="md-admin-inp mda-assists" placeholder="prázdne = zo szalh" value="' + mdEsc((ov && Array.isArray(ov.assists)) ? assistsStr : '') + '"></div>';
-      }
-      h += '</div></div>';
-    });
+  let h = '<div class="md-tl-editor" id="mded-' + mdEsc(key) + '" onclick="event.stopPropagation()">'
+    + '<div class="md-tl-editor-grid">'
+    +   '<div><label class="md-admin-lbl">Video-čas</label>'
+    +     '<input class="md-admin-inp mded-offset" placeholder="31:20" value="' + mdEsc(offset || '') + '"></div>'
+    +   '<div><label class="md-admin-lbl">#</label>'
+    +     '<input class="md-admin-inp mded-num" placeholder="' + mdEsc(baseNum) + '" value="' + mdEsc(ov.player_num != null ? ov.player_num : '') + '"></div>'
+    +   '<div class="md-admin-wide"><label class="md-admin-lbl">' + (isGoal ? 'Strelec' : 'Hráč') + '</label>'
+    +     '<input class="md-admin-inp mded-name" placeholder="' + mdEsc(baseName || '—') + '" value="' + mdEsc(ov.player_name != null ? ov.player_name : '') + '"></div>';
+  if (isGoal){
+    h += '<div class="md-admin-wide"><label class="md-admin-lbl">Asistencie (mená oddelené čiarkou)</label>'
+       +   '<input class="md-admin-inp mded-assists" placeholder="prázdne = zo szalh" value="' + mdEsc((ov && Array.isArray(ov.assists)) ? assistsStr : '') + '"></div>';
   }
-
-  h += '<div class="md-admin-actions">'
-     + '<button class="btn-primary" onclick="mdSaveAdmin()" id="mda-save">Uložiť zmeny</button>'
-     + '<span id="mda-status" class="md-admin-status"></span>'
-     + '</div>';
-  h += '<div class="md-admin-note">Prázdne pole = ponechá hodnotu zo szalh / súpisky. Vyplnené pole vždy prepíše.</div>';
-  h += '</div>';
+  h += '</div>'
+    + '<div class="md-tl-editor-actions">'
+    +   '<button class="md-ed-save" onclick="mdSaveEvent(\'' + mdEsc(key) + '\',' + (isGoal ? 'true' : 'false') + ')">Uložiť</button>'
+    +   '<button class="md-ed-cancel" onclick="mdToggleEvent(\'' + mdEsc(key) + '\')">Zrušiť</button>'
+    +   '<span class="md-ed-status"></span>'
+    + '</div>'
+    + '<div class="md-admin-hint">Prázdne = ponechá szalh/súpisku. Vyplnené vždy prepíše.</div>'
+    + '</div>';
   return h;
+}
+
+// Rozbaľ / zbaľ editor konkrétnej akcie
+function mdToggleEvent(key){
+  const el = document.getElementById('mded-' + key);
+  if (!el) return;
+  el.classList.toggle('open');
 }
 
 // Vytiahni 11-znakové YouTube ID z linku alebo vráť vstup ak už je ID
@@ -3163,65 +3174,83 @@ function mdParseYtId(v){
   return m ? m[1] : v;
 }
 
-async function mdSaveAdmin(){
-  if (!_mdCurrent) return;
+// Ulož do match_details len zmenené polia; ostatné z _mdCurrent.details ponechaj.
+async function mdPersist(patch){
   const eventId = _mdCurrent.eventId;
-  const statusEl = document.getElementById('mda-status');
-  const saveBtn  = document.getElementById('mda-save');
-  if (saveBtn) saveBtn.disabled = true;
-  if (statusEl){ statusEl.textContent = 'Ukladám…'; statusEl.className = 'md-admin-status'; }
-
-  // YouTube ID
-  const ytRaw = (document.getElementById('mda-yt')?.value || '').trim();
-  const youtube_id = ytRaw ? mdParseYtId(ytRaw) : null;
-
-  // Zozbieraj offsety a overrides z DOM
-  const video_offsets = {};
-  const overrides = {};
-  document.querySelectorAll('.md-admin-ev').forEach(row => {
-    const key = row.getAttribute('data-key');
-    const type = row.getAttribute('data-type');
-    const offset = (row.querySelector('.mda-offset')?.value || '').trim();
-    if (offset) video_offsets[key] = offset;
-
-    const num  = (row.querySelector('.mda-num')?.value  || '').trim();
-    const name = (row.querySelector('.mda-name')?.value || '').trim();
-    const assistsRaw = (row.querySelector('.mda-assists')?.value || '').trim();
-
-    const ov = {};
-    if (num)  ov.player_num  = num;
-    if (name) ov.player_name = name;
-    if (type === 'goal' && assistsRaw){
-      ov.assists = assistsRaw.split(',').map(s => s.trim()).filter(Boolean).map(n => ({ name: n }));
-    }
-    if (Object.keys(ov).length) overrides[key] = ov;
-  });
-
+  const d = _mdCurrent.details || {};
   const payload = {
     event_id: eventId,
-    youtube_id,
-    video_offsets,
-    overrides
+    youtube_id: d.youtube_id != null ? d.youtube_id : null,
+    video_offsets: { ...(d.video_offsets || {}) },
+    overrides: { ...(d.overrides || {}) },
+    ...patch
   };
+  const { error } = await sb.from('match_details').upsert(payload, { onConflict: 'event_id' });
+  if (error) throw error;
+  _mdCurrent.details = payload;
+  return payload;
+}
+
+// Ulož YouTube ID pre celý zápas
+async function mdSaveYt(){
+  if (!_mdCurrent) return;
+  const ytRaw = (document.getElementById('mda-yt')?.value || '').trim();
+  const youtube_id = ytRaw ? mdParseYtId(ytRaw) : null;
+  try {
+    const payload = await mdPersist({ youtube_id });
+    toast('Video uložené ✓','success');
+    mdRerender(payload);
+  } catch(e){
+    console.error('yt save error:', e);
+    toast('Uloženie videa zlyhalo','error');
+  }
+}
+
+// Ulož override + video-čas jednej akcie
+async function mdSaveEvent(key, isGoal){
+  if (!_mdCurrent) return;
+  const editor = document.getElementById('mded-' + key);
+  if (!editor) return;
+  const statusEl = editor.querySelector('.md-ed-status');
+  if (statusEl){ statusEl.textContent = 'Ukladám…'; statusEl.className = 'md-ed-status'; }
+
+  const offset = (editor.querySelector('.mded-offset')?.value || '').trim();
+  const num    = (editor.querySelector('.mded-num')?.value    || '').trim();
+  const name   = (editor.querySelector('.mded-name')?.value   || '').trim();
+  const assistsRaw = (editor.querySelector('.mded-assists')?.value || '').trim();
+
+  const d = _mdCurrent.details || {};
+  const video_offsets = { ...(d.video_offsets || {}) };
+  const overrides = { ...(d.overrides || {}) };
+
+  if (offset) video_offsets[key] = offset; else delete video_offsets[key];
+
+  const ov = {};
+  if (num)  ov.player_num  = num;
+  if (name) ov.player_name = name;
+  if (isGoal && assistsRaw){
+    ov.assists = assistsRaw.split(',').map(s => s.trim()).filter(Boolean).map(n => ({ name: n }));
+  }
+  if (Object.keys(ov).length) overrides[key] = ov; else delete overrides[key];
 
   try {
-    const { error } = await sb.from('match_details').upsert(payload, { onConflict: 'event_id' });
-    if (error) throw error;
-    _mdCurrent.details = payload;
-    if (statusEl){ statusEl.textContent = 'Uložené ✓'; statusEl.className = 'md-admin-status ok'; }
-    toast('Detail zápasu uložený ✓','success');
-    // zapamätaj scroll pozíciu, aby prekreslenie neposkočilo hore
-    const scroller = document.getElementById('md-body')?.closest('.modal');
-    const sy = scroller ? scroller.scrollTop : 0;
-    renderMatchDetail(_mdCurrent.data, payload, _mdCurrent.profIdx);
-    if (scroller) scroller.scrollTop = sy;
+    const payload = await mdPersist({ video_offsets, overrides });
+    if (statusEl){ statusEl.textContent = 'Uložené ✓'; statusEl.className = 'md-ed-status ok'; }
+    toast('Akcia uložená ✓','success');
+    mdRerender(payload);
   } catch(e){
-    console.error('match_details save error:', e);
-    if (statusEl){ statusEl.textContent = 'Chyba: ' + (e.message || 'nepodarilo sa uložiť'); statusEl.className = 'md-admin-status err'; }
+    console.error('event save error:', e);
+    if (statusEl){ statusEl.textContent = 'Chyba pri ukladaní'; statusEl.className = 'md-ed-status err'; }
     toast('Uloženie zlyhalo','error');
-  } finally {
-    if (saveBtn) saveBtn.disabled = false;
   }
+}
+
+// Prekresli detail so zachovaním scroll pozície v modale
+function mdRerender(payload){
+  const scroller = document.getElementById('md-body')?.closest('.modal');
+  const sy = scroller ? scroller.scrollTop : 0;
+  renderMatchDetail(_mdCurrent.data, payload, _mdCurrent.profIdx);
+  if (scroller) scroller.scrollTop = sy;
 }
 
 // Prehraj video od zadaného času zápasu-vo-videu (mm:ss alebo hh:mm:ss)
