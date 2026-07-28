@@ -78,3 +78,9 @@ Zdieľajú ten istý Supabase projekt a `ndrtls.com` doménu:
 Používaj git rozumne: pozri `git diff` pred commitom, píš stručné commit
 správy (kľudne po slovensky), commitni logické celky. Po zmene v `index.html`
 a bumpe verzie je commit + push na GitHub Pages celý deploy.
+
+**Branch stratégia:** malé zmeny (drobné opravy, texty, jednoduché úpravy)
+môžu ísť rovno do `main`. Pri väčších zmenách (nová funkcionalita, rizikovejšie
+refaktory, viac súvisiacich úprav naraz) najprv commitni a pushni na testovací
+branch (napr. `test` alebo feature branch) a do `main`/deploy to zlej až po
+odsúhlasení. Posúdenie, čo je "väčšia zmena", nechaj na mne podľa kontextu.
