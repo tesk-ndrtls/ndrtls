@@ -462,6 +462,23 @@ header{
 .md-ed-status.ok{color:#8fd18f;}
 .md-ed-status.err{color:var(--rust-light);}
 
+/* ── ADMIN: interná poznámka k prihláške ── */
+.app-note{border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  padding:.7rem 0; margin:.2rem 0;}
+.app-note-lbl{display:block; font-family:'Oswald'; font-weight:700; font-size:.72rem;
+  letter-spacing:.06em; text-transform:uppercase; color:var(--rust-light); margin-bottom:.4rem;}
+.app-note-hint{font-weight:400; text-transform:none; letter-spacing:0; color:var(--bone);}
+.app-note-inp{width:100%; box-sizing:border-box; background:rgba(21,17,15,.7);
+  border:1px solid var(--line); border-radius:6px; padding:.55rem .7rem; color:var(--cream);
+  font-family:'Barlow Condensed'; font-size:.95rem; resize:vertical; min-height:44px;}
+.app-note-inp:focus{outline:none; border-color:var(--rust-light);}
+.app-note-foot{display:flex; align-items:center; gap:.8rem; margin-top:.5rem; flex-wrap:wrap;}
+.app-note-meta{font-family:'Oswald'; font-size:.72rem; color:var(--bone);}
+.app-note-save{margin-left:auto; color:var(--cream-bright); background:var(--rust);
+  border:1px solid var(--rust); cursor:pointer;}
+.app-note-save:hover{background:var(--rust-light); border-color:var(--rust-light); color:var(--cream-bright);}
+.app-note-save:disabled{opacity:.6; cursor:default;}
+
 /* ── FOOTER ── */
 footer{
   position:relative; z-index:2; text-align:center;
@@ -1589,7 +1606,7 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.9.0</div>
+  <div id="version-badge">v3.9.1</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2721,11 +2738,21 @@ async function loadAdminContacts() {
   }
   const months = ['jan','feb','mar','apr','máj','jún','júl','aug','sep','okt','nov','dec'];
   const posLabels = { utocnik:'Útočník', obranca:'Obranca', brankar:'Brankár' };
+  const fmtDate = ts => {
+    const dt = ts ? new Date(ts) : null;
+    if (!dt || isNaN(dt)) return '';
+    const hh = String(dt.getHours()).padStart(2,'0'), mm = String(dt.getMinutes()).padStart(2,'0');
+    return `${dt.getDate()}. ${months[dt.getMonth()]} ${dt.getFullYear()} ${hh}:${mm}`;
+  };
   box.innerHTML = data.map(c => {
     const d = c.created_at ? new Date(c.created_at) : null;
     const dateStr = d ? `${d.getDate()}. ${months[d.getMonth()]} ${d.getFullYear()}` : '';
     const posStr = c.position ? (posLabels[c.position] || c.position) : '—';
     const msg = (c.message || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const noteVal = (c.admin_note || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const noteMeta = c.admin_note_at
+      ? `Naposledy upravil ${(c.admin_note_by||'—').replace(/</g,'&lt;')} · ${fmtDate(c.admin_note_at)}`
+      : '';
     return `<div class="event-card" style="flex-direction:column;align-items:stretch;gap:.6rem;">
       <div style="display:flex;align-items:baseline;gap:.8rem;flex-wrap:wrap;">
         <h4 style="margin:0;color:var(--cream-bright);">${(c.name||'—').replace(/</g,'&lt;')}</h4>
@@ -2736,6 +2763,14 @@ async function loadAdminContacts() {
         <a href="mailto:${c.email}" style="color:var(--rust-light);">${(c.email||'').replace(/</g,'&lt;')}</a>
       </div>
       <div style="font-family:'Barlow Condensed';font-size:1rem;color:var(--cream);white-space:pre-wrap;">${msg}</div>
+      <div class="app-note">
+        <label class="app-note-lbl">📝 Interná poznámka <span class="app-note-hint">(vidia len manažéri — stav, kto kontaktoval…)</span></label>
+        <textarea class="app-note-inp" id="app-note-${c.id}" rows="2" placeholder="napr. Volal som 12.7., ozve sa budúci týždeň…">${noteVal}</textarea>
+        <div class="app-note-foot">
+          <span class="app-note-meta" id="app-note-meta-${c.id}">${noteMeta}</span>
+          <button class="btn-sm app-note-save" onclick="saveContactNote(${c.id})">Uložiť poznámku</button>
+        </div>
+      </div>
       <div style="display:flex;gap:.5rem;justify-content:flex-end;">
         <a class="btn-sm" href="mailto:${c.email}" style="color:var(--cream-bright);text-decoration:none;">✉ Odpovedať</a>
         <button class="btn-sm" onclick="deleteContactRequest(${c.id})" style="color:#bf6d6d;">🗑 Vymazať</button>
@@ -2754,6 +2789,43 @@ async function deleteContactRequest(id) {
   }
   toast('Prihláška vymazaná', 'success');
   loadAdminContacts();
+}
+
+async function saveContactNote(id) {
+  const ta = document.getElementById('app-note-' + id);
+  if (!ta) return;
+  const note = ta.value.trim();
+  const by = (currentProfile?.nickname || currentProfile?.full_name || 'manažér').trim();
+  const nowIso = new Date().toISOString();
+  const btn = ta.closest('.app-note')?.querySelector('.app-note-save');
+  if (btn) { btn.disabled = true; btn.textContent = 'Ukladám…'; }
+
+  // Skús uložiť aj s metadátami (kto/kedy). Ak stĺpce chýbajú, fallback len na text.
+  let { data, error } = await sb.from('contact_requests')
+    .update({ admin_note: note || null, admin_note_by: by, admin_note_at: nowIso })
+    .eq('id', id).select();
+
+  if (error && /column|schema|admin_note_by|admin_note_at/i.test(error.message || '')) {
+    ({ data, error } = await sb.from('contact_requests')
+      .update({ admin_note: note || null })
+      .eq('id', id).select());
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = 'Uložiť poznámku'; }
+
+  if (error) { toast('Chyba: ' + error.message, 'error'); return; }
+  if (!data || !data.length) { toast('Nepodarilo sa uložiť (chýba oprávnenie).', 'error'); return; }
+
+  const metaEl = document.getElementById('app-note-meta-' + id);
+  if (metaEl) {
+    const dt = new Date(nowIso);
+    const months = ['jan','feb','mar','apr','máj','jún','júl','aug','sep','okt','nov','dec'];
+    const hh = String(dt.getHours()).padStart(2,'0'), mm = String(dt.getMinutes()).padStart(2,'0');
+    metaEl.textContent = note
+      ? `Naposledy upravil ${by} · ${dt.getDate()}. ${months[dt.getMonth()]} ${dt.getFullYear()} ${hh}:${mm}`
+      : '';
+  }
+  toast('Poznámka uložená ✓', 'success');
 }
 
 async function submitContact() {
