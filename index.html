@@ -462,6 +462,25 @@ header{
 .md-ed-status.ok{color:#8fd18f;}
 .md-ed-status.err{color:var(--rust-light);}
 
+/* manuálne pridaná akcia (bez szalh záznamu) */
+.md-tl-manual{font-size:.58rem; text-transform:uppercase; letter-spacing:.08em;
+  color:var(--bone); opacity:.75; margin-left:.4rem;}
+.md-tl-del{position:absolute; top:.4rem; right:34px; z-index:2;
+  background:rgba(21,17,15,.6); border:1px solid var(--maroon); color:var(--rust-light);
+  width:26px; height:26px; border-radius:6px; cursor:pointer; font-size:.8rem;
+  display:flex; align-items:center; justify-content:center; line-height:1; padding:0;}
+.md-tl-del:hover{background:var(--rust); color:var(--cream-bright);}
+.md-tl-item.has-del .md-tl-head{padding-right:68px;}
+
+/* formulár na pridanie novej akcie */
+.md-tl-addform-grid{grid-template-columns:1fr 1fr;}
+
+/* box score — admin edit */
+.md-box-team-row{display:flex; align-items:center; justify-content:space-between; gap:.6rem; margin:1rem 0 .5rem;}
+.md-box-team-row .md-box-team{margin:0;}
+.md-box td .md-admin-inp{padding:.3rem .4rem; font-size:.85rem;}
+.md-box-toolbar{display:flex; flex-wrap:wrap; gap:.5rem; margin:.4rem 0 1.2rem;}
+
 /* ── ADMIN: interná poznámka k prihláške ── */
 .app-note{border-top:1px solid var(--line); border-bottom:1px solid var(--line);
   padding:.7rem 0; margin:.2rem 0;}
@@ -1606,7 +1625,7 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.9.1</div>
+  <div id="version-badge">v3.10.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -3024,6 +3043,7 @@ function mdComposeAssists(assists, profIdx, ov){
 }
 
 let _mdCurrent = null; // { data, details } aktuálne otvoreného zápasu (pre video seek)
+let _mdBoxEditing = new Set(); // indexy tímov (v data.boxscore) práve editovaných adminom
 
 async function openMatchDetail(eventId){
   const overlay = document.getElementById('modal-match-detail');
@@ -3045,6 +3065,7 @@ async function openMatchDetail(eventId){
     const data = await proxyRes.json();
     const details = (detailsRes && detailsRes.data) || {};
     _mdCurrent = { data, details, profIdx, eventId };
+    _mdBoxEditing = new Set();
     renderMatchDetail(data, details, profIdx);
   } catch(e){
     console.error('Match detail load error:', e);
@@ -3110,7 +3131,18 @@ function renderMatchDetail(data, details, profIdx){
 
   // Timeline
   html += '<div class="md-sec-label">Priebeh zápasu</div>';
-  const events = Array.isArray(data.events) ? data.events : [];
+  const rawEvents = Array.isArray(data.events) ? data.events : [];
+  const manualEvents = Array.isArray(details.manual_events) ? details.manual_events : [];
+  const events = rawEvents.concat(manualEvents).slice().sort((a, b) => {
+    const pa = a.period != null ? a.period : 0, pb = b.period != null ? b.period : 0;
+    if (pa !== pb) return pa - pb;
+    return mdTimeToSec(a.time) - mdTimeToSec(b.time);
+  });
+  const isAdminTl = currentProfile?.role === 'admin';
+  if (isAdminTl){
+    html += '<button class="md-yt-save" style="margin-bottom:.7rem;" onclick="mdToggleAddEvent()">+ Pridať akciu</button>'
+      + mdAddEventForm();
+  }
   if (events.length){
     html += '<div class="md-timeline">';
     events.forEach(ev => {
@@ -3141,18 +3173,23 @@ function renderMatchDetail(data, details, profIdx){
       }
 
       const isAdmin = currentProfile?.role === 'admin';
+      const isManual = ev.manual === true;
       const editBtn = isAdmin
         ? '<button class="md-tl-edit" title="Upraviť akciu" onclick="event.stopPropagation();mdToggleEvent(\'' + mdEsc(key) + '\')">✎</button>'
         : '';
+      const delBtn = (isAdmin && isManual)
+        ? '<button class="md-tl-del" title="Vymazať manuálnu akciu" onclick="event.stopPropagation();mdDeleteManualEvent(\'' + mdEsc(key) + '\')">🗑</button>'
+        : '';
 
-      html += '<div class="md-tl-item ' + cls + (canSeek ? ' clickable' : '') + '"'
+      html += '<div class="md-tl-item ' + cls + (canSeek ? ' clickable' : '') + (delBtn ? ' has-del' : '') + '"'
         + (canSeek ? ' onclick="mdSeek(\'' + mdEsc(offset) + '\')"' : '') + '>'
-        + editBtn
+        + editBtn + delBtn
         + '<div class="md-tl-dot">' + (isGoal ? '🥅' : '⛔') + '</div>'
         + '<div class="md-tl-head">'
         +   '<span class="md-tl-clock">' + mdEsc(clockTxt) + '</span>'
         +   '<span class="md-tl-title">' + numTxt + nameTxt + '</span>'
         +   '<span class="md-tl-badge">' + (isGoal ? 'Gól' : 'Trest') + '</span>'
+        +   (isManual ? '<span class="md-tl-manual">manuálne</span>' : '')
         + '</div>'
         + (subParts.length ? '<div class="md-tl-sub">' + subParts.join(' · ') + '</div>' : '')
         + (canSeek ? '<span class="md-tl-play">▶ prehrať vo videu (' + mdEsc(offset) + ')</span>' : '')
@@ -3167,27 +3204,67 @@ function renderMatchDetail(data, details, profIdx){
   // Box score
   html += '<div class="md-sec-label">Štatistiky hráčov</div>';
   const box = Array.isArray(data.boxscore) ? data.boxscore : [];
+  const boxOverrides = details.box_overrides || {};
+  const boxExtra = details.box_extra || {};
+  const isAdminBox = currentProfile?.role === 'admin';
   if (box.length){
-    box.forEach(team => {
+    box.forEach((team, idx) => {
       const tName = team.team || '';
-      html += '<div class="md-box-team' + (isNeaTeam(tName) ? ' nea' : '') + '">' + mdEsc(tName) + '</div>';
-      html += '<div class="md-box-wrap"><table class="md-box">'
+      const editing = isAdminBox && _mdBoxEditing.has(idx);
+      html += '<div class="md-box-team-row">'
+        + '<div class="md-box-team' + (isNeaTeam(tName) ? ' nea' : '') + '">' + mdEsc(tName) + '</div>'
+        + (isAdminBox && !editing ? '<button class="md-yt-save" onclick="mdToggleBoxEdit(' + idx + ')">✎ Upraviť</button>' : '')
+        + '</div>';
+      html += '<div class="md-box-wrap"><table class="md-box" data-team-idx="' + idx + '">'
         + '<thead><tr><th>#</th><th>Hráč</th><th>G</th><th>A</th><th>B</th><th>TM</th></tr></thead><tbody>';
       const players = Array.isArray(team.players) ? team.players : [];
       players.forEach(pl => {
+        const key = mdBoxKey(tName, pl.name);
+        const ov = boxOverrides[key] || {};
         const hit = mdApplyRoster(pl.name, profIdx);
-        const num = (hit && hit.number != null && hit.number !== '') ? hit.number
-                    : (pl.num != null ? pl.num : '');
-        html += '<tr' + (hit ? ' class="roster-match"' : '') + '>'
-          + '<td>' + mdEsc(num) + '</td>'
-          + '<td>' + mdEsc(pl.name || '') + '</td>'
-          + '<td>' + (pl.goals   != null ? pl.goals   : 0) + '</td>'
-          + '<td>' + (pl.assists != null ? pl.assists : 0) + '</td>'
-          + '<td>' + (pl.points  != null ? pl.points  : ((pl.goals||0)+(pl.assists||0))) + '</td>'
-          + '<td>' + (pl.pim     != null ? pl.pim     : 0) + '</td>'
-          + '</tr>';
+        const num = ov.num != null ? ov.num
+                    : ((hit && hit.number != null && hit.number !== '') ? hit.number : (pl.num != null ? pl.num : ''));
+        const name = ov.name != null ? ov.name : (pl.name || '');
+        const goals = ov.goals != null ? ov.goals : (pl.goals != null ? pl.goals : 0);
+        const assists = ov.assists != null ? ov.assists : (pl.assists != null ? pl.assists : 0);
+        const pim = ov.pim != null ? ov.pim : (pl.pim != null ? pl.pim : 0);
+        if (editing){
+          html += mdBoxRowInputs({ num, name, goals, assists, pim }, null, key);
+        } else {
+          const points = (ov.goals != null || ov.assists != null) ? (goals + assists)
+                        : (pl.points != null ? pl.points : (goals + assists));
+          html += '<tr' + (hit ? ' class="roster-match"' : '') + '>'
+            + '<td>' + mdEsc(num) + '</td>'
+            + '<td>' + mdEsc(name) + '</td>'
+            + '<td>' + goals + '</td>'
+            + '<td>' + assists + '</td>'
+            + '<td>' + points + '</td>'
+            + '<td>' + pim + '</td>'
+            + '</tr>';
+        }
+      });
+      (Array.isArray(boxExtra[tName]) ? boxExtra[tName] : []).forEach(row => {
+        if (editing){
+          html += mdBoxRowInputs(row, row.id, null);
+        } else if (row && row.name){
+          html += '<tr class="roster-match">'
+            + '<td>' + mdEsc(row.num || '') + '</td>'
+            + '<td>' + mdEsc(row.name || '') + '</td>'
+            + '<td>' + (row.goals || 0) + '</td>'
+            + '<td>' + (row.assists || 0) + '</td>'
+            + '<td>' + ((row.goals || 0) + (row.assists || 0)) + '</td>'
+            + '<td>' + (row.pim || 0) + '</td>'
+            + '</tr>';
+        }
       });
       html += '</tbody></table></div>';
+      if (editing){
+        html += '<div class="md-box-toolbar">'
+          + '<button class="md-ed-cancel" onclick="mdAddBoxRow(' + idx + ')">+ Pridať hráča</button>'
+          + '<button class="md-yt-save" onclick="mdSaveBox(' + idx + ')">Uložiť štatistiky</button>'
+          + '<button class="md-ed-cancel" onclick="mdCancelBoxEdit(' + idx + ')">Zrušiť</button>'
+          + '</div>';
+      }
     });
   } else {
     html += '<div class="md-empty">Box score nie je k dispozícii.</div>';
@@ -3237,6 +3314,113 @@ function mdToggleEvent(key){
   el.classList.toggle('open');
 }
 
+// mm:ss (alebo hh:mm:ss) → sekundy, pre zoradenie timeline
+function mdTimeToSec(t){
+  if (!t) return 0;
+  const p = String(t).split(':').map(n => parseInt(n, 10) || 0);
+  if (p.length === 3) return p[0]*3600 + p[1]*60 + p[2];
+  if (p.length === 2) return p[0]*60 + p[1];
+  return p[0] || 0;
+}
+
+// Formulár na manuálne pridanie akcie (gól/trest), ktorú szalh nezachytil
+function mdAddEventForm(){
+  return '<div class="md-tl-editor md-tl-addform" id="md-add-event-form">'
+    + '<div class="md-tl-editor-grid md-tl-addform-grid">'
+    +   '<div><label class="md-admin-lbl">Tretina</label>'
+    +     '<select class="md-admin-inp" id="mdadd-period"><option value="1">1. tretina</option><option value="2">2. tretina</option></select></div>'
+    +   '<div><label class="md-admin-lbl">Čas</label>'
+    +     '<input class="md-admin-inp" id="mdadd-time" placeholder="napr. 12:34"></div>'
+    +   '<div><label class="md-admin-lbl">Typ</label>'
+    +     '<select class="md-admin-inp" id="mdadd-type" onchange="mdAddTypeChange()"><option value="goal">Gól</option><option value="penalty">Trest</option></select></div>'
+    +   '<div><label class="md-admin-lbl">#</label>'
+    +     '<input class="md-admin-inp" id="mdadd-num" placeholder="číslo"></div>'
+    +   '<div class="md-admin-wide"><label class="md-admin-lbl">Meno hráča</label>'
+    +     '<input class="md-admin-inp" id="mdadd-name" placeholder="meno a priezvisko"></div>'
+    +   '<div class="md-admin-wide" id="mdadd-assists-wrap"><label class="md-admin-lbl">Asistencie (mená oddelené čiarkou)</label>'
+    +     '<input class="md-admin-inp" id="mdadd-assists"></div>'
+    +   '<div class="md-admin-wide" id="mdadd-reason-wrap" style="display:none"><label class="md-admin-lbl">Dôvod trestu</label>'
+    +     '<input class="md-admin-inp" id="mdadd-reason" placeholder="napr. 2 min – hákovanie"></div>'
+    + '</div>'
+    + '<div class="md-tl-editor-actions">'
+    +   '<button class="md-ed-save" onclick="mdSaveNewEvent()">Pridať</button>'
+    +   '<button class="md-ed-cancel" onclick="mdToggleAddEvent()">Zrušiť</button>'
+    +   '<span class="md-ed-status" id="mdadd-status"></span>'
+    + '</div>'
+    + '</div>';
+}
+
+// Prepni zobrazenie asistencie/dôvod podľa typu akcie vo formulári pridania
+function mdAddTypeChange(){
+  const t = document.getElementById('mdadd-type')?.value;
+  const aw = document.getElementById('mdadd-assists-wrap');
+  const rw = document.getElementById('mdadd-reason-wrap');
+  if (aw) aw.style.display = t === 'goal' ? '' : 'none';
+  if (rw) rw.style.display = t === 'penalty' ? '' : 'none';
+}
+
+// Rozbaľ / zbaľ formulár na pridanie novej akcie
+function mdToggleAddEvent(){
+  const el = document.getElementById('md-add-event-form');
+  if (!el) return;
+  el.classList.toggle('open');
+}
+
+// Ulož novú manuálne pridanú akciu (gól/trest mimo szalh dát)
+async function mdSaveNewEvent(){
+  if (!_mdCurrent) return;
+  const period = parseInt(document.getElementById('mdadd-period')?.value, 10) || 1;
+  const time = (document.getElementById('mdadd-time')?.value || '').trim();
+  const type = document.getElementById('mdadd-type')?.value || 'goal';
+  const num = (document.getElementById('mdadd-num')?.value || '').trim();
+  const name = (document.getElementById('mdadd-name')?.value || '').trim();
+  const assistsRaw = (document.getElementById('mdadd-assists')?.value || '').trim();
+  const reason = (document.getElementById('mdadd-reason')?.value || '').trim();
+  const statusEl = document.getElementById('mdadd-status');
+
+  if (!time || !name){
+    if (statusEl){ statusEl.textContent = 'Vyplň aspoň čas a meno hráča.'; statusEl.className = 'md-ed-status err'; }
+    return;
+  }
+
+  const key = 'manual_' + period + '_' + time + '_' + type + '_' + Date.now();
+  const ev = { key, period, time, type, manual: true };
+  if (num) ev.player_num = num;
+  if (name) ev.player_name = name;
+  if (type === 'goal' && assistsRaw){
+    ev.assists = assistsRaw.split(',').map(s => s.trim()).filter(Boolean).map(n => ({ name: n }));
+  }
+  if (type === 'penalty' && reason) ev.reason = reason;
+
+  const d = _mdCurrent.details || {};
+  const manual_events = (Array.isArray(d.manual_events) ? d.manual_events : []).concat([ev]);
+
+  try {
+    const payload = await mdPersist({ manual_events });
+    toast('Akcia pridaná ✓','success');
+    mdRerender(payload);
+  } catch(e){
+    console.error('add event error:', e);
+    if (statusEl){ statusEl.textContent = 'Chyba pri ukladaní'; statusEl.className = 'md-ed-status err'; }
+    toast('Uloženie zlyhalo','error');
+  }
+}
+
+// Vymaž manuálne pridanú akciu
+async function mdDeleteManualEvent(key){
+  if (!_mdCurrent) return;
+  const d = _mdCurrent.details || {};
+  const manual_events = (Array.isArray(d.manual_events) ? d.manual_events : []).filter(e => e.key !== key);
+  try {
+    const payload = await mdPersist({ manual_events });
+    toast('Akcia vymazaná ✓','success');
+    mdRerender(payload);
+  } catch(e){
+    console.error('delete event error:', e);
+    toast('Vymazanie zlyhalo','error');
+  }
+}
+
 // Vytiahni 11-znakové YouTube ID z linku alebo vráť vstup ak už je ID
 function mdParseYtId(v){
   if (!v) return '';
@@ -3255,6 +3439,9 @@ async function mdPersist(patch){
     youtube_id: d.youtube_id != null ? d.youtube_id : null,
     video_offsets: { ...(d.video_offsets || {}) },
     overrides: { ...(d.overrides || {}) },
+    manual_events: Array.isArray(d.manual_events) ? [...d.manual_events] : [],
+    box_overrides: { ...(d.box_overrides || {}) },
+    box_extra: { ...(d.box_extra || {}) },
     ...patch
   };
   const { error } = await sb.from('match_details').upsert(payload, { onConflict: 'event_id' });
@@ -3323,6 +3510,93 @@ function mdRerender(payload){
   const sy = scroller ? scroller.scrollTop : 0;
   renderMatchDetail(_mdCurrent.data, payload, _mdCurrent.profIdx);
   if (scroller) scroller.scrollTop = sy;
+}
+
+// Kľúč riadku box score: normalizovaný tím + normalizované meno hráča
+function mdBoxKey(team, name){
+  return mdNormName(team) + '|' + mdNormName(name);
+}
+
+// Editovateľný riadok box score (existujúci hráč cez `key`, alebo pridaný cez `extraId`)
+function mdBoxRowInputs(row, extraId, key){
+  const attr = extraId ? ' data-extra-id="' + mdEsc(extraId) + '"' : (key ? ' data-key="' + mdEsc(key) + '"' : '');
+  return '<tr class="md-box-edit-row"' + attr + '>'
+    + '<td><input class="md-admin-inp mdbx-num" value="' + mdEsc(row.num != null ? row.num : '') + '"></td>'
+    + '<td><input class="md-admin-inp mdbx-name" value="' + mdEsc(row.name || '') + '"></td>'
+    + '<td><input class="md-admin-inp mdbx-goals" type="number" min="0" value="' + (row.goals || 0) + '" oninput="mdBoxRecalcPoints(this)"></td>'
+    + '<td><input class="md-admin-inp mdbx-assists" type="number" min="0" value="' + (row.assists || 0) + '" oninput="mdBoxRecalcPoints(this)"></td>'
+    + '<td class="mdbx-points">' + ((row.goals || 0) + (row.assists || 0)) + '</td>'
+    + '<td><input class="md-admin-inp mdbx-pim" type="number" min="0" value="' + (row.pim || 0) + '"></td>'
+    + '</tr>';
+}
+
+// Prepočítaj body (G+A) v editovanom riadku box score
+function mdBoxRecalcPoints(inp){
+  const tr = inp.closest('tr');
+  const g = parseInt(tr.querySelector('.mdbx-goals')?.value, 10) || 0;
+  const a = parseInt(tr.querySelector('.mdbx-assists')?.value, 10) || 0;
+  const cell = tr.querySelector('.mdbx-points');
+  if (cell) cell.textContent = g + a;
+}
+
+// Zapni editáciu box score pre daný tím (index v data.boxscore)
+function mdToggleBoxEdit(idx){
+  if (!_mdCurrent) return;
+  _mdBoxEditing.add(idx);
+  mdRerender(_mdCurrent.details);
+}
+
+// Zruš editáciu box score bez uloženia
+function mdCancelBoxEdit(idx){
+  _mdBoxEditing.delete(idx);
+  mdRerender(_mdCurrent.details);
+}
+
+// Pridaj prázdny riadok pre nového hráča do editovanej tabuľky (bez prekreslenia — nestratí rozrobené zmeny)
+function mdAddBoxRow(idx){
+  const tbody = document.querySelector('table.md-box[data-team-idx="' + idx + '"] tbody');
+  if (!tbody) return;
+  const id = 'extra_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+  tbody.insertAdjacentHTML('beforeend', mdBoxRowInputs({ num: '', name: '', goals: 0, assists: 0, pim: 0 }, id));
+}
+
+// Ulož štatistiky hráčov daného tímu (overrides existujúcich riadkov + nové pridané riadky)
+async function mdSaveBox(idx){
+  if (!_mdCurrent) return;
+  const teamObj = _mdCurrent.data.boxscore?.[idx];
+  const tName = teamObj ? (teamObj.team || '') : '';
+  const tbody = document.querySelector('table.md-box[data-team-idx="' + idx + '"] tbody');
+  if (!tbody) return;
+
+  const d = _mdCurrent.details || {};
+  const box_overrides = { ...(d.box_overrides || {}) };
+  const box_extra = { ...(d.box_extra || {}) };
+  const extraRows = [];
+
+  tbody.querySelectorAll('tr.md-box-edit-row').forEach(tr => {
+    const num = (tr.querySelector('.mdbx-num')?.value || '').trim();
+    const name = (tr.querySelector('.mdbx-name')?.value || '').trim();
+    const goals = parseInt(tr.querySelector('.mdbx-goals')?.value, 10) || 0;
+    const assists = parseInt(tr.querySelector('.mdbx-assists')?.value, 10) || 0;
+    const pim = parseInt(tr.querySelector('.mdbx-pim')?.value, 10) || 0;
+    const key = tr.dataset.key;
+    if (key){
+      box_overrides[key] = { num, name, goals, assists, pim };
+    } else if (name){
+      extraRows.push({ id: tr.dataset.extraId, num, name, goals, assists, pim });
+    }
+  });
+  box_extra[tName] = extraRows;
+
+  try {
+    const payload = await mdPersist({ box_overrides, box_extra });
+    toast('Štatistiky uložené ✓','success');
+    _mdBoxEditing.delete(idx);
+    mdRerender(payload);
+  } catch(e){
+    console.error('box save error:', e);
+    toast('Uloženie zlyhalo','error');
+  }
 }
 
 // Prehraj video od zadaného času zápasu-vo-videu (mm:ss alebo hh:mm:ss)
