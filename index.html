@@ -1625,7 +1625,7 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.10.0</div>
+  <div id="version-badge">v3.10.1</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2545,7 +2545,7 @@ async function loadAdminUsers() {
 
     list.innerHTML = profiles.map(p => {
       const act     = isActivated(p);
-      const name    = act ? p.full_name : '(bez mena)';
+      const name    = act ? p.full_name : (p.email || '(bez mena)');
       const nick    = p.nickname && p.nickname !== p.full_name ? ' · ' + p.nickname : '';
       const total   = rsvpTotal[p.id] || 0;
       const yes     = rsvpYes[p.id] || 0;
