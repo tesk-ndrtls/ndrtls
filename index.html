@@ -1635,7 +1635,7 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.12.0</div>
+  <div id="version-badge">v3.12.1</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -1935,29 +1935,6 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
     <div class="form-group"><label>Nadpis</label><input type="text" id="news-title" placeholder="Nadpis príspevku"></div>
     <div class="form-group"><label>Dátum udalosti</label><input type="date" id="news-date"></div>
     <div class="form-group"><label>Text</label><textarea id="news-body" rows="4" style="width:100%;background:var(--ink);border:1px solid var(--line);border-radius:6px;padding:.75rem .9rem;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;resize:vertical;min-height:80px;"></textarea></div>
-    <div class="form-group"><label>Foto URL (nepovinné)</label><input type="url" id="news-img" placeholder="https://..."></div>
-    <div class="form-group"><label>YouTube link (nepovinné)</label><input type="url" id="news-yt" placeholder="https://youtu.be/...">
-      <p style="font-size:.82rem;color:var(--bone);margin-top:.3rem;">YouTube má prednosť pred fotom.</p></div>
-    <div class="stripe"></div>
-    <div class="form-group"><label>🇬🇧 Anglický nadpis (nepovinné)</label><input type="text" id="news-title-en" placeholder="English title"></div>
-    <div class="form-group"><label>🇬🇧 Anglický text (nepovinné)</label><textarea id="news-body-en" rows="4" style="width:100%;background:var(--ink);border:1px solid var(--line);border-radius:6px;padding:.75rem .9rem;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;resize:vertical;min-height:80px;" placeholder="English text"></textarea>
-      <p style="font-size:.82rem;color:var(--bone);margin-top:.3rem;">Prázdne = pri EN jazyku sa zobrazí slovenský text.</p></div>
-    <div class="modal-actions">
-      <button class="btn-admin save" onclick="saveNews()">Uložiť</button>
-      <button class="btn-admin cancel" onclick="closeModal('modal-news')">Zrušiť</button>
-      <button class="btn-admin danger" id="news-delete-btn" onclick="deleteNews()" style="display:none;margin-left:auto;">Vymazať</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══ NEWS MODAL ══ -->
-<div class="modal-overlay" id="modal-news">
-  <div class="modal">
-    <h3 id="news-modal-title">Nový oznam</h3>
-    <input type="hidden" id="news-edit-id">
-    <div class="form-group"><label>Nadpis</label><input type="text" id="news-title" placeholder="Nadpis príspevku"></div>
-    <div class="form-group"><label>Dátum udalosti</label><input type="date" id="news-date"></div>
-    <div class="form-group"><label>Text</label><textarea id="news-body" rows="4" style="width:100%;background:var(--ink);border:1px solid var(--line);border-radius:6px;padding:.75rem .9rem;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;resize:vertical;min-height:80px;"></textarea></div>
     <div class="form-group">
       <label>Foto</label>
       <input type="file" id="news-photo-upload" accept="image/*" style="display:none;" onchange="uploadNewsPhoto(this.files[0])">
@@ -1966,7 +1943,12 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
       <input type="url" id="news-img" placeholder="alebo vlož URL fotky">
       <div id="news-img-preview" style="display:none;margin-top:.5rem;"></div>
     </div>
-    <div class="form-group"><label>YouTube link (nepovinné)</label><input type="url" id="news-yt" placeholder="https://youtu.be/..."></div>
+    <div class="form-group"><label>YouTube link (nepovinné)</label><input type="url" id="news-yt" placeholder="https://youtu.be/...">
+      <p style="font-size:.82rem;color:var(--bone);margin-top:.3rem;">YouTube má prednosť pred fotom.</p></div>
+    <div class="stripe"></div>
+    <div class="form-group"><label>🇬🇧 Anglický nadpis (nepovinné)</label><input type="text" id="news-title-en" placeholder="English title"></div>
+    <div class="form-group"><label>🇬🇧 Anglický text (nepovinné)</label><textarea id="news-body-en" rows="4" style="width:100%;background:var(--ink);border:1px solid var(--line);border-radius:6px;padding:.75rem .9rem;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;resize:vertical;min-height:80px;" placeholder="English text"></textarea>
+      <p style="font-size:.82rem;color:var(--bone);margin-top:.3rem;">Prázdne = pri EN jazyku sa zobrazí slovenský text.</p></div>
     <div class="modal-actions">
       <button class="btn-admin save" onclick="saveNews()">Uložiť</button>
       <button class="btn-admin cancel" onclick="closeModal('modal-news')">Zrušiť</button>
