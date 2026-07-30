@@ -732,6 +732,9 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
 .news-card:hover{border-color:rgba(107,31,42,.4);}
 .news-card-img{width:100%;aspect-ratio:16/9;object-fit:cover;}
 .news-card-video{width:100%;aspect-ratio:16/9;border:0;}
+.news-card-vid-badge{position:absolute;top:.6rem;right:.6rem;background:rgba(0,0,0,.75);
+  color:var(--cream-bright);font-family:'Oswald';font-size:.68rem;font-weight:700;
+  letter-spacing:.05em;text-transform:uppercase;padding:.25rem .55rem;border-radius:4px;z-index:2;}
 .news-card-body{padding:1.2rem 1.4rem;}
 .news-card-date{font-family:'Oswald';font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rust-light);margin-bottom:.4rem;}
 .news-card h3{font-family:'Oswald';font-weight:700;font-size:1.15rem;color:var(--cream-bright);text-transform:uppercase;margin-bottom:.5rem;}
@@ -1637,7 +1640,7 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.13.0</div>
+  <div id="version-badge">v3.13.1</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2495,9 +2498,24 @@ function renderPublicNews() {
     const dateStr=d.getDate()+'. '+months[d.getMonth()]+' '+d.getFullYear();
     const title = (LANG==='en' && n.title_en) ? n.title_en : n.title;
     const body  = (LANG==='en' && n.body_en)  ? n.body_en  : (n.body||'');
+    const ytId = n.youtube_url ? extractYoutubeId(n.youtube_url) : null;
+    const domId = 'newsmedia-' + n.id;
     let media='';
-    if (n.youtube_url) { const ytId=extractYoutubeId(n.youtube_url); if(ytId) media=`<iframe class="news-card-video" src="https://www.youtube-nocookie.com/embed/${ytId}" allowfullscreen></iframe>`; }
-    else if (n.image_url) media=`<img class="news-card-img" src="${n.image_url}" alt="${title}" onerror="this.style.display='none'">`;
+    if (ytId && n.image_url) {
+      // Foto v náhľade (primárne), video sa prehrá až po kliknutí — odznak v rohu ho signalizuje.
+      media = `<div class="media-thumb" id="${domId}" onclick="playVideo('${domId}','${ytId}')" style="cursor:pointer;aspect-ratio:16/9;">`
+        + `<img src="${n.image_url}" alt="${title}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">`
+        + `<div class="news-card-vid-badge">▶ Video</div>`
+        + `</div>`;
+    } else if (ytId) {
+      // Len video, žiadne foto → náhľad z YouTube s tlačidlom prehrať (rovnaký vzor ako galéria médií).
+      media = `<div class="media-thumb" id="${domId}" onclick="playVideo('${domId}','${ytId}')" style="cursor:pointer;">`
+        + `<img src="https://img.youtube.com/vi/${ytId}/hqdefault.jpg" alt="${title}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">`
+        + `<div class="yt-play-btn"><svg viewBox="0 0 68 48" width="68" height="48"><path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="#ff0000"/><path d="M45 24L27 14v20" fill="#fff"/></svg></div>`
+        + `</div>`;
+    } else if (n.image_url) {
+      media=`<img class="news-card-img" src="${n.image_url}" alt="${title}" onerror="this.style.display='none'">`;
+    }
     return `<div class="news-card">${media}<div class="news-card-body"><div class="news-card-date">${dateStr}</div><h3>${title}</h3><p>${body.replace(/\n/g,'<br>')}</p></div></div>`;
   }).join('');
 }
