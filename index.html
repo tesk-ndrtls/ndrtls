@@ -1637,7 +1637,7 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.13.2</div>
+  <div id="version-badge">v3.13.3</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2483,8 +2483,9 @@ function extractYoutubeId(url) {
   const m=url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/);
   return m?m[1]:null;
 }
-// Červené YouTube play tlačidlo — len signalizuje, že oznam má video (prehrá sa až v detaile).
-const NEWS_YT_BADGE = '<div class="yt-play-btn"><svg viewBox="0 0 68 48" width="68" height="48"><path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="#ff0000"/><path d="M45 24L27 14v20" fill="#fff"/></svg></div>';
+// Malé červené YouTube logo v rohu — len signalizuje, že oznam má video (prehrá sa až v detaile).
+const NEWS_YT_BADGE = '<div style="position:absolute;top:.5rem;right:.5rem;z-index:2;filter:drop-shadow(0 1px 4px rgba(0,0,0,.6));">'
+  + '<svg width="34" height="24" viewBox="0 0 68 48"><path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="#ff0000"/><path d="M45 24L27 14v20" fill="#fff"/></svg></div>';
 let _newsCache = null;
 async function loadPublicNews() {
   const list=document.getElementById('pub-news-list');
@@ -2540,11 +2541,13 @@ function openNewsDetail(id) {
   const ytId = n.youtube_url ? extractYoutubeId(n.youtube_url) : null;
 
   document.getElementById('nd-title').textContent = title;
+  // Galéria: foto aj video sa v detaile zobrazia spolu, nič sa neskrýva.
   let media = '';
+  if (n.image_url) {
+    media += `<img src="${n.image_url}" alt="${title}" style="width:100%;border-radius:10px;margin-bottom:1rem;">`;
+  }
   if (ytId) {
-    media = `<div class="md-video"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/${ytId}?rel=0" title="${title}" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div>`;
-  } else if (n.image_url) {
-    media = `<img src="${n.image_url}" alt="${title}" style="width:100%;border-radius:10px;margin-bottom:1rem;">`;
+    media += `<div class="md-video"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/${ytId}?rel=0" title="${title}" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div>`;
   }
   document.getElementById('nd-body').innerHTML =
     `<div class="news-card-date" style="margin-bottom:.8rem;">${dateStr}</div>`
