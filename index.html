@@ -1637,7 +1637,7 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.13.0</div>
+  <div id="version-badge">v3.13.3</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -1956,6 +1956,18 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
       <button class="btn-admin cancel" onclick="closeModal('modal-news')">Zrušiť</button>
       <button class="btn-admin danger" id="news-delete-btn" onclick="deleteNews()" style="display:none;margin-left:auto;">Vymazať</button>
     </div>
+  </div>
+</div>
+
+<!-- ══ NEWS DETAIL MODAL (verejný náhľad oznamu) ══ -->
+<div class="modal-overlay" id="modal-news-detail">
+  <div class="modal md-modal">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.4rem;">
+      <h3 id="nd-title" style="margin:0;font-size:1.3rem;">Oznam</h3>
+      <button onclick="closeModal('modal-news-detail')"
+        style="background:none;border:0;color:var(--bone);font-size:1.6rem;cursor:pointer;line-height:1;">&times;</button>
+    </div>
+    <div id="nd-body"></div>
   </div>
 </div>
 
@@ -2471,6 +2483,9 @@ function extractYoutubeId(url) {
   const m=url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/);
   return m?m[1]:null;
 }
+// Malé červené YouTube logo v rohu — len signalizuje, že oznam má video (prehrá sa až v detaile).
+const NEWS_YT_BADGE = '<div style="position:absolute;top:.5rem;right:.5rem;z-index:2;filter:drop-shadow(0 1px 4px rgba(0,0,0,.6));">'
+  + '<svg width="34" height="24" viewBox="0 0 68 48"><path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="#ff0000"/><path d="M45 24L27 14v20" fill="#fff"/></svg></div>';
 let _newsCache = null;
 async function loadPublicNews() {
   const list=document.getElementById('pub-news-list');
@@ -2495,11 +2510,50 @@ function renderPublicNews() {
     const dateStr=d.getDate()+'. '+months[d.getMonth()]+' '+d.getFullYear();
     const title = (LANG==='en' && n.title_en) ? n.title_en : n.title;
     const body  = (LANG==='en' && n.body_en)  ? n.body_en  : (n.body||'');
+    const ytId = n.youtube_url ? extractYoutubeId(n.youtube_url) : null;
     let media='';
-    if (n.youtube_url) { const ytId=extractYoutubeId(n.youtube_url); if(ytId) media=`<iframe class="news-card-video" src="https://www.youtube-nocookie.com/embed/${ytId}" allowfullscreen></iframe>`; }
-    else if (n.image_url) media=`<img class="news-card-img" src="${n.image_url}" alt="${title}" onerror="this.style.display='none'">`;
-    return `<div class="news-card">${media}<div class="news-card-body"><div class="news-card-date">${dateStr}</div><h3>${title}</h3><p>${body.replace(/\n/g,'<br>')}</p></div></div>`;
+    if (n.image_url) {
+      // Foto v náhľade; ak má aj video, len naznač červeným YouTube tlačidlom — video sa prehrá až v detaile.
+      media = `<div class="media-thumb" style="aspect-ratio:16/9;">`
+        + `<img src="${n.image_url}" alt="${title}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">`
+        + (ytId ? NEWS_YT_BADGE : '')
+        + `</div>`;
+    } else if (ytId) {
+      // Len video, žiadne foto → náhľad z YouTube s tlačidlom prehrať (video sa aj tak otvorí až v detaile).
+      media = `<div class="media-thumb">`
+        + `<img src="https://img.youtube.com/vi/${ytId}/hqdefault.jpg" alt="${title}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">`
+        + NEWS_YT_BADGE
+        + `</div>`;
+    }
+    return `<div class="news-card" onclick="openNewsDetail(${n.id})" style="cursor:pointer;">${media}<div class="news-card-body"><div class="news-card-date">${dateStr}</div><h3>${title}</h3><p>${body.replace(/\n/g,'<br>')}</p></div></div>`;
   }).join('');
+}
+
+// Rozbaľ konkrétny oznam do detailu — video (ak je) sa prehráva len tu, nie v náhľade.
+function openNewsDetail(id) {
+  const n = (_newsCache || []).find(x => x.id === id);
+  if (!n) return;
+  const months=['jan','feb','mar','apr','máj','jún','júl','aug','sep','okt','nov','dec'];
+  const d=new Date(n.event_date || n.created_at);
+  const dateStr=d.getDate()+'. '+months[d.getMonth()]+' '+d.getFullYear();
+  const title = (LANG==='en' && n.title_en) ? n.title_en : n.title;
+  const body  = (LANG==='en' && n.body_en)  ? n.body_en  : (n.body||'');
+  const ytId = n.youtube_url ? extractYoutubeId(n.youtube_url) : null;
+
+  document.getElementById('nd-title').textContent = title;
+  // Galéria: foto aj video sa v detaile zobrazia spolu, nič sa neskrýva.
+  let media = '';
+  if (n.image_url) {
+    media += `<img src="${n.image_url}" alt="${title}" style="width:100%;border-radius:10px;margin-bottom:1rem;">`;
+  }
+  if (ytId) {
+    media += `<div class="md-video"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/${ytId}?rel=0" title="${title}" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div>`;
+  }
+  document.getElementById('nd-body').innerHTML =
+    `<div class="news-card-date" style="margin-bottom:.8rem;">${dateStr}</div>`
+    + media
+    + `<p style="color:var(--bone);font-size:.98rem;line-height:1.6;margin-top:1rem;">${body.replace(/\n/g,'<br>')}</p>`;
+  document.getElementById('modal-news-detail').classList.add('show');
 }
 /* ── ADMIN: USERS ──────────────────────────────── */
 async function loadAdminUsers() {
