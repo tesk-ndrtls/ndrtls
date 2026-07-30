@@ -1637,7 +1637,7 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.12.5</div>
+  <div id="version-badge">v3.12.6</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2412,6 +2412,10 @@ function showSection(id) {
   if (id==='rahl' && !window._rahlLoaded) { window._rahlLoaded=true; loadRAHL(); }
   if (id==='training') renderTraining();
   closeNav(); window.scrollTo(0,0);
+  // Zatvorenie menu spúšťa scroll-lock (MutationObserver), ktorý o chvíľu
+  // vráti scroll na pozíciu spred otvorenia menu — táto druhá scrollTo (po
+  // odoslaní mikrotaskov) to prebije a sekcia sa vždy zobrazí od začiatku.
+  requestAnimationFrame(() => window.scrollTo(0,0));
   if (id !== 'login' && id !== 'onboarding') lsSet('ndrtls-section', id);
 }
 function handleHash() {
