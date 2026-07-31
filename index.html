@@ -1637,7 +1637,7 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.13.7</div>
+  <div id="version-badge">v3.13.8</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -5380,7 +5380,15 @@ function initPullToRefresh() {
     if (dist >= THRESHOLD) {
       ind.classList.add('ptr-spin','ptr-visible');
       ind.style.height = 'calc(64px + env(safe-area-inset-top,0px))';
-      setTimeout(() => location.reload(), 350);
+      setTimeout(() => {
+        // V standalone web app móde iOS zrejme zachytí vizuálny snímok stránky
+        // tesne pred reloadom (pre launch/prechodovú animáciu) — ak je v tej
+        // chvíli spinner na plnú výšku, snímok si ho "zapamätá" a zaseknutý sa
+        // potom objaví aj na čerstvo načítanej stránke. Zbaľ ho tesne predtým
+        // a daj prehliadaču aspoň dva frame na prekreslenie, až potom reload.
+        resetIndicator();
+        requestAnimationFrame(() => requestAnimationFrame(() => location.reload()));
+      }, 350);
     } else {
       resetIndicator();
     }
