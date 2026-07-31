@@ -1637,7 +1637,7 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.13.4</div>
+  <div id="version-badge">v3.13.5</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -5336,17 +5336,24 @@ function initPullToRefresh() {
     document.getElementById('gallery-lightbox')?.style.display === 'flex';
 
   // Reset vizuálneho stavu indikátora (použité pri zrušenom/prerušenom gest)
+  let watchdog = null;
   const resetIndicator = () => {
     pulling = false;
+    if (watchdog) { clearTimeout(watchdog); watchdog = null; }
     ind.classList.remove('ptr-visible', 'ptr-spin');
     ind.style.height = '';
   };
 
   window.addEventListener('touchstart', e => {
-    if (isBlocked() || scroller().scrollTop > 0) { pulling = false; return; }
-    resetIndicator(); // vyčisti prípadný zaseknutý stav z predošlého prerušeného gesta
+    resetIndicator(); // vyčisti prípadný zaseknutý stav z predošlého prerušeného/nedokončeného gesta
+    if (isBlocked() || scroller().scrollTop > 0) return;
     startY = e.touches[0].clientY;
     pulling = true; dist = 0;
+    // Poistka: appka spustená z plochy sa dá počas ťahania odložiť na pozadie (swipe
+    // na plochu, prepnutie appiek, zamknutie displeja) — vtedy sa JS okamžite zastaví
+    // a touchend/touchcancel nikdy nepríde. Bez tejto poistky by indikátor ostal
+    // natrvalo zaseknutý v poltiahnutej pozícii.
+    watchdog = setTimeout(resetIndicator, 3000);
   }, { passive: true });
 
   window.addEventListener('touchmove', e => {
@@ -5378,6 +5385,12 @@ function initPullToRefresh() {
   // prepínanie appiek) bez toho, aby vôbec vystrelil touchend — bez tohto poslucháča
   // indikátor ostane natrvalo zaseknutý v poltiahnutej pozícii.
   window.addEventListener('touchcancel', resetIndicator, { passive: true });
+
+  // Web app spustená z plochy sa vie odložiť na pozadie uprostred gesta (swipe na
+  // plochu, prepnutie appiek, zamknutie displeja) — pri návrate/skrytí appky
+  // vždy vyčisti indikátor, nech watchdog v touchstart nemusí čakať 3 sekundy.
+  document.addEventListener('visibilitychange', resetIndicator);
+  window.addEventListener('pageshow', resetIndicator);
 }
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initPullToRefresh);
