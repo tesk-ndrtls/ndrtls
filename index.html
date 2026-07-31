@@ -1637,7 +1637,7 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.13.3</div>
+  <div id="version-badge">v3.13.4</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -5335,15 +5335,23 @@ function initPullToRefresh() {
     document.querySelector('.modal-overlay.show') ||
     document.getElementById('gallery-lightbox')?.style.display === 'flex';
 
+  // Reset vizuálneho stavu indikátora (použité pri zrušenom/prerušenom gest)
+  const resetIndicator = () => {
+    pulling = false;
+    ind.classList.remove('ptr-visible', 'ptr-spin');
+    ind.style.height = '';
+  };
+
   window.addEventListener('touchstart', e => {
     if (isBlocked() || scroller().scrollTop > 0) { pulling = false; return; }
+    resetIndicator(); // vyčisti prípadný zaseknutý stav z predošlého prerušeného gesta
     startY = e.touches[0].clientY;
     pulling = true; dist = 0;
   }, { passive: true });
 
   window.addEventListener('touchmove', e => {
     if (!pulling) return;
-    if (isBlocked()) { pulling = false; ind.classList.remove('ptr-visible'); ind.style.height = ''; return; }
+    if (isBlocked()) { resetIndicator(); return; }
     const raw = e.touches[0].clientY - startY;
     // aplikuj dead-zone + tlmenie
     dist = raw > DEADZONE ? (raw - DEADZONE) * DAMP : 0;
@@ -5362,10 +5370,14 @@ function initPullToRefresh() {
       ind.style.height = 'calc(64px + env(safe-area-inset-top,0px))';
       setTimeout(() => location.reload(), 350);
     } else {
-      ind.classList.remove('ptr-visible');
-      ind.style.height = '';
+      resetIndicator();
     }
   }, { passive: true });
+
+  // iPadOS/Safari vie gesto prerušiť systémovým gestom (napr. Ovládacie centrum,
+  // prepínanie appiek) bez toho, aby vôbec vystrelil touchend — bez tohto poslucháča
+  // indikátor ostane natrvalo zaseknutý v poltiahnutej pozícii.
+  window.addEventListener('touchcancel', resetIndicator, { passive: true });
 }
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initPullToRefresh);
