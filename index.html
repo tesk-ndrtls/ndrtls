@@ -1637,7 +1637,7 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.13.8</div>
+  <div id="version-badge">v3.13.9</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -4112,7 +4112,7 @@ async function loadEvents() {
     const isPast = _evDay < _today;
     const day = d.getDate();
     const mon = months[d.getMonth()];
-    const time = d.toLocaleTimeString('sk', {hour:'2-digit',minute:'2-digit'});
+    const time = d.toLocaleTimeString('sk', {hour:'2-digit',minute:'2-digit',hour12:false});
     const myStatus = rsvpMap[ev.id] || null;
     const count = countMap[ev.id] || 0;
     const maxStr = ev.max_players ? ` / ${ev.max_players}` : '';
@@ -4612,7 +4612,7 @@ async function loadAdminEvents() {
   list.innerHTML = data.map(ev => {
     const d = new Date(ev.date);
     const dateStr = d.getDate() + '. ' + months[d.getMonth()] + ' ' + d.getFullYear();
-    const time = d.toLocaleTimeString('sk', {hour:'2-digit',minute:'2-digit'});
+    const time = d.toLocaleTimeString('sk', {hour:'2-digit',minute:'2-digit',hour12:false});
     return `<div class="event-card">
       <div class="ev-date">${d.getDate()}<span>${months[d.getMonth()]}</span></div>
       <div class="ev-info">
@@ -4660,10 +4660,14 @@ function openEditEventModal(ev) {
 
 async function saveEvent() {
   const editId = document.getElementById('ev-edit-id').value;
+  const dateVal = document.getElementById('ev-date').value; // "YYYY-MM-DDTHH:mm", myslené ako lokálny čas
+  // new Date() na reťazec bez "Z"/offsetu ho interpretuje ako lokálny čas — presne to chceme.
+  // Bez tohto prevodu Postgres berie surový reťazec akoby bol v UTC, čím sa čas posunie o časové pásmo (napr. +2h v lete).
+  const dateIso = dateVal ? new Date(dateVal).toISOString() : '';
   const payload = {
     title:    document.getElementById('ev-title').value.trim(),
     type:     document.getElementById('ev-type').value,
-    date:     document.getElementById('ev-date').value,
+    date:     dateIso,
     location: document.getElementById('ev-location').value.trim() || null,
     max_players: parseInt(document.getElementById('ev-max').value) || null,
     notes:    document.getElementById('ev-notes').value.trim() || null,
