@@ -1662,7 +1662,7 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.15.1</div>
+  <div id="version-badge">v3.15.2</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2607,7 +2607,9 @@ function openNewsDetail(id) {
     `<div class="news-card-date" style="margin-bottom:.8rem;">${dateStr}</div>`
     + media
     + `<p style="color:var(--bone);font-size:.98rem;line-height:1.6;margin-top:1rem;">${body.replace(/\n/g,'<br>')}</p>`;
-  document.getElementById('modal-news-detail').classList.add('show');
+  const ndOverlay = document.getElementById('modal-news-detail');
+  ndOverlay.classList.add('show');
+  ndOverlay.querySelector('.modal')?.scrollTo(0, 0); // vždy od vrchu, nie tam kde skončil posledný oznam
 }
 /* ── ADMIN: USERS ──────────────────────────────── */
 async function loadAdminUsers() {
@@ -3215,6 +3217,7 @@ async function openMatchDetail(eventId){
   body.innerHTML = '<div style="text-align:center;padding:2.5rem;color:var(--bone);">'
     + '<span class="spinner"></span> <span style="margin-left:.6rem;">Načítavam…</span></div>';
   overlay.classList.add('show');
+  overlay.scrollTop = 0; // celoobrazovkový modal — vždy otvor od vrchu, nie tam kde skončil posledný zápas
 
   try {
     // Paralelne: szalh proxy + admin override z Supabase + aktívne profily
