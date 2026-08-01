@@ -733,6 +733,8 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
 .player-slot{background:rgba(107,31,42,.6);border:2px solid rgba(107,31,42,.9);border-radius:8px;padding:.4rem .5rem;min-width:80px;max-width:110px;text-align:center;cursor:pointer;transition:.2s;}
 .player-slot:hover{border-color:var(--rust-light);}
 .player-slot.filled{border-color:var(--rust);background:rgba(74,20,29,.7);}
+.player-slot.dragging{opacity:.85;z-index:50;position:relative;box-shadow:0 8px 24px rgba(0,0,0,.55);transition:none !important;cursor:grabbing;}
+.player-slot.drag-over{outline:2px solid var(--rust-light);outline-offset:2px;}
 .player-slot.empty{border-color:rgba(233,220,195,.2);background:rgba(38,34,32,.4);}
 .player-slot .slot-pos{font-family:'Oswald';font-weight:700;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--rust-light);margin-bottom:.2rem;}
 .player-slot .slot-num{font-family:'Anton';font-size:1.1rem;color:var(--cream-bright);line-height:1;}
@@ -740,8 +742,8 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
 .player-slot.empty .slot-num{color:rgba(233,220,195,.2);font-size:.8rem;}
 .rink{background:linear-gradient(180deg,#1a3a5c 0%,#1e4470 50%,#1a3a5c 100%);border:3px solid #4a90d9;border-radius:20px;padding:1rem;position:relative;margin-bottom:1rem;min-height:420px;}
 .rink-line{border-top:2px solid rgba(74,144,217,.4);margin:.5rem 0;}
-.rink-center{border-top:2px solid rgba(200,50,50,.6);margin:.5rem 0;position:relative;text-align:center;}
-.rink-center::after{content:'';display:inline-block;width:60px;height:60px;border:2px solid rgba(200,50,50,.6);border-radius:50%;position:absolute;left:50%;top:-31px;transform:translateX(-50%);}
+.rink-center{border-top:2px solid rgba(200,50,50,.18);margin:.5rem 0;position:relative;text-align:center;}
+.rink-center::after{content:'';display:inline-block;width:60px;height:60px;border:2px solid rgba(200,50,50,.18);border-radius:50%;position:absolute;left:50%;top:-31px;transform:translateX(-50%);}
 .line-label{font-family:'Oswald';font-weight:700;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(233,220,195,.5);text-align:center;margin:.2rem 0;}
 .line-row{display:flex;justify-content:center;gap:.6rem;margin:.4rem 0;flex-wrap:wrap;}
 .goalkeeper-slot{display:flex;justify-content:center;margin:.3rem 0;}
@@ -1011,9 +1013,9 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
       <div class="nav-group-label">Admin</div>
       <div id="nav-admin-links">
         <div class="nav-item" onclick="showSection('admin-news')" id="nav-admin-news"><span class="nav-ic">📝</span><span>Správa oznamov</span></div>
-        <div class="nav-item" onclick="showSection('admin-events')" id="nav-admin-events"><span class="nav-ic">⚙</span><span>Správa udalostí</span></div>
+        <div class="nav-item" onclick="showSection('admin-events')" id="nav-admin-events"><span class="nav-ic">📅</span><span>Správa udalostí</span></div>
         <div class="nav-item" onclick="showSection('admin-media')" id="nav-admin-media"><span class="nav-ic">📸</span><span>Správa médií</span></div>
-        <div class="nav-item" onclick="showSection('admin-payments')" id="nav-admin-payments"><span class="nav-ic">⚙</span><span>Správa financií</span></div>
+        <div class="nav-item" onclick="showSection('admin-payments')" id="nav-admin-payments"><span class="nav-ic">💶</span><span>Správa financií</span></div>
         <div class="nav-item" onclick="showSection('admin-users')" id="nav-admin-users"><span class="nav-ic">👥</span><span>Správa používateľov</span></div>
         <div class="nav-item" onclick="showSection('admin-contacts')" id="nav-admin-contacts"><span class="nav-ic">📩</span><span>Prihlášky</span></div>
       </div>
@@ -1662,7 +1664,7 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.15.2</div>
+  <div id="version-badge">v3.16.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -3857,7 +3859,7 @@ async function savePlayerCard() {
 /* ── LINEUP ───────────────────────────────────── */
 /* Pracujeme VÝHRADNE s registrovanými používateľmi (profiles), ktorí sú prihlásení
    (RSVP=yes). Súpiska z RAHL (players) sa tu nepoužíva — je len informatívna. */
-let _lEId=null,_lEd=false,_lD={},_lAS=null,_lPool=[],_lHasRsvp=false;
+let _lEId=null,_lEd=false,_lD={},_lAS=null,_lPool=[],_lHasRsvp=false,_lNotRsvp=[];
 
 // Zobrazované meno: prezývka, inak celé meno
 function _lDisplayName(p) {
@@ -3893,6 +3895,18 @@ async function openLineup(eid, et) {
       }
     } catch(e) { console.warn('[lineup] RSVP/profiles load failed', e); }
 
+    // Admin-only: registrovaní používatelia BEZ potvrdenej účasti — admin ich vie do
+    // zostavy pridať aj tak, výberom sa reálne prihlásia (RSVP=áno).
+    _lNotRsvp = [];
+    if (isA) {
+      try {
+        const { data:allProfsRaw } = await sb.from('profiles')
+          .select('id, full_name, nickname, position, number');
+        const rsvpIds = new Set(_lPool.map(p=>p.id));
+        _lNotRsvp = filterIgnored(allProfsRaw).filter(p=>!rsvpIds.has(p.id));
+      } catch(e) { console.warn('[lineup] not-rsvp load failed', e); }
+    }
+
     renderLineup(); document.getElementById('modal-lineup').classList.add('show');
     if (isA && Object.keys(_lD).length===0) autoLineup();
   } catch (err) {
@@ -3908,6 +3922,7 @@ function renderLineup() {
   });
 }
 function lineupSlotClick(slot) {
+  if (_lJustDragged) { _lJustDragged = false; return; } // klik hneď po drage — ignoruj
   if (!_lEd) return;
   _lAS = slot;
   document.getElementById('lineup-picker-label').textContent =
@@ -3936,6 +3951,18 @@ function lineupSlotClick(slot) {
     rows.push('<div onclick="assignPlayer(\'' + p.id + '\')" style="padding:.4rem .6rem;border:1px solid var(--line);border-radius:6px;cursor:pointer;background:var(--charcoal);' + u + '"><span style="font-family:\'Anton\';color:var(--maroon);margin-right:.3rem;">' + (p.number || '\u2014') + '</span><span style="font-family:\'Oswald\';font-size:.82rem;color:var(--cream-bright);">' + nm + '</span></div>');
   });
 
+  // Admin: aj neprihláseného hráča — výberom sa reálne prihlási (RSVP=áno)
+  if (isAdminUI() && _lNotRsvp.length) {
+    let notCand = _lNotRsvp.filter(p => al.includes(p.position));
+    if (!notCand.length) notCand = _lNotRsvp.slice();
+    rows.push('<div style="grid-column:1/-1;margin-top:.6rem;padding-top:.5rem;border-top:1px solid var(--line);font-family:\'Oswald\';font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--bone);opacity:.75;">Neprihlásení — pridaním ich prihlásiš</div>');
+    notCand.forEach(p => {
+      const u = used.has(p.id) ? 'opacity:.4;pointer-events:none;' : '';
+      const nm = _lDisplayName(p);
+      rows.push('<div onclick="assignUnregisteredPlayer(\'' + p.id + '\')" style="padding:.4rem .6rem;border:1px dashed var(--line);border-radius:6px;cursor:pointer;background:var(--charcoal);' + u + '"><span style="font-family:\'Anton\';color:var(--bone);margin-right:.3rem;">' + (p.number || '—') + '</span><span style="font-family:\'Oswald\';font-size:.82rem;color:var(--bone);">' + nm + '</span></div>');
+    });
+  }
+
   list.innerHTML = rows.join('');
   document.getElementById('lineup-picker').style.display = 'block';
 }
@@ -3950,8 +3977,114 @@ function assignPlayer(pid) {
   }
   document.getElementById('lineup-picker').style.display='none'; _lAS=null; renderLineup();
 }
-function enableLineupEdit() { _lEd=true; document.getElementById('lineup-edit-btn').style.display='none'; document.getElementById('lineup-save-btn').style.display='inline-block'; document.getElementById('lineup-auto-btn').style.display='inline-block'; document.querySelectorAll('.player-slot').forEach(s=>{ s.style.cursor='pointer'; s.style.outline='1px dashed rgba(138,58,30,.4)'; }); }
-async function saveLineup() { _lEd=false; document.getElementById('lineup-edit-btn').style.display='inline-block'; document.getElementById('lineup-save-btn').style.display='none'; document.getElementById('lineup-auto-btn').style.display='none'; document.getElementById('lineup-picker').style.display='none'; document.querySelectorAll('.player-slot').forEach(s=>{ s.style.cursor=''; s.style.outline=''; }); const { error }=await sb.from('game_results').upsert({event_id:_lEId,season_id:2,notes:JSON.stringify(_lD)},{onConflict:'event_id'}); if (error) { toast('Chyba: '+error.message,'error'); return; } toast('Zostava uložená ✓','success'); }
+
+// Admin pridáva neprihláseného hráča do zostavy — vytvorí reálny RSVP záznam (status "yes"),
+// nech to hráč vidí ako platné prihlásenie, nielen dočasný zápis v zostave.
+async function assignUnregisteredPlayer(pid) {
+  if (!_lAS || !_lEId || !isAdminUI()) return;
+  const p = _lNotRsvp.find(x => String(x.id) === String(pid));
+  if (!p) return;
+  const { error } = await sb.from('rsvp')
+    .upsert({ event_id: _lEId, user_id: p.id, status: 'yes' }, { onConflict: 'event_id,user_id' });
+  if (error) { toast('Chyba pri prihlasovaní: ' + error.message, 'error'); return; }
+
+  _lPool.push(p);
+  _lNotRsvp = _lNotRsvp.filter(x => String(x.id) !== String(pid));
+  const key = _lAS.dataset.line + '_' + _lAS.dataset.pos;
+  _lD[key] = { playerId: p.id, name: _lDisplayName(p), number: p.number || '—' };
+  document.getElementById('lineup-picker').style.display = 'none';
+  _lAS = null;
+  renderLineup();
+  toast('Hráč prihlásený a pridaný do zostavy ✓', 'success');
+}
+
+/* ── LINEUP DRAG & DROP (myš aj dotyk cez Pointer Events) ──
+   Len admin a len v režime úprav (_lEd). Obsadený → obsadený = swap,
+   obsadený → prázdny = presun. touch-action:none na slotoch (nastavené
+   v enableLineupEdit) zabráni scrollovaniu stránky počas ťahania prstom. */
+let _lDrag = null;         // { slot, key, startX, startY, moved, pointerId }
+let _lJustDragged = false; // potlačí klik, ktorý prehliadač vyšle hneď po pointerup
+
+document.addEventListener('pointerdown', e => {
+  const slot = e.target.closest && e.target.closest('#lineup-rink .player-slot');
+  if (slot) lineupDragStart(e, slot);
+});
+
+function lineupDragStart(e, slot){
+  if (!_lEd || !isAdminUI()) return;
+  const key = slot.dataset.line + '_' + slot.dataset.pos;
+  if (!_lD[key]) return; // ťahať sa dá len obsadený slot
+  e.preventDefault();
+  _lDrag = { slot, key, startX: e.clientX, startY: e.clientY, moved: false, pointerId: e.pointerId };
+  slot.setPointerCapture(e.pointerId);
+  slot.addEventListener('pointermove', lineupDragMove);
+  slot.addEventListener('pointerup', lineupDragEnd);
+  slot.addEventListener('pointercancel', lineupDragCancel);
+}
+
+function lineupDragMove(e){
+  if (!_lDrag || e.pointerId !== _lDrag.pointerId) return;
+  const dx = e.clientX - _lDrag.startX;
+  const dy = e.clientY - _lDrag.startY;
+  if (!_lDrag.moved && Math.hypot(dx, dy) > 8){
+    _lDrag.moved = true;
+    _lDrag.slot.classList.add('dragging');
+  }
+  if (!_lDrag.moved) return;
+  _lDrag.slot.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+  const target = lineupDragTargetAt(e, _lDrag.slot);
+  document.querySelectorAll('.player-slot.drag-over').forEach(s => { if (s !== target) s.classList.remove('drag-over'); });
+  if (target && target !== _lDrag.slot) target.classList.add('drag-over');
+}
+
+// elementFromPoint vidí ťahaný slot samotný (leží pod prstom) — na chvíľu ho preto vyraď z hit-testu.
+function lineupDragTargetAt(e, dragSlot){
+  dragSlot.style.pointerEvents = 'none';
+  const target = document.elementFromPoint(e.clientX, e.clientY)?.closest('#lineup-rink .player-slot');
+  dragSlot.style.pointerEvents = '';
+  return target;
+}
+
+function lineupDragEnd(e){
+  if (!_lDrag || e.pointerId !== _lDrag.pointerId) return;
+  const drag = _lDrag;
+  _lDrag = null;
+  drag.slot.classList.remove('dragging');
+  drag.slot.style.transform = '';
+  drag.slot.removeEventListener('pointermove', lineupDragMove);
+  drag.slot.removeEventListener('pointerup', lineupDragEnd);
+  drag.slot.removeEventListener('pointercancel', lineupDragCancel);
+  document.querySelectorAll('.player-slot.drag-over').forEach(s => s.classList.remove('drag-over'));
+
+  if (!drag.moved) return; // bol to len klik, nie drag — nech ho spracuje lineupSlotClick
+  _lJustDragged = true;
+  setTimeout(() => { _lJustDragged = false; }, 50);
+
+  const target = lineupDragTargetAt(e, drag.slot);
+  if (!target || target === drag.slot) return;
+
+  const targetKey = target.dataset.line + '_' + target.dataset.pos;
+  const srcPlayer = _lD[drag.key];
+  const dstPlayer = _lD[targetKey];
+  if (dstPlayer) { _lD[targetKey] = srcPlayer; _lD[drag.key] = dstPlayer; } // swap
+  else { _lD[targetKey] = srcPlayer; delete _lD[drag.key]; }              // presun
+  renderLineup();
+}
+
+function lineupDragCancel(e){
+  if (!_lDrag || e.pointerId !== _lDrag.pointerId) return;
+  const drag = _lDrag;
+  _lDrag = null;
+  drag.slot.classList.remove('dragging');
+  drag.slot.style.transform = '';
+  drag.slot.removeEventListener('pointermove', lineupDragMove);
+  drag.slot.removeEventListener('pointerup', lineupDragEnd);
+  drag.slot.removeEventListener('pointercancel', lineupDragCancel);
+  document.querySelectorAll('.player-slot.drag-over').forEach(s => s.classList.remove('drag-over'));
+}
+
+function enableLineupEdit() { _lEd=true; document.getElementById('lineup-edit-btn').style.display='none'; document.getElementById('lineup-save-btn').style.display='inline-block'; document.getElementById('lineup-auto-btn').style.display='inline-block'; document.querySelectorAll('.player-slot').forEach(s=>{ s.style.cursor='pointer'; s.style.outline='1px dashed rgba(138,58,30,.4)'; s.style.touchAction='none'; }); }
+async function saveLineup() { _lEd=false; document.getElementById('lineup-edit-btn').style.display='inline-block'; document.getElementById('lineup-save-btn').style.display='none'; document.getElementById('lineup-auto-btn').style.display='none'; document.getElementById('lineup-picker').style.display='none'; document.querySelectorAll('.player-slot').forEach(s=>{ s.style.cursor=''; s.style.outline=''; s.style.touchAction=''; }); const { error }=await sb.from('game_results').upsert({event_id:_lEId,season_id:2,notes:JSON.stringify(_lD)},{onConflict:'event_id'}); if (error) { toast('Chyba: '+error.message,'error'); return; } toast('Zostava uložená ✓','success'); }
 function autoLineup() {
   // LEN prihlásení registrovaní používatelia. Ak sa nikto neprihlásil → prázdna zostava.
   const pool = _lPool.slice();
