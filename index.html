@@ -995,12 +995,17 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
     <div class="nav-divider"></div>
     <div class="nav-group">
       <div class="nav-group-label">Admin</div>
-      <div class="nav-item" onclick="showSection('admin-news')" id="nav-admin-news"><span class="nav-ic">📝</span><span>Správa oznamov</span></div>
-      <div class="nav-item" onclick="showSection('admin-users')" id="nav-admin-users"><span class="nav-ic">👥</span><span>Správa používateľov</span></div>
-      <div class="nav-item" onclick="showSection('admin-media')" id="nav-admin-media"><span class="nav-ic">📸</span><span>Správa médií</span></div>
-      <div class="nav-item" onclick="showSection('admin-events')" id="nav-admin-events"><span class="nav-ic">⚙</span><span>Správa udalostí</span></div>
-      <div class="nav-item" onclick="showSection('admin-payments')" id="nav-admin-payments"><span class="nav-ic">⚙</span><span>Správa financií</span></div>
-      <div class="nav-item" onclick="showSection('admin-contacts')" id="nav-admin-contacts"><span class="nav-ic">📩</span><span>Prihlášky</span></div>
+      <div class="nav-item" onclick="toggleAdminPreview()" id="nav-admin-preview-toggle">
+        <span class="nav-ic">👁</span><span id="nav-admin-preview-label">Zobraziť ako hráč</span>
+      </div>
+      <div id="nav-admin-links">
+        <div class="nav-item" onclick="showSection('admin-news')" id="nav-admin-news"><span class="nav-ic">📝</span><span>Správa oznamov</span></div>
+        <div class="nav-item" onclick="showSection('admin-users')" id="nav-admin-users"><span class="nav-ic">👥</span><span>Správa používateľov</span></div>
+        <div class="nav-item" onclick="showSection('admin-media')" id="nav-admin-media"><span class="nav-ic">📸</span><span>Správa médií</span></div>
+        <div class="nav-item" onclick="showSection('admin-events')" id="nav-admin-events"><span class="nav-ic">⚙</span><span>Správa udalostí</span></div>
+        <div class="nav-item" onclick="showSection('admin-payments')" id="nav-admin-payments"><span class="nav-ic">⚙</span><span>Správa financií</span></div>
+        <div class="nav-item" onclick="showSection('admin-contacts')" id="nav-admin-contacts"><span class="nav-ic">📩</span><span>Prihlášky</span></div>
+      </div>
     </div>
   </div>
   <div style="margin-top:auto;padding-bottom:.5rem;">
@@ -1034,7 +1039,9 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
   </div>
 </header>
 
-
+<div id="admin-preview-banner" style="display:none;background:var(--rust);color:var(--cream-bright);font-family:'Oswald';font-weight:600;font-size:.8rem;letter-spacing:.04em;padding:.55rem 1rem;text-align:center;position:sticky;top:0;z-index:49;">
+  👁 Pozeráš appku ako bežný hráč. <span style="text-decoration:underline;cursor:pointer;" onclick="toggleAdminPreview()">Späť na admina</span>
+</div>
 
 <!-- ══ MAIN SITE ══ -->
 <div id="main-site">
@@ -1641,7 +1648,7 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.14.0</div>
+  <div id="version-badge">v3.15.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2146,6 +2153,32 @@ let currentUser    = null;
 let currentProfile = null;
 let rosterData     = [];
 let LANG           = (typeof lsGet === 'function' && lsGet('ndrtls-lang')) || 'sk';
+// Admin si vie dočasne "vypnúť" admin zobrazenie a pozrieť appku ako bežný hráč — jeho
+// reálna rola v DB sa tým nemení, je to len kozmetický prepínač na strane klienta.
+let _adminPreviewOff = (typeof lsGet === 'function' && lsGet('ndrtls-admin-preview-off') === '1');
+// Použiť VŠADE namiesto priameho currentProfile?.role==='admin' pri rozhodovaní,
+// či zobraziť admin tlačidlá/panely — jediné miesto, ktoré rešpektuje náhľad hráča.
+function isAdminUI(){ return currentProfile?.role === 'admin' && !_adminPreviewOff; }
+
+// Zobraz/skry admin odkazy v menu + banner podľa aktuálneho stavu náhľadu hráča.
+// Prepínač a "Admin" nadpis v menu ostávajú vždy viditeľné pre reálneho admina.
+function applyAdminPreviewUI(){
+  const isRealAdmin = currentProfile?.role === 'admin';
+  const links = document.getElementById('nav-admin-links');
+  const label = document.getElementById('nav-admin-preview-label');
+  const banner = document.getElementById('admin-preview-banner');
+  if (links) links.style.display = isRealAdmin && !_adminPreviewOff ? 'block' : 'none';
+  if (label) label.textContent = _adminPreviewOff ? 'Späť na admina' : 'Zobraziť ako hráč';
+  if (banner) banner.style.display = isRealAdmin && _adminPreviewOff ? 'block' : 'none';
+}
+
+// Prepni náhľad "appka očami bežného hráča" — nemení rolu v DB, len lokálne
+// vypne/zapne zobrazenie admin tlačidiel a panelov. Reload nech sa prekreslí úplne všetko.
+function toggleAdminPreview(){
+  _adminPreviewOff = !_adminPreviewOff;
+  lsSet('ndrtls-admin-preview-off', _adminPreviewOff ? '1' : '0');
+  location.reload();
+}
 let _sectionHistory = [];
 
 /* ── AUTH ─────────────────────────────────────── */
@@ -2308,13 +2341,16 @@ async function _onLoginInner(user) {
   setEl('nav-logout-btn',    el => el.style.display = 'flex');
   setEl('nav-zone-section',  el => el.style.display = 'block');
   if (currentProfile?.role === 'admin') setEl('nav-admin-section', el => el.style.display = 'block');
+  applyAdminPreviewUI();
 
   hideSplash();
   setEl('sec-login', el => { el.classList.remove('active'); el.style.display = 'none'; });
 
   let restoreSection = 'news';
   const saved = lsGet('ndrtls-section');
-  if (saved && saved !== 'login' && saved !== 'onboarding' && document.getElementById('sec-' + saved)) restoreSection = saved;
+  const savedIsAdminOnly = saved && saved.startsWith('admin-');
+  if (saved && saved !== 'login' && saved !== 'onboarding' && document.getElementById('sec-' + saved)
+      && !(savedIsAdminOnly && !isAdminUI())) restoreSection = saved;
   showSection(restoreSection);
 
   // Background loads — failures here must not affect login state
@@ -3230,7 +3266,7 @@ function renderMatchDetail(data, details, profIdx){
     html += '<div class="md-video"><div class="md-video-none">Video zatiaľ nie je priradené.</div></div>';
   }
   // Admin: YouTube ID pre celý zápas
-  if (currentProfile?.role === 'admin'){
+  if (isAdminUI()){
     html += '<div class="md-yt-admin">'
       + '<label class="md-admin-lbl">YouTube ID / link (celý zápas)</label>'
       + '<div class="md-yt-admin-row">'
@@ -3273,7 +3309,7 @@ function renderMatchDetail(data, details, profIdx){
     });
   });
 
-  const isAdminTl = currentProfile?.role === 'admin';
+  const isAdminTl = isAdminUI();
   if (isAdminTl){
     html += '<button class="md-yt-save" style="margin-bottom:.7rem;" onclick="mdToggleAddEvent()">+ Pridať akciu</button>'
       + mdAddEventForm();
@@ -3307,7 +3343,7 @@ function renderMatchDetail(data, details, profIdx){
         if (ev.situation) subParts.push(mdEsc(ev.situation));
       }
 
-      const isAdmin = currentProfile?.role === 'admin';
+      const isAdmin = isAdminUI();
       const isManual = ev.manual === true;
       const editBtn = isAdmin
         ? '<button class="md-tl-edit" title="Upraviť akciu" onclick="event.stopPropagation();mdToggleEvent(\'' + mdEsc(key) + '\')">✎</button>'
@@ -3341,7 +3377,7 @@ function renderMatchDetail(data, details, profIdx){
   const box = Array.isArray(data.boxscore) ? data.boxscore : [];
   const boxOverrides = details.box_overrides || {};
   const boxExtra = details.box_extra || {};
-  const isAdminBox = currentProfile?.role === 'admin';
+  const isAdminBox = isAdminUI();
   if (box.length){
     box.forEach((team, idx) => {
       const tName = team.team || '';
@@ -3775,7 +3811,7 @@ function openPlayerCard(playerId) {
   document.getElementById('pm-assists').textContent=p.assists||0;
   const ne=document.getElementById('pm-note');
   if (p.note) { ne.textContent=p.note; ne.style.display='block'; } else ne.style.display='none';
-  document.getElementById('pm-edit-btn').style.display=currentProfile?.role==='admin'?'block':'none';
+  document.getElementById('pm-edit-btn').style.display=isAdminUI()?'block':'none';
   document.getElementById('pm-view').style.display='block';
   document.getElementById('pm-edit').style.display='none';
   document.getElementById('pm-edit-id').value=playerId;
@@ -3819,7 +3855,7 @@ async function openLineup(eid, et) {
     if (!title) title = (window['_ev_'+eid] && window['_ev_'+eid].title) || 'Zostava';
     document.getElementById('lineup-modal-title').textContent='🏒 '+title;
     document.getElementById('lineup-picker').style.display='none';
-    const isA=currentProfile?.role==='admin';
+    const isA=isAdminUI();
     document.getElementById('lineup-edit-btn').style.display=isA?'inline-block':'none';
     document.getElementById('lineup-save-btn').style.display='none';
     document.getElementById('lineup-auto-btn').style.display='none';
@@ -4131,7 +4167,7 @@ async function loadEvents() {
     namesMap[r.event_id].push(profileMap[r.user_id] || '?');
   });
 
-  const isAdmin = currentProfile?.role === 'admin';
+  const isAdmin = isAdminUI();
 
   list.innerHTML = events.map(ev => {
     const d = new Date(ev.date);
