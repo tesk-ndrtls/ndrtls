@@ -696,12 +696,16 @@ a:hover{color:var(--cream-bright);}
 .btn-rsvp.yes:hover,.btn-rsvp.yes.active{background:#4a8a4a;color:var(--cream-bright);border-color:#4a8a4a;}
 .btn-rsvp.no{background:rgba(138,74,74,.2);color:#bf6d6d;border:1px solid rgba(138,74,74,.4);}
 .btn-rsvp.no:hover,.btn-rsvp.no.active{background:#8a4a4a;color:var(--cream-bright);border-color:#8a4a4a;}
-.modal-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:1rem;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
+.modal-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;
+  padding:calc(1rem + env(safe-area-inset-top,0px)) calc(1rem + env(safe-area-inset-right,0px)) calc(1rem + env(safe-area-inset-bottom,0px)) calc(1rem + env(safe-area-inset-left,0px));
+  box-sizing:border-box;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
 .modal-overlay.show{display:flex;}
 /* Scroll-lock pozadia, keď je otvorená vrstva (modal / menu / lightbox).
    Scrolluje sa len vnútro aktívnej vrstvy, pozadie stojí. */
 body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
-.modal{background:var(--charcoal);border:1px solid var(--maroon);border-radius:14px;padding:2rem;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
+.modal{background:var(--charcoal);border:1px solid var(--maroon);border-radius:14px;padding:2rem;width:100%;max-width:500px;
+  max-height:calc(100vh - 2rem - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
+  overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
 .modal h3{font-family:'Anton';font-size:1.6rem;text-transform:uppercase;color:var(--cream-bright);margin-bottom:1.2rem;}
 .modal-actions{display:flex;gap:.6rem;margin-top:1.4rem;flex-wrap:wrap;}
 .admin-bar{background:var(--maroon-deep);border:1px solid var(--rust);border-radius:8px;padding:.7rem 1rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;}
@@ -1637,7 +1641,7 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.13.10</div>
+  <div id="version-badge">v3.14.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -3246,6 +3250,29 @@ function renderMatchDetail(data, details, profIdx){
     if (pa !== pb) return pa - pb;
     return mdTimeToSec(a.time) - mdTimeToSec(b.time);
   });
+
+  // Góly/asistencie spočítané zo skutočného priebehu zápasu (timeline, s admin opravami
+  // strelca/asistencií) — toto je "reálny" stav a má prednosť pred pôvodnými číslami z RAHL
+  // v box score nižšie, pokiaľ admin danú štatistiku priamo neprepísal ručne.
+  const computedStats = {};
+  events.forEach(ev => {
+    if (ev.type !== 'goal') return;
+    const key = ev.key || ((ev.period != null ? ev.period : '?') + '_' + (ev.time || '?') + '_' + (ev.type || '?'));
+    const ov = overrides[key];
+    const scorer = mdComposePlayer(ev, profIdx, ov);
+    if (scorer.name){
+      const k = mdNormName(scorer.name);
+      if (!computedStats[k]) computedStats[k] = { name: scorer.name, goals: 0, assists: 0 };
+      computedStats[k].goals++;
+    }
+    mdComposeAssists(ev.assists, profIdx, ov).forEach(a => {
+      if (!a.name) return;
+      const k = mdNormName(a.name);
+      if (!computedStats[k]) computedStats[k] = { name: a.name, goals: 0, assists: 0 };
+      computedStats[k].assists++;
+    });
+  });
+
   const isAdminTl = currentProfile?.role === 'admin';
   if (isAdminTl){
     html += '<button class="md-yt-save" style="margin-bottom:.7rem;" onclick="mdToggleAddEvent()">+ Pridať akciu</button>'
@@ -3330,16 +3357,17 @@ function renderMatchDetail(data, details, profIdx){
         const key = mdBoxKey(tName, pl.name);
         const ov = boxOverrides[key] || {};
         const hit = mdApplyRoster(pl.name, profIdx);
+        const computed = computedStats[mdNormName(pl.name)];
         const num = ov.num != null ? ov.num
                     : ((hit && hit.number != null && hit.number !== '') ? hit.number : (pl.num != null ? pl.num : ''));
         const name = ov.name != null ? ov.name : (pl.name || '');
-        const goals = ov.goals != null ? ov.goals : (pl.goals != null ? pl.goals : 0);
-        const assists = ov.assists != null ? ov.assists : (pl.assists != null ? pl.assists : 0);
+        const goals = ov.goals != null ? ov.goals : (computed ? computed.goals : (pl.goals != null ? pl.goals : 0));
+        const assists = ov.assists != null ? ov.assists : (computed ? computed.assists : (pl.assists != null ? pl.assists : 0));
         const pim = ov.pim != null ? ov.pim : (pl.pim != null ? pl.pim : 0);
         if (editing){
           html += mdBoxRowInputs({ num, name, goals, assists, pim }, null, key);
         } else {
-          const points = (ov.goals != null || ov.assists != null) ? (goals + assists)
+          const points = (ov.goals != null || ov.assists != null || computed) ? (goals + assists)
                         : (pl.points != null ? pl.points : (goals + assists));
           html += '<tr' + (hit ? ' class="roster-match"' : '') + '>'
             + '<td>' + mdEsc(num) + '</td>'
