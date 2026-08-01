@@ -706,6 +706,20 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
 .modal{background:var(--charcoal);border:1px solid var(--maroon);border-radius:14px;padding:2rem;width:100%;max-width:500px;
   max-height:calc(100vh - 2rem - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
   overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
+
+/* Celoobrazovkový modal (napr. detail zápasu) — bez plávajúceho okna,
+   scrolluje sa celý overlay naraz, nie zvlášť vnútro okna. */
+.modal-overlay.modal-fullscreen{
+  padding:0;align-items:stretch;justify-content:stretch;
+  background:var(--ink);backdrop-filter:none;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+}
+.modal-overlay.modal-fullscreen .modal{
+  width:100%;max-width:none;min-height:100%;max-height:none;
+  border-radius:0;border:0;overflow-y:visible;box-sizing:border-box;
+  padding:calc(1.4rem + env(safe-area-inset-top,0px)) calc(1.2rem + env(safe-area-inset-right,0px))
+    calc(2rem + env(safe-area-inset-bottom,0px)) calc(1.2rem + env(safe-area-inset-left,0px));
+}
 .modal h3{font-family:'Anton';font-size:1.6rem;text-transform:uppercase;color:var(--cream-bright);margin-bottom:1.2rem;}
 .modal-actions{display:flex;gap:.6rem;margin-top:1.4rem;flex-wrap:wrap;}
 .admin-bar{background:var(--maroon-deep);border:1px solid var(--rust);border-radius:8px;padding:.7rem 1rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;}
@@ -995,16 +1009,16 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
     <div class="nav-divider"></div>
     <div class="nav-group">
       <div class="nav-group-label">Admin</div>
-      <div class="nav-item" onclick="toggleAdminPreview()" id="nav-admin-preview-toggle">
-        <span class="nav-ic">👁</span><span id="nav-admin-preview-label">Zobraziť ako hráč</span>
-      </div>
       <div id="nav-admin-links">
         <div class="nav-item" onclick="showSection('admin-news')" id="nav-admin-news"><span class="nav-ic">📝</span><span>Správa oznamov</span></div>
-        <div class="nav-item" onclick="showSection('admin-users')" id="nav-admin-users"><span class="nav-ic">👥</span><span>Správa používateľov</span></div>
-        <div class="nav-item" onclick="showSection('admin-media')" id="nav-admin-media"><span class="nav-ic">📸</span><span>Správa médií</span></div>
         <div class="nav-item" onclick="showSection('admin-events')" id="nav-admin-events"><span class="nav-ic">⚙</span><span>Správa udalostí</span></div>
+        <div class="nav-item" onclick="showSection('admin-media')" id="nav-admin-media"><span class="nav-ic">📸</span><span>Správa médií</span></div>
         <div class="nav-item" onclick="showSection('admin-payments')" id="nav-admin-payments"><span class="nav-ic">⚙</span><span>Správa financií</span></div>
+        <div class="nav-item" onclick="showSection('admin-users')" id="nav-admin-users"><span class="nav-ic">👥</span><span>Správa používateľov</span></div>
         <div class="nav-item" onclick="showSection('admin-contacts')" id="nav-admin-contacts"><span class="nav-ic">📩</span><span>Prihlášky</span></div>
+      </div>
+      <div class="nav-item" onclick="toggleAdminPreview()" id="nav-admin-preview-toggle">
+        <span class="nav-ic">👁</span><span id="nav-admin-preview-label">Zobraziť ako hráč</span>
       </div>
     </div>
   </div>
@@ -1105,7 +1119,7 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
 </div>
 
 <!-- ── MATCH DETAIL MODAL ── -->
-<div class="modal-overlay" id="modal-match-detail">
+<div class="modal-overlay modal-fullscreen" id="modal-match-detail">
   <div class="modal md-modal">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.4rem;">
       <h3 id="md-title" style="margin:0;font-size:1.3rem;">Detail zápasu</h3>
@@ -1648,7 +1662,7 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.15.0</div>
+  <div id="version-badge">v3.15.1</div>
 </footer>
 </div><!-- /main-site -->
 
