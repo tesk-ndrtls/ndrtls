@@ -710,13 +710,14 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
 /* Celoobrazovkový modal (napr. detail zápasu) — bez plávajúceho okna,
    scrolluje sa celý overlay naraz, nie zvlášť vnútro okna. */
 .modal-overlay.modal-fullscreen{
-  padding:0;align-items:stretch;justify-content:stretch;
+  padding:0;align-items:flex-start;justify-content:stretch;
   background:var(--ink);backdrop-filter:none;
   overflow-y:auto;-webkit-overflow-scrolling:touch;
 }
 .modal-overlay.modal-fullscreen .modal{
-  width:100%;max-width:none;min-height:100%;max-height:none;
+  width:100%;max-width:none;max-height:none;
   border-radius:0;border:0;overflow-y:visible;box-sizing:border-box;
+  background:var(--ink);
   padding:calc(1.4rem + env(safe-area-inset-top,0px)) calc(1.2rem + env(safe-area-inset-right,0px))
     calc(2rem + env(safe-area-inset-bottom,0px)) calc(1.2rem + env(safe-area-inset-left,0px));
 }
@@ -1664,7 +1665,7 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.16.0</div>
+  <div id="version-badge">v3.16.1</div>
 </footer>
 </div><!-- /main-site -->
 
