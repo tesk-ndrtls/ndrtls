@@ -36,6 +36,7 @@
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%}
+html{background:var(--ink);}
 html{scroll-behavior:smooth}
 body{
   background:var(--ink); color:var(--cream);
@@ -395,14 +396,22 @@ header{
   color:var(--rust-light); font-size:.78rem; letter-spacing:.2em; margin:1.4rem 0 .8rem;}
 /* timeline */
 .md-timeline{position:relative; margin-left:.4rem;}
-.md-tl-item{position:relative; padding:.55rem 0 .55rem 2.6rem; border-left:2px solid var(--line);}
+.md-tl-item{position:relative; padding:.55rem .6rem .55rem 2.6rem; border-left:2px solid var(--line);
+  border-radius:0 8px 8px 0; margin-bottom:2px;}
 .md-tl-item:last-child{border-left-color:transparent;}
-.md-tl-item.clickable{cursor:pointer; border-radius:0 8px 8px 0;}
+.md-tl-item.clickable{cursor:pointer;}
 .md-tl-item.clickable:hover{background:rgba(107,31,42,.15);}
+.md-tl-item.team-nea{background:rgba(107,31,42,.16);}
+.md-tl-item.team-opp{background:rgba(255,255,255,.03);}
 .md-tl-dot{position:absolute; left:-9px; top:.7rem; width:16px; height:16px; border-radius:50%;
   display:grid; place-items:center; font-size:.62rem; background:var(--charcoal); border:2px solid var(--rust);}
 .md-tl-item.goal .md-tl-dot{border-color:#6dbf6d; background:rgba(45,80,45,.6);}
 .md-tl-item.penalty .md-tl-dot{border-color:var(--rust-light); background:rgba(138,58,30,.4);}
+.md-tl-puck{width:9px; height:9px; border-radius:50%; background:#161616; border:1px solid #5b5b5b; display:block;}
+.md-tl-period-divider{display:flex; align-items:center; gap:.6rem; margin:1rem 0 .4rem -2.6rem;
+  color:var(--rust-light); font-family:'Oswald'; font-weight:700; font-size:.72rem;
+  letter-spacing:.15em; text-transform:uppercase;}
+.md-tl-period-divider::before,.md-tl-period-divider::after{content:''; flex:1; height:1px; background:var(--maroon);}
 .md-tl-time{position:absolute; left:.1rem; top:.55rem; font-family:'Oswald'; font-weight:700;
   font-size:.7rem; color:var(--bone); display:none;}
 .md-tl-head{display:flex; align-items:baseline; gap:.5rem; flex-wrap:wrap;}
@@ -712,14 +721,14 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
 .modal-overlay.modal-fullscreen{
   padding:0;align-items:flex-start;justify-content:stretch;
   background:var(--ink);backdrop-filter:none;
-  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:none;
 }
 .modal-overlay.modal-fullscreen .modal{
   width:100%;max-width:none;max-height:none;
   border-radius:0;border:0;overflow-y:visible;box-sizing:border-box;
   background:var(--ink);
   padding:calc(1.4rem + env(safe-area-inset-top,0px)) calc(1.2rem + env(safe-area-inset-right,0px))
-    calc(2rem + env(safe-area-inset-bottom,0px)) calc(1.2rem + env(safe-area-inset-left,0px));
+    calc(4rem + env(safe-area-inset-bottom,0px)) calc(1.2rem + env(safe-area-inset-left,0px));
 }
 .modal h3{font-family:'Anton';font-size:1.6rem;text-transform:uppercase;color:var(--cream-bright);margin-bottom:1.2rem;}
 .modal-actions{display:flex;gap:.6rem;margin-top:1.4rem;flex-wrap:wrap;}
@@ -1665,7 +1674,7 @@ body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.16.1</div>
+  <div id="version-badge">v3.17.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -3253,15 +3262,65 @@ function renderMatchDetail(data, details, profIdx){
   titleEl.textContent = (data.round ? data.round + ' · ' : '') + homeName + ' — ' + awayName;
 
   const fin = data.final || {};
-  const per = Array.isArray(data.period_scores) ? data.period_scores : [];
-  const periodsStr = per.length
-    ? per.map(p => (p.home != null ? p.home : '?') + ':' + (p.away != null ? p.away : '?')).join('  ·  ')
-    : '';
 
   // Video: override youtube_id má prednosť pred szalh
   const ytId = details.youtube_id || data.youtube || '';
   const offsets = details.video_offsets || {};
   const overrides = details.overrides || {};
+
+  // Timeline dáta (potrebné už tu, pretože z nich počítame aj skóre po tretinách nižšie)
+  const rawEvents = Array.isArray(data.events) ? data.events : [];
+  const manualEvents = Array.isArray(details.manual_events) ? details.manual_events : [];
+  const events = rawEvents.concat(manualEvents).slice().sort((a, b) => {
+    const pa = a.period != null ? a.period : 0, pb = b.period != null ? b.period : 0;
+    if (pa !== pb) return pa - pb;
+    return mdTimeToSec(a.time) - mdTimeToSec(b.time);
+  });
+
+  // Góly/asistencie spočítané zo skutočného priebehu zápasu (timeline, s admin opravami
+  // strelca/asistencií) — toto je "reálny" stav a má prednosť pred pôvodnými číslami z RAHL
+  // v box score nižšie a v "po tretinách" skóre, pokiaľ admin danú štatistiku priamo neprepísal.
+  const computedStats = {};
+  const eventTeam = {}; // key -> 'nea' | 'opp', podľa toho či strelec/potrestaný je v našej súpiske
+  const periodTally = {}; // period -> {nea, opp} góly
+  events.forEach(ev => {
+    const key = ev.key || ((ev.period != null ? ev.period : '?') + '_' + (ev.time || '?') + '_' + (ev.type || '?'));
+    const ov = overrides[key];
+    const player = mdComposePlayer(ev, profIdx, ov);
+    const team = ev.team === 'nea' || ev.team === 'opp' ? ev.team : (mdApplyRoster(player.name, profIdx) ? 'nea' : 'opp');
+    eventTeam[key] = team;
+    if (ev.type !== 'goal') return;
+    const p = ev.period != null ? ev.period : 1;
+    if (!periodTally[p]) periodTally[p] = { nea: 0, opp: 0 };
+    periodTally[p][team]++;
+    if (player.name){
+      const k = mdNormName(player.name);
+      if (!computedStats[k]) computedStats[k] = { name: player.name, goals: 0, assists: 0 };
+      computedStats[k].goals++;
+    }
+    mdComposeAssists(ev.assists, profIdx, ov).forEach(a => {
+      if (!a.name) return;
+      const k = mdNormName(a.name);
+      if (!computedStats[k]) computedStats[k] = { name: a.name, goals: 0, assists: 0 };
+      computedStats[k].assists++;
+    });
+  });
+
+  // "Po tretinách" — reálne skóre podľa zápisu (nie pôvodné szalh period_scores), vždy
+  // v poradí domáci:hostia, aby sedelo so scoreline vyššie.
+  const neaIsHome = isNeaTeam(homeName);
+  const periodNums = Object.keys(periodTally).map(Number);
+  if (!periodNums.includes(1)) periodNums.push(1);
+  if (!periodNums.includes(2)) periodNums.push(2);
+  periodNums.sort((a, b) => a - b);
+  const periodsStr = events.length
+    ? periodNums.map(p => {
+        const t = periodTally[p] || { nea: 0, opp: 0 };
+        const home = neaIsHome ? t.nea : t.opp;
+        const away = neaIsHome ? t.opp : t.nea;
+        return home + ':' + away;
+      }).join('  ·  ')
+    : '';
 
   let html = '';
 
@@ -3299,35 +3358,6 @@ function renderMatchDetail(data, details, profIdx){
 
   // Timeline
   html += '<div class="md-sec-label">Priebeh zápasu</div>';
-  const rawEvents = Array.isArray(data.events) ? data.events : [];
-  const manualEvents = Array.isArray(details.manual_events) ? details.manual_events : [];
-  const events = rawEvents.concat(manualEvents).slice().sort((a, b) => {
-    const pa = a.period != null ? a.period : 0, pb = b.period != null ? b.period : 0;
-    if (pa !== pb) return pa - pb;
-    return mdTimeToSec(a.time) - mdTimeToSec(b.time);
-  });
-
-  // Góly/asistencie spočítané zo skutočného priebehu zápasu (timeline, s admin opravami
-  // strelca/asistencií) — toto je "reálny" stav a má prednosť pred pôvodnými číslami z RAHL
-  // v box score nižšie, pokiaľ admin danú štatistiku priamo neprepísal ručne.
-  const computedStats = {};
-  events.forEach(ev => {
-    if (ev.type !== 'goal') return;
-    const key = ev.key || ((ev.period != null ? ev.period : '?') + '_' + (ev.time || '?') + '_' + (ev.type || '?'));
-    const ov = overrides[key];
-    const scorer = mdComposePlayer(ev, profIdx, ov);
-    if (scorer.name){
-      const k = mdNormName(scorer.name);
-      if (!computedStats[k]) computedStats[k] = { name: scorer.name, goals: 0, assists: 0 };
-      computedStats[k].goals++;
-    }
-    mdComposeAssists(ev.assists, profIdx, ov).forEach(a => {
-      if (!a.name) return;
-      const k = mdNormName(a.name);
-      if (!computedStats[k]) computedStats[k] = { name: a.name, goals: 0, assists: 0 };
-      computedStats[k].assists++;
-    });
-  });
 
   const isAdminTl = isAdminUI();
   if (isAdminTl){
@@ -3336,12 +3366,19 @@ function renderMatchDetail(data, details, profIdx){
   }
   if (events.length){
     html += '<div class="md-timeline">';
+    let lastPeriod = null;
     events.forEach(ev => {
       const key = ev.key || ((ev.period != null ? ev.period : '?') + '_' + (ev.time || '?') + '_' + (ev.type || '?'));
       const ov = overrides[key];
       const isGoal = ev.type === 'goal';
       const cls = isGoal ? 'goal' : 'penalty';
       const player = mdComposePlayer(ev, profIdx, ov);
+      const p = ev.period != null ? ev.period : 1;
+      if (p !== lastPeriod){
+        html += '<div class="md-tl-period-divider">' + p + '. tretina</div>';
+        lastPeriod = p;
+      }
+      const teamCls = eventTeam[key] === 'nea' ? 'team-nea' : 'team-opp';
       const offset = offsets[key];
       const canSeek = !!(offset && ytId);
       const clockTxt = (ev.period != null ? ev.period + '. tretina · ' : '') + (ev.time || '');
@@ -3372,10 +3409,15 @@ function renderMatchDetail(data, details, profIdx){
         ? '<button class="md-tl-del" title="Vymazať manuálnu akciu" onclick="event.stopPropagation();mdDeleteManualEvent(\'' + mdEsc(key) + '\')">🗑</button>'
         : '';
 
-      html += '<div class="md-tl-item ' + cls + (canSeek ? ' clickable' : '') + (delBtn ? ' has-del' : '') + '"'
+      const dotIcon = isGoal
+        ? '<span class="md-tl-puck"></span>'
+        : '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="var(--cream-bright)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+          + '<path d="M2.5 10a4 4 0 0 1 4-4h5.5l4-3.2v3.2H19a2.5 2.5 0 0 1 2.5 2.5v1a2.5 2.5 0 0 1-2.5 2.5h-1.05a5 5 0 1 1-9.9 0H6.5a4 4 0 0 1-4-4z"/>'
+          + '<circle cx="7" cy="10" r="1" fill="var(--cream-bright)" stroke="none"/></svg>';
+      html += '<div class="md-tl-item ' + cls + ' ' + teamCls + (canSeek ? ' clickable' : '') + (delBtn ? ' has-del' : '') + '"'
         + (canSeek ? ' onclick="mdSeek(\'' + mdEsc(offset) + '\')"' : '') + '>'
         + editBtn + delBtn
-        + '<div class="md-tl-dot">' + (isGoal ? '🥅' : '⛔') + '</div>'
+        + '<div class="md-tl-dot">' + dotIcon + '</div>'
         + '<div class="md-tl-head">'
         +   '<span class="md-tl-clock">' + mdEsc(clockTxt) + '</span>'
         +   '<span class="md-tl-title">' + numTxt + nameTxt + '</span>'
@@ -3525,6 +3567,8 @@ function mdAddEventForm(){
     +     '<input class="md-admin-inp" id="mdadd-time" placeholder="napr. 12:34"></div>'
     +   '<div><label class="md-admin-lbl">Typ</label>'
     +     '<select class="md-admin-inp" id="mdadd-type" onchange="mdAddTypeChange()"><option value="goal">Gól</option><option value="penalty">Trest</option></select></div>'
+    +   '<div><label class="md-admin-lbl">Tím</label>'
+    +     '<select class="md-admin-inp" id="mdadd-team"><option value="nea">Neanderthals</option><option value="opp">Súper</option></select></div>'
     +   '<div><label class="md-admin-lbl">#</label>'
     +     '<input class="md-admin-inp" id="mdadd-num" placeholder="číslo"></div>'
     +   '<div class="md-admin-wide"><label class="md-admin-lbl">Meno hráča</label>'
@@ -3564,6 +3608,7 @@ async function mdSaveNewEvent(){
   const period = parseInt(document.getElementById('mdadd-period')?.value, 10) || 1;
   const time = (document.getElementById('mdadd-time')?.value || '').trim();
   const type = document.getElementById('mdadd-type')?.value || 'goal';
+  const team = document.getElementById('mdadd-team')?.value === 'opp' ? 'opp' : 'nea';
   const num = (document.getElementById('mdadd-num')?.value || '').trim();
   const name = (document.getElementById('mdadd-name')?.value || '').trim();
   const assistsRaw = (document.getElementById('mdadd-assists')?.value || '').trim();
@@ -3576,7 +3621,7 @@ async function mdSaveNewEvent(){
   }
 
   const key = 'manual_' + period + '_' + time + '_' + type + '_' + Date.now();
-  const ev = { key, period, time, type, manual: true };
+  const ev = { key, period, time, type, team, manual: true };
   if (num) ev.player_num = num;
   if (name) ev.player_name = name;
   if (type === 'goal' && assistsRaw){
