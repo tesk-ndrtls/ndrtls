@@ -36,7 +36,6 @@
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%}
-html{background:var(--ink);}
 html{scroll-behavior:smooth}
 body{
   background:var(--ink); color:var(--cream);
@@ -412,8 +411,6 @@ header{
   color:var(--rust-light); font-family:'Oswald'; font-weight:700; font-size:.72rem;
   letter-spacing:.15em; text-transform:uppercase;}
 .md-tl-period-divider::before,.md-tl-period-divider::after{content:''; flex:1; height:1px; background:var(--maroon);}
-.md-tl-time{position:absolute; left:.1rem; top:.55rem; font-family:'Oswald'; font-weight:700;
-  font-size:.7rem; color:var(--bone); display:none;}
 .md-tl-head{display:flex; align-items:baseline; gap:.5rem; flex-wrap:wrap;}
 .md-tl-clock{font-family:'Oswald'; font-weight:700; color:var(--bone); font-size:.8rem; min-width:4.4rem;}
 .md-tl-title{font-family:'Oswald'; font-weight:600; color:var(--cream-bright); font-size:.98rem;}
@@ -711,28 +708,23 @@ a:hover{color:var(--cream-bright);}
 .modal-overlay.show{display:flex;}
 /* Scroll-lock pozadia, keď je otvorená vrstva (modal / menu / lightbox).
    Scrolluje sa len vnútro aktívnej vrstvy, pozadie stojí. */
-/* `top` nastavuje JS na -savedY. Bez `bottom:0` + `height:auto` by telo malo výšku
-   presne jedného viewportu, takže spodných `savedY` px obrazovky by ostalo mimo jeho
-   boxu — a WebKit (iOS) tam oreže aj position:fixed vrstvy nad ním. Práve to robilo
-   ten čierny pás pod celoobrazovkovým detailom zápasu. */
-body.layer-open{position:fixed;left:0;right:0;bottom:0;height:auto;width:100%;overflow:hidden;overscroll-behavior:none;}
+body.layer-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;}
 .modal{background:var(--charcoal);border:1px solid var(--maroon);border-radius:14px;padding:2rem;width:100%;max-width:500px;
   max-height:calc(100vh - 2rem - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
   overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
 
-/* Celoobrazovkový modal (napr. detail zápasu) — bez plávajúceho okna,
-   scrolluje sa celý overlay naraz, nie zvlášť vnútro okna. */
-.modal-overlay.modal-fullscreen{
-  padding:0;align-items:flex-start;justify-content:stretch;
-  background:var(--ink);backdrop-filter:none;
-  overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:none;
-}
-.modal-overlay.modal-fullscreen .modal{
-  width:100%;max-width:none;max-height:none;
-  border-radius:0;border:0;overflow-y:visible;box-sizing:border-box;
-  background:var(--ink);
+/* Detail zápasu — bežný obsah stránky, nie plávajúca vrstva. Scrolluje dokument,
+   takže sa správa presne ako ostatné sekcie a pozadie je celé z <body>. */
+.md-page{display:none; position:relative; z-index:2;}
+.md-page.show{display:block;}
+/* Kým je detail otvorený, zvyšok stránky je skrytý cez triedu na <body> —
+   nesiahame na inline display, takže sa po zatvorení nič nerozbije. */
+body.md-open #main-site,
+body.md-open > header,
+body.md-open #admin-preview-banner{display:none !important;}
+.md-page-inner{
   padding:calc(1.4rem + env(safe-area-inset-top,0px)) calc(1.2rem + env(safe-area-inset-right,0px))
-    calc(4rem + env(safe-area-inset-bottom,0px)) calc(1.2rem + env(safe-area-inset-left,0px));
+    calc(2rem + env(safe-area-inset-bottom,0px)) calc(1.2rem + env(safe-area-inset-left,0px));
 }
 .modal h3{font-family:'Anton';font-size:1.6rem;text-transform:uppercase;color:var(--cream-bright);margin-bottom:1.2rem;}
 .modal-actions{display:flex;gap:.6rem;margin-top:1.4rem;flex-wrap:wrap;}
@@ -1130,22 +1122,6 @@ body.layer-open{position:fixed;left:0;right:0;bottom:0;height:auto;width:100%;ov
         </table>
       </div>
       <p id="rahl-updated" style="margin-top:.8rem;color:var(--bone);font-size:.82rem;opacity:.5;"></p>
-    </div>
-  </div>
-</div>
-
-<!-- ── MATCH DETAIL MODAL ── -->
-<div class="modal-overlay modal-fullscreen" id="modal-match-detail">
-  <div class="modal md-modal">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.4rem;">
-      <h3 id="md-title" style="margin:0;font-size:1.3rem;">Detail zápasu</h3>
-      <button onclick="closeModal('modal-match-detail')"
-        style="background:none;border:0;color:var(--bone);font-size:1.6rem;cursor:pointer;line-height:1;">&times;</button>
-    </div>
-    <div id="md-body">
-      <div style="text-align:center;padding:2.5rem;color:var(--bone);">
-        <span class="spinner"></span> <span style="margin-left:.6rem;">Načítavam…</span>
-      </div>
     </div>
   </div>
 </div>
@@ -1678,12 +1654,29 @@ body.layer-open{position:fixed;left:0;right:0;bottom:0;height:auto;width:100%;ov
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.18.0</div>
+  <div id="version-badge">v3.19.0</div>
 </footer>
 </div><!-- /main-site -->
 
-
-
+<!-- ── DETAIL ZÁPASU ──
+     Zámerne mimo #main-site a mimo position:fixed: pri otvorení sa #main-site skryje
+     a detail sa stane bežným obsahom stránky. Scrolluje teda dokument sám, presne ako
+     ktorákoľvek iná sekcia — žiadny vnorený scroller, žiadny scroll-lock, a teda ani
+     priestor pre orezanie spodku obrazovky. -->
+<div class="md-page" id="modal-match-detail">
+  <div class="md-page-inner">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.4rem;">
+      <h3 id="md-title" style="margin:0;font-size:1.3rem;">Detail zápasu</h3>
+      <button onclick="closeMatchDetail()"
+        style="background:none;border:0;color:var(--bone);font-size:1.6rem;cursor:pointer;line-height:1;">&times;</button>
+    </div>
+    <div id="md-body">
+      <div style="text-align:center;padding:2.5rem;color:var(--bone);">
+        <span class="spinner"></span> <span style="margin-left:.6rem;">Načítavam…</span>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ══ MODALS ══ -->
 <!-- ══ LINEUP MODAL ══ -->
@@ -3224,16 +3217,20 @@ function mdComposeAssists(assists, profIdx, ov){
 
 let _mdCurrent = null; // { data, details } aktuálne otvoreného zápasu (pre video seek)
 let _mdBoxEditing = new Set(); // indexy tímov (v data.boxscore) práve editovaných adminom
+let _mdReturnY = 0; // scroll pozícia stránky, na ktorú sa vrátime po zatvorení detailu
 
 async function openMatchDetail(eventId){
-  const overlay = document.getElementById('modal-match-detail');
+  const page = document.getElementById('modal-match-detail');
   const body = document.getElementById('md-body');
   const titleEl = document.getElementById('md-title');
   titleEl.textContent = 'Detail zápasu';
   body.innerHTML = '<div style="text-align:center;padding:2.5rem;color:var(--bone);">'
     + '<span class="spinner"></span> <span style="margin-left:.6rem;">Načítavam…</span></div>';
-  overlay.classList.add('show');
-  overlay.scrollTop = 0; // celoobrazovkový modal — vždy otvor od vrchu, nie tam kde skončil posledný zápas
+  // Detail nahradí obsah stránky — zvyšok skryjeme, aby scrolloval len on.
+  _mdReturnY = window.scrollY || document.documentElement.scrollTop || 0;
+  document.body.classList.add('md-open');
+  page.classList.add('show');
+  window.scrollTo(0, 0); // vždy otvor od vrchu, nie tam kde skončil posledný zápas
 
   try {
     // Paralelne: szalh proxy + admin override z Supabase + aktívne profily
@@ -3254,6 +3251,13 @@ async function openMatchDetail(eventId){
       + 'Detail zápasu sa nepodarilo načítať.<br>'
       + '<a href="https://szalh.sk" target="_blank" style="color:var(--rust-light);">Otvoriť szalh.sk ↗</a></div>';
   }
+}
+
+// Zavri detail zápasu a vráť stránku tam, kde bola pred otvorením
+function closeMatchDetail(){
+  document.getElementById('modal-match-detail').classList.remove('show');
+  document.body.classList.remove('md-open');
+  window.scrollTo(0, _mdReturnY);
 }
 
 function renderMatchDetail(data, details, profIdx){
@@ -3857,13 +3861,11 @@ async function mdSaveEvent(key){
   }
 }
 
-// Prekresli detail so zachovaním scroll pozície. Pri celoobrazovkovom detaile scrolluje
-// overlay, nie vnútorné okno — inak by sa po každom uložení skočilo hore.
+// Prekresli detail so zachovaním scroll pozície (scrolluje dokument)
 function mdRerender(payload){
-  const scroller = document.getElementById('modal-match-detail');
-  const sy = scroller ? scroller.scrollTop : 0;
+  const sy = window.scrollY || document.documentElement.scrollTop || 0;
   renderMatchDetail(_mdCurrent.data, payload, _mdCurrent.profIdx);
-  if (scroller) scroller.scrollTop = sy;
+  window.scrollTo(0, sy);
 }
 
 // Kľúč riadku box score: normalizovaný tím + normalizované meno hráča
@@ -5710,10 +5712,12 @@ function initPullToRefresh() {
 
   const scroller = () => document.scrollingElement || document.documentElement;
 
-  // Pull-to-refresh sa nesmie spustiť, keď je otvorené burger menu alebo modal/lightbox
+  // Pull-to-refresh sa nesmie spustiť, keď je otvorené burger menu, modal/lightbox
+  // alebo detail zápasu (reload by ho zavrel)
   const isBlocked = () =>
     document.getElementById('sidenav')?.classList.contains('open') ||
     document.querySelector('.modal-overlay.show') ||
+    document.querySelector('.md-page.show') ||
     document.getElementById('gallery-lightbox')?.style.display === 'flex';
 
   // Reset vizuálneho stavu indikátora (použité pri zrušenom/prerušenom gest)
