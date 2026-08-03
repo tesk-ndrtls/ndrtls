@@ -746,24 +746,32 @@ body.md-open #admin-preview-banner{display:none !important;}
 .btn-admin.save{background:#4a8a4a;color:var(--cream-bright);}
 .btn-admin.cancel{background:var(--charcoal);color:var(--bone);border:1px solid var(--line);}
 .btn-admin.danger{background:#8a4a4a;color:var(--cream-bright);}
-.player-slot{background:rgba(107,31,42,.6);border:2px solid rgba(107,31,42,.9);border-radius:8px;padding:.4rem .5rem;min-width:80px;max-width:110px;text-align:center;cursor:pointer;transition:.2s;}
+/* Ľadová plocha je zmenšená tak, aby sa celá zmestila na bežný mobil bez scrollovania */
+.player-slot{position:relative;background:rgba(107,31,42,.6);border:2px solid rgba(107,31,42,.9);border-radius:7px;padding:.28rem .3rem;min-width:58px;max-width:88px;text-align:center;cursor:pointer;transition:.2s;}
 .player-slot:hover{border-color:var(--rust-light);}
 .player-slot.filled{border-color:var(--rust);background:rgba(74,20,29,.7);}
-.player-slot.dragging{opacity:.85;z-index:50;position:relative;box-shadow:0 8px 24px rgba(0,0,0,.55);transition:none !important;cursor:grabbing;}
+.player-slot.dragging{opacity:.85;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.55);transition:none !important;cursor:grabbing;}
 .player-slot.drag-over{outline:2px solid var(--rust-light);outline-offset:2px;}
 .player-slot.empty{border-color:rgba(233,220,195,.2);background:rgba(38,34,32,.4);}
-.player-slot .slot-pos{font-family:'Oswald';font-weight:700;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--rust-light);margin-bottom:.2rem;}
-.player-slot .slot-num{font-family:'Anton';font-size:1.1rem;color:var(--cream-bright);line-height:1;}
-.player-slot .slot-name{font-family:'Oswald';font-size:.65rem;color:var(--bone);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px;margin:0 auto;}
-.player-slot.empty .slot-num{color:rgba(233,220,195,.2);font-size:.8rem;}
-.rink{background:linear-gradient(180deg,#1a3a5c 0%,#1e4470 50%,#1a3a5c 100%);border:3px solid #4a90d9;border-radius:20px;padding:1rem;position:relative;margin-bottom:1rem;min-height:420px;}
-.rink-line{border-top:2px solid rgba(74,144,217,.4);margin:.5rem 0;}
-.rink-center{border-top:2px solid rgba(200,50,50,.18);margin:.5rem 0;position:relative;text-align:center;}
-.rink-center::after{content:'';display:inline-block;width:60px;height:60px;border:2px solid rgba(200,50,50,.18);border-radius:50%;position:absolute;left:50%;top:-31px;transform:translateX(-50%);}
-.line-label{font-family:'Oswald';font-weight:700;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(233,220,195,.5);text-align:center;margin:.2rem 0;}
-.line-row{display:flex;justify-content:center;gap:.6rem;margin:.4rem 0;flex-wrap:wrap;}
-.goalkeeper-slot{display:flex;justify-content:center;margin:.3rem 0;}
-.goalkeeper-slot .player-slot{min-width:100px;background:rgba(20,60,100,.7);border-color:rgba(74,144,217,.6);}
+.player-slot .slot-pos{font-family:'Oswald';font-weight:700;font-size:.52rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rust-light);margin-bottom:.1rem;}
+.player-slot .slot-num{font-family:'Anton';font-size:.95rem;color:var(--cream-bright);line-height:1;}
+.player-slot .slot-name{font-family:'Oswald';font-size:.57rem;color:var(--bone);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:74px;margin:0 auto;}
+.player-slot.empty .slot-num{color:rgba(233,220,195,.2);font-size:.72rem;}
+/* ✕ na odobratie hráča — len v režime úprav a len na obsadenom slote */
+.slot-del{display:none;position:absolute;top:-7px;right:-7px;width:18px;height:18px;padding:0;
+  border-radius:50%;background:#8a4a4a;color:var(--cream-bright);border:1px solid rgba(0,0,0,.45);
+  font-family:'Oswald';font-size:.7rem;line-height:1;align-items:center;justify-content:center;
+  cursor:pointer;z-index:5;box-shadow:0 1px 4px rgba(0,0,0,.5);}
+.slot-del:hover{background:#bf6d6d;}
+.rink.editing .player-slot.filled .slot-del{display:flex;}
+.rink{background:linear-gradient(180deg,#1a3a5c 0%,#1e4470 50%,#1a3a5c 100%);border:2px solid #4a90d9;border-radius:14px;padding:.5rem .4rem;position:relative;margin-bottom:.6rem;}
+.rink-line{border-top:2px solid rgba(74,144,217,.4);margin:.25rem 0;}
+.rink-center{border-top:2px solid rgba(200,50,50,.18);margin:.3rem 0;position:relative;text-align:center;}
+.rink-center::after{content:'';display:inline-block;width:44px;height:44px;border:2px solid rgba(200,50,50,.18);border-radius:50%;position:absolute;left:50%;top:-23px;transform:translateX(-50%);}
+.line-label{font-family:'Oswald';font-weight:700;font-size:.55rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(233,220,195,.5);text-align:center;margin:.1rem 0;}
+.line-row{display:flex;justify-content:center;gap:.5rem;margin:.14rem 0;flex-wrap:nowrap;}
+.goalkeeper-slot{display:flex;justify-content:center;margin:.2rem 0;}
+.goalkeeper-slot .player-slot{min-width:72px;background:rgba(20,60,100,.7);border-color:rgba(74,144,217,.6);}
 .news-card{background:var(--charcoal);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:1rem;transition:.2s;}
 .news-card:hover{border-color:rgba(107,31,42,.4);}
 .news-card-img{width:100%;aspect-ratio:16/9;object-fit:cover;}
@@ -1412,7 +1420,7 @@ body.md-open #admin-preview-banner{display:none !important;}
     <div class="card-grid">
       <div class="card">
         <h3>Pravidlá kabíny</h3>
-        <p>Príchod min. 20 minút pred zápasom. Výstroj si každý prináša vlastnú. Kto mešká, platí rundu.</p>
+        <p>Príchod min. 20 minút pred zápasom. Kto mešká, platí rundu.</p>
       </div>
       <div class="card">
         <h3>Kontakty</h3>
@@ -1431,20 +1439,6 @@ body.md-open #admin-preview-banner{display:none !important;}
         <h3>Sezónne ciele</h3>
         <p>Top 3 v tabuľke RAHL1. Výhra aspoň jedného turnaja. A nezabudnúť sa baviť.</p>
       </div>
-      <div class="card">
-        <h3>📸 Instagram</h3>
-        <p>
-          <a href="https://www.instagram.com/neanderthals_bratislava/" target="_blank"
-            style="color:var(--rust-light);text-decoration:none;font-family:'Oswald';font-weight:700;">
-            @neanderthals_bratislava
-          </a><br>
-          <span style="color:var(--bone);font-size:.9rem;">Sleduj nás na Instagrame</span>
-        </p>
-      </div>
-      <div class="card">
-        <h3>Tímový výjazd</h3>
-        <p>Plánujeme víkendový výjazd. Hlasovanie o termíne prebehne v skupinovom chate.</p>
-      </div>
     </div>
   </div>
 </div>
@@ -1457,26 +1451,6 @@ body.md-open #admin-preview-banner{display:none !important;}
       </div>
 
       <div style="background:var(--charcoal);border:1px solid var(--line);border-radius:12px;padding:1.4rem;margin-bottom:1rem;">
-        <h4 style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.15em;
-          text-transform:uppercase;color:var(--rust-light);margin-bottom:1rem;">Nastavenie hesla</h4>
-        <div class="form-group">
-          <label>Nové heslo</label>
-          <input type="password" id="profile-pass-new" placeholder="min. 6 znakov" autocomplete="new-password">
-        </div>
-        <div class="form-group">
-          <label>Potvrď nové heslo</label>
-          <input type="password" id="profile-pass-confirm" placeholder="zopakuj heslo" autocomplete="new-password">
-        </div>
-        <button class="btn-primary" onclick="saveProfilePassword()" style="margin-top:.4rem;">
-          Nastaviť heslo
-        </button>
-        <div id="profile-pass-msg" style="display:none;margin-top:.6rem;font-family:'Oswald';font-size:.85rem;"></div>
-        <p style="margin-top:.8rem;color:var(--bone);font-size:.85rem;opacity:.7;">
-          Po nastavení hesla sa budeš môcť prihlásiť kedykoľvek.
-        </p>
-      </div>
-
-      <div style="background:var(--charcoal);border:1px solid var(--line);border-radius:12px;padding:1.4rem;">
         <h4 style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.15em;
           text-transform:uppercase;color:var(--rust-light);margin-bottom:1rem;">Zobrazované meno</h4>
         <div class="form-group">
@@ -1516,6 +1490,26 @@ body.md-open #admin-preview-banner{display:none !important;}
           text-transform:uppercase;cursor:pointer;">
           Pokračovať do zóny →
         </button>
+      </div>
+
+      <div style="background:var(--charcoal);border:1px solid var(--line);border-radius:12px;padding:1.4rem;">
+        <h4 style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.15em;
+          text-transform:uppercase;color:var(--rust-light);margin-bottom:1rem;">Nastavenie hesla</h4>
+        <div class="form-group">
+          <label>Nové heslo</label>
+          <input type="password" id="profile-pass-new" placeholder="min. 6 znakov" autocomplete="new-password">
+        </div>
+        <div class="form-group">
+          <label>Potvrď nové heslo</label>
+          <input type="password" id="profile-pass-confirm" placeholder="zopakuj heslo" autocomplete="new-password">
+        </div>
+        <button class="btn-primary" onclick="saveProfilePassword()" style="margin-top:.4rem;">
+          Nastaviť heslo
+        </button>
+        <div id="profile-pass-msg" style="display:none;margin-top:.6rem;font-family:'Oswald';font-size:.85rem;"></div>
+        <p style="margin-top:.8rem;color:var(--bone);font-size:.85rem;opacity:.7;">
+          Po nastavení hesla sa budeš môcť prihlásiť kedykoľvek.
+        </p>
       </div>
     </div>
   </div>
@@ -1664,7 +1658,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.20.0</div>
+  <div id="version-badge">v3.21.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -1693,8 +1687,8 @@ body.md-open #admin-preview-banner{display:none !important;}
 <div class="modal-overlay" id="modal-lineup">
   <div class="modal lineup-modal">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
-      <h3 id="lineup-modal-title" style="margin:0;font-size:1.4rem;">Zostava</h3>
-      <div style="display:flex;gap:.5rem;align-items:center;">
+      <h3 id="lineup-modal-title" style="margin:0;font-size:1.4rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Zostava</h3>
+      <div style="display:flex;gap:.5rem;align-items:center;flex-shrink:0;">
         <button id="lineup-edit-btn" class="btn-admin edit" onclick="enableLineupEdit()"
           style="display:none;font-size:.72rem;">✏ Upraviť</button>
         <button id="lineup-save-btn" class="btn-admin save" onclick="saveLineup()"
@@ -4095,9 +4089,38 @@ async function openLineup(eid, et) {
 function renderLineup() {
   document.querySelectorAll('.player-slot').forEach(slot=>{
     const key=slot.dataset.line+'_'+slot.dataset.pos, p=_lD[key];
-    if (p) { slot.classList.remove('empty'); slot.classList.add('filled'); slot.querySelector('.slot-num').textContent=p.number||'—'; slot.querySelector('.slot-name').textContent=p.name||p.number||''; }
-    else { slot.classList.remove('filled'); slot.classList.add('empty'); slot.querySelector('.slot-num').textContent='+'; slot.querySelector('.slot-name').textContent='voľné'; }
+    if (p) {
+      slot.classList.remove('empty'); slot.classList.add('filled');
+      slot.querySelector('.slot-num').textContent=p.number||'—';
+      slot.querySelector('.slot-name').textContent=p.name||p.number||'';
+      if (!slot.querySelector('.slot-del')) slot.appendChild(mdMakeSlotDel(slot));
+    }
+    else {
+      slot.classList.remove('filled'); slot.classList.add('empty');
+      slot.querySelector('.slot-num').textContent='+';
+      slot.querySelector('.slot-name').textContent='voľné';
+      slot.querySelector('.slot-del')?.remove();
+    }
   });
+}
+
+// ✕ tlačidlo na odobratie hráča zo slotu (zobrazuje sa len v režime úprav)
+function mdMakeSlotDel(slot){
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'slot-del'; b.title = 'Odobrať hráča'; b.textContent = '✕';
+  // pointerdown musí zostať tu, inak by ho zachytil drag & drop na slote
+  b.addEventListener('pointerdown', e => e.stopPropagation());
+  b.addEventListener('click', e => { e.stopPropagation(); lineupRemoveSlot(slot); });
+  return b;
+}
+
+function lineupRemoveSlot(slot){
+  if (!_lEd) return;
+  const key = slot.dataset.line + '_' + slot.dataset.pos;
+  if (!_lD[key]) return;
+  delete _lD[key];
+  renderLineup();
+  toast('Hráč odobraný','success');
 }
 function lineupSlotClick(slot) {
   if (_lJustDragged) { _lJustDragged = false; return; } // klik hneď po drage — ignoruj
@@ -4261,8 +4284,8 @@ function lineupDragCancel(e){
   document.querySelectorAll('.player-slot.drag-over').forEach(s => s.classList.remove('drag-over'));
 }
 
-function enableLineupEdit() { _lEd=true; document.getElementById('lineup-edit-btn').style.display='none'; document.getElementById('lineup-save-btn').style.display='inline-block'; document.getElementById('lineup-auto-btn').style.display='inline-block'; document.querySelectorAll('.player-slot').forEach(s=>{ s.style.cursor='pointer'; s.style.outline='1px dashed rgba(138,58,30,.4)'; s.style.touchAction='none'; }); }
-async function saveLineup() { _lEd=false; document.getElementById('lineup-edit-btn').style.display='inline-block'; document.getElementById('lineup-save-btn').style.display='none'; document.getElementById('lineup-auto-btn').style.display='none'; document.getElementById('lineup-picker').style.display='none'; document.querySelectorAll('.player-slot').forEach(s=>{ s.style.cursor=''; s.style.outline=''; s.style.touchAction=''; }); const { error }=await sb.from('game_results').upsert({event_id:_lEId,season_id:2,notes:JSON.stringify(_lD)},{onConflict:'event_id'}); if (error) { toast('Chyba: '+error.message,'error'); return; } toast('Zostava uložená ✓','success'); }
+function enableLineupEdit() { _lEd=true; document.getElementById('lineup-edit-btn').style.display='none'; document.getElementById('lineup-save-btn').style.display='inline-block'; document.getElementById('lineup-auto-btn').style.display='inline-block'; document.getElementById('lineup-rink').classList.add('editing'); document.querySelectorAll('.player-slot').forEach(s=>{ s.style.cursor='pointer'; s.style.outline='1px dashed rgba(138,58,30,.4)'; s.style.touchAction='none'; }); }
+async function saveLineup() { _lEd=false; document.getElementById('lineup-edit-btn').style.display='inline-block'; document.getElementById('lineup-save-btn').style.display='none'; document.getElementById('lineup-auto-btn').style.display='none'; document.getElementById('lineup-picker').style.display='none'; document.getElementById('lineup-rink').classList.remove('editing'); document.querySelectorAll('.player-slot').forEach(s=>{ s.style.cursor=''; s.style.outline=''; s.style.touchAction=''; }); const { error }=await sb.from('game_results').upsert({event_id:_lEId,season_id:2,notes:JSON.stringify(_lD)},{onConflict:'event_id'}); if (error) { toast('Chyba: '+error.message,'error'); return; } toast('Zostava uložená ✓','success'); }
 function autoLineup() {
   // LEN prihlásení registrovaní používatelia. Ak sa nikto neprihlásil → prázdna zostava.
   const pool = _lPool.slice();
@@ -4513,8 +4536,10 @@ async function loadEvents() {
     // Store event for admin edit
     window['_ev_'+ev.id] = ev;
     const adminEdit = isAdmin
-      ? `<button class="btn-sm" onclick="openEditEventModal(window['_ev_'+${ev.id}])"
-          style="margin-left:auto;color:var(--rust-light);" title="Upraviť">✏</button>`
+      ? `<button class="btn-sm" onclick="showAdminRsvpPanel(${ev.id})"
+          style="color:var(--rust-light);">👥 Prihlásiť hráča</button>
+         <button class="btn-sm" onclick="openEditEventModal(window['_ev_'+${ev.id}])"
+          style="color:var(--rust-light);" title="Upraviť">✏</button>`
       : '';
 
     return `<div class="event-card${isPast?' past-event':''}" id="ecard-${ev.id}" style="flex-direction:column;align-items:stretch;cursor:default;${isPast?'opacity:.5;':''}">
@@ -4531,7 +4556,7 @@ async function loadEvents() {
           <button class="btn-rsvp no ${myStatus==='no'?'active':''}"
             onclick="setRsvp(${ev.id}, 'no', this)">✗ Nejdem</button>
           <button class="btn-sm" onclick="openLineup(${ev.id})"
-            style="color:var(--bone);" title="Zostava">🏒</button>
+            style="color:var(--bone);">Zostava</button>
           ${adminEdit}
         </div>
       </div>
