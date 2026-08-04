@@ -772,6 +772,73 @@ body.md-open #admin-preview-banner{display:none !important;}
 .line-row{display:flex;justify-content:center;gap:.5rem;margin:.14rem 0;flex-wrap:nowrap;}
 .goalkeeper-slot{display:flex;justify-content:center;margin:.2rem 0;}
 .goalkeeper-slot .player-slot{min-width:72px;background:rgba(20,60,100,.7);border-color:rgba(74,144,217,.6);}
+/* ── INTERNÉ INFO: TAKTICKÁ PRÍRUČKA ── */
+.tk{--tk-blue:#2f5d7c; --tk-ok:#6dbf6d; max-width:940px; margin:0 auto;}
+.tk-hero{text-align:center; padding:.5rem 0 2rem; border-bottom:2px solid var(--maroon);}
+.tk-eyebrow{font-family:'Oswald'; font-weight:600; letter-spacing:.32em; text-transform:uppercase;
+  font-size:.68rem; color:var(--rust-light); margin-bottom:.9rem;}
+.tk-hero h2{font-family:'Anton'; font-weight:400; text-transform:uppercase; letter-spacing:.01em;
+  font-size:clamp(2.2rem,9vw,4.4rem); line-height:.92; margin:0; color:var(--cream-bright);
+  text-shadow:0 2px 0 rgba(0,0,0,.4);}
+.tk-hero h2 .tk-accent{color:var(--rust-light); display:block; font-size:.4em; letter-spacing:.06em; margin-top:.5rem;}
+.tk-thesis{max-width:560px; margin:1.3rem auto 0; font-size:1.08rem; color:var(--bone);}
+.tk-thesis b{color:var(--cream-bright);}
+.tk-sec{margin-top:2.4rem;}
+.tk-sec-head{display:flex; align-items:baseline; gap:.8rem; margin-bottom:.35rem;}
+.tk-num{font-family:'Anton'; font-size:1.4rem; color:var(--maroon); line-height:1;}
+.tk-title{font-family:'Oswald'; font-weight:700; text-transform:uppercase; letter-spacing:.13em;
+  font-size:1rem; color:var(--cream-bright);}
+.tk-sub{color:var(--bone); margin:0 0 1rem 2.2rem; font-size:.95rem;}
+.tk-mantra{background:linear-gradient(135deg,var(--maroon),var(--charcoal));
+  border:1px solid var(--rust); border-radius:14px; padding:1.5rem 1.3rem; text-align:center;}
+.tk-mantra .tk-q{font-family:'Anton'; font-size:clamp(1.2rem,4.5vw,1.9rem); color:var(--cream-bright);
+  text-transform:uppercase; line-height:1.08;}
+.tk-mantra .tk-msub{color:var(--bone); margin-top:.7rem; font-size:.98rem;}
+.tk-rink-block{display:grid; grid-template-columns:1fr; gap:1.2rem;}
+@media(min-width:760px){.tk-rink-block{grid-template-columns:1.1fr .9fr; align-items:center;}}
+.tk-card{background:var(--charcoal); border:1px solid var(--line); border-radius:14px; padding:1rem;}
+.tk-card svg{display:block; width:100%; height:auto; border-radius:8px;}
+.tk-legend{display:flex; flex-wrap:wrap; gap:.8rem; margin-top:.9rem; font-family:'Oswald';
+  font-size:.76rem; text-transform:uppercase; letter-spacing:.06em;}
+.tk-legend span{display:inline-flex; align-items:center; gap:.4rem; color:var(--bone);}
+.tk-legend-pos{font-size:.72rem; margin-top:.4rem;}
+.tk-legend-pos b{color:var(--rust-light);}
+.tk-dot{width:14px; height:14px; border-radius:50%; display:inline-block; flex:0 0 auto;}
+.tk-dot.us{background:var(--rust-light); border:2px solid var(--cream-bright);}
+.tk-dot.them{background:var(--tk-blue); border:2px solid #a9c6da;}
+.tk-dot.puck{background:#111; border:2px solid var(--bone); width:10px; height:10px;}
+.tk-roles{margin:0; padding:0; list-style:none;}
+.tk-roles li{display:flex; gap:.7rem; align-items:baseline; padding:.55rem 0;
+  border-bottom:1px solid var(--line); font-size:.98rem;}
+.tk-roles li:last-child{border-bottom:0;}
+.tk-role-tag{flex:0 0 auto; min-width:86px; font-family:'Oswald'; font-weight:700;
+  text-transform:uppercase; letter-spacing:.05em; font-size:.74rem; color:var(--rust-light);}
+.tk-role-txt{color:var(--bone);}
+.tk-rules{display:grid; grid-template-columns:1fr; gap:.85rem;}
+@media(min-width:640px){.tk-rules{grid-template-columns:1fr 1fr;}}
+.tk-rule{background:var(--charcoal); border:1px solid var(--line); border-left:4px solid var(--rust);
+  border-radius:10px; padding:1rem 1.1rem;}
+.tk-rule .tk-n{font-family:'Anton'; font-size:1.5rem; color:var(--maroon); line-height:1;
+  float:left; margin:.05rem .65rem 0 0;}
+.tk-rule h4{font-family:'Oswald'; font-weight:700; text-transform:uppercase; letter-spacing:.05em;
+  font-size:.94rem; color:var(--cream-bright); margin:.1rem 0 .35rem;}
+.tk-rule p{margin:0; color:var(--bone); font-size:.96rem;}
+.tk-rule.tk-full{grid-column:1/-1; border-left-color:var(--maroon);}
+.tk-why{display:grid; grid-template-columns:1fr; gap:.7rem;}
+@media(min-width:640px){.tk-why{grid-template-columns:1fr 1fr;}}
+.tk-why div{background:rgba(45,80,45,.14); border:1px solid rgba(109,191,109,.28);
+  border-radius:10px; padding:.85rem 1rem; color:var(--cream); font-size:.96rem;}
+.tk-why div b{color:var(--tk-ok); display:block; font-family:'Oswald'; text-transform:uppercase;
+  letter-spacing:.05em; font-size:.78rem; margin-bottom:.2rem;}
+.tk-drill{background:var(--charcoal); border:1px dashed var(--rust); border-radius:12px; padding:1.1rem 1.2rem;}
+.tk-drill h4{font-family:'Oswald'; text-transform:uppercase; letter-spacing:.08em;
+  color:var(--rust-light); margin:0 0 .5rem; font-size:.92rem;}
+.tk-drill p{margin:.3rem 0; color:var(--bone); font-size:.96rem;}
+.tk-foot{margin-top:2.6rem; padding-top:1.2rem; border-top:2px solid var(--maroon); text-align:center;}
+.tk-foot .tk-cave{font-family:'Anton'; text-transform:uppercase; color:var(--maroon);
+  letter-spacing:.1em; font-size:1.05rem;}
+.tk-foot p{color:var(--bone); font-size:.92rem; margin:.5rem 0 0;}
+
 .news-card{background:var(--charcoal);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:1rem;transition:.2s;}
 .news-card:hover{border-color:rgba(107,31,42,.4);}
 .news-card-img{width:100%;aspect-ratio:16/9;object-fit:cover;}
@@ -1413,32 +1480,158 @@ body.md-open #admin-preview-banner{display:none !important;}
 
 <div class="page-section" id="sec-internal">
   <div class="sec-wrap">
-    <div class="sec-head">
-      <h2>Interné info</h2>
-      <p>Dokumenty a informácie len pre hráčov kmeňa.</p>
-    </div>
-    <div class="card-grid">
-      <div class="card">
-        <h3>Pravidlá kabíny</h3>
-        <p>Príchod min. 20 minút pred zápasom. Kto mešká, platí rundu.</p>
+    <div class="tk">
+
+      <div class="tk-hero">
+        <div class="tk-eyebrow">Interné info · Taktická príručka</div>
+        <h2>Ťažko<br>poraziteľní<span class="tk-accent">Systém pre Neanderthals</span></h2>
+        <p class="tk-thesis">Nemusíme byť najtalentovanejší tím v lige. Musíme byť tím, ktorý sa poráža zo všetkých najťažšie. <b>Talent sa dá prekonať poctivosťou a disciplínou</b> — a to je presne to, čo máme vo vlastných rukách.</p>
       </div>
-      <div class="card">
-        <h3>Kontakty</h3>
-        <p>
-          🏒 <strong>GM / Tréner:</strong><br>
-          <a href="mailto:sakinder@ndrtls.com" style="color:var(--rust-light)">sakinder@ndrtls.com</a><br><br>
-          🏆 <strong>Kapitán / Financmajster:</strong><br>
-          <a href="mailto:stehno@ndrtls.com" style="color:var(--rust-light)">stehno@ndrtls.com</a><br><br>
-          📱 <strong>PR / Social media:</strong><br>
-          <a href="mailto:konty@ndrtls.com" style="color:var(--rust-light)">konty@ndrtls.com</a><br><br>
-          ⚙ <strong>Admin / Tréner:</strong><br>
-          <a href="mailto:tesk@ndrtls.com" style="color:var(--rust-light)">tesk@ndrtls.com</a>
-        </p>
+
+      <!-- 01 FILOZOFIA -->
+      <div class="tk-sec">
+        <div class="tk-sec-head"><span class="tk-num">01</span><span class="tk-title">Naša filozofia</span></div>
+        <p class="tk-sub">Prečo hráme tak, ako hráme.</p>
+        <div class="tk-mantra">
+          <div class="tk-q">„Nedarujeme súperovi ľahký gól.<br>Počkáme si na jeho chybu.“</div>
+          <div class="tk-msub">Otvorený hokej hore-dole je terén, kde súper vytiahne svoju kvalitu a potrestá nás. Tak sa hrať nebudeme. Keď hru zatvoríme a odohráme ju disciplinovane, presunieme ju tam, kde nerozhoduje talent, ale poctivosť a vôľa — a v tom sme si so súperom rovní.</div>
+        </div>
       </div>
-      <div class="card">
-        <h3>Sezónne ciele</h3>
-        <p>Top 3 v tabuľke RAHL1. Výhra aspoň jedného turnaja. A nezabudnúť sa baviť.</p>
+
+      <!-- 02 ROZOSTAVENIE -->
+      <div class="tk-sec">
+        <div class="tk-sec-head"><span class="tk-num">02</span><span class="tk-title">Rozostavenie: blok 1-2-2</span></div>
+        <p class="tk-sub">V strednom pásme nikoho neatakujeme silou — trpezlivo súpera vytláčame k mantinelu, kde stráca priestor aj možnosti.</p>
+        <div class="tk-rink-block">
+          <div class="tk-card">
+            <svg viewBox="0 0 420 320" role="img" aria-label="Nákres rozostavenia 1-2-2: krídla vytláčajú útočníka k mantinelu, kde ho zdvojí obranca">
+              <rect x="0" y="0" width="420" height="320" rx="10" fill="#e8edf2"/>
+              <rect x="120" y="0" width="7" height="320" fill="#2f5d7c" opacity=".8"/>
+              <rect x="293" y="0" width="7" height="320" fill="#2f5d7c" opacity=".8"/>
+              <rect x="207" y="0" width="6" height="320" fill="#b5303a"/>
+              <circle cx="210" cy="160" r="48" fill="none" stroke="#b9c7d6" stroke-width="2"/>
+              <circle cx="210" cy="160" r="3" fill="#b5303a"/>
+              <rect x="405" y="140" width="10" height="40" rx="2" fill="#b5303a" opacity=".85"/>
+              <g font-family="Oswald,sans-serif" font-size="13" font-weight="700" text-anchor="middle">
+                <circle cx="34" cy="160" r="15" fill="#2f5d7c" stroke="#a9c6da" stroke-width="2.5"/>
+                <text x="34" y="165" fill="#fff">Ú</text>
+                <circle cx="78" cy="95" r="15" fill="#2f5d7c" stroke="#a9c6da" stroke-width="2.5"/>
+                <circle cx="78" cy="225" r="15" fill="#2f5d7c" stroke="#a9c6da" stroke-width="2.5"/>
+                <circle cx="52" cy="160" r="6" fill="#111" stroke="#e8edf2" stroke-width="1.5"/>
+                <circle cx="155" cy="160" r="16" fill="#c56a3f" stroke="#fbf6ec" stroke-width="3"/>
+                <text x="155" y="165" fill="#15110f">C</text>
+                <circle cx="232" cy="100" r="16" fill="#c56a3f" stroke="#fbf6ec" stroke-width="3"/>
+                <text x="232" y="105" fill="#15110f">ĽK</text>
+                <circle cx="232" cy="220" r="16" fill="#c56a3f" stroke="#fbf6ec" stroke-width="3"/>
+                <text x="232" y="225" fill="#15110f">PK</text>
+                <circle cx="325" cy="120" r="16" fill="#8a3a1e" stroke="#fbf6ec" stroke-width="3"/>
+                <text x="325" y="125" fill="#fbf6ec">O</text>
+                <circle cx="325" cy="200" r="16" fill="#8a3a1e" stroke="#fbf6ec" stroke-width="3"/>
+                <text x="325" y="205" fill="#fbf6ec">O</text>
+              </g>
+            </svg>
+            <div class="tk-legend">
+              <span><i class="tk-dot us"></i> My</span>
+              <span><i class="tk-dot them"></i> Súper</span>
+              <span><i class="tk-dot puck"></i> Puk</span>
+            </div>
+            <div class="tk-legend tk-legend-pos">
+              <span><b>C</b> center</span>
+              <span><b>ĽK / PK</b> ľavé a pravé krídlo</span>
+              <span><b>O</b> obranca</span>
+              <span><b>Ú</b> útočiaci súper</span>
+            </div>
+          </div>
+          <div>
+            <ul class="tk-roles">
+              <li><span class="tk-role-tag">Center</span><span class="tk-role-txt">Náš najbližší hráč k puku. Nesnaží sa súpera zastaviť silou — vedie ho z prostriedku klziska k jednej strane a odrezáva mu cestu späť do stredu.</span></li>
+              <li><span class="tk-role-tag">Krídla</span><span class="tk-role-txt">Ľavé a pravé krídlo držia strany. To na strane, kam smeruje puk, nabieha oblúkom a priebežne zužuje súperovi priestor, až mu nechá len úzky pás pri mantineli.</span></li>
+              <li><span class="tk-role-tag">Obrancovia</span><span class="tk-role-txt">Držia modrú čiaru a strážia priestor pred bránkou. Keď je súper vytlačený k mantinelu, bližší obranca ho tam zdvojí — dvaja proti jednému pri stene mu vezmú všetky možnosti. Druhý obranca nikdy neopúšťa stred pred bránkou.</span></li>
+            </ul>
+            <div class="tk-mantra" style="margin-top:1.1rem;padding:1.1rem;">
+              <div class="tk-q" style="font-size:1.15rem;">„Radšej ustrážim pozíciu,<br>než aby som zbytočne vybehol.“</div>
+            </div>
+          </div>
+        </div>
       </div>
+
+      <!-- 03 PÄŤ PRAVIDIEL -->
+      <div class="tk-sec">
+        <div class="tk-sec-head"><span class="tk-num">03</span><span class="tk-title">Mamutia mantra — päť pravidiel do hlavy</span></div>
+        <p class="tk-sub">Zopakujeme si ich pred každým zápasom dovtedy, kým nám neprejdú do kostí.</p>
+        <div class="tk-rules">
+          <div class="tk-rule">
+            <span class="tk-n">1</span>
+            <h4>Nikdy nie sme traja v jednom rohu</h4>
+            <p>Najčastejšie si strelíme vlastný gól tak, že sa za pukom nahrnieme do rohu všetci a priestor pred bránkou zostane prázdny. Vždy jeden z nás zostáva vyššie a stráži ho.</p>
+          </div>
+          <div class="tk-rule">
+            <span class="tk-n">2</span>
+            <h4>Do obrany sa vraciame piati</h4>
+            <p>A to vrátane útočníkov. Nikto nečaká vpredu na brejk, kým to vzadu horí. Len čo stratíme puk, prvá myšlienka je otočiť sa a korčuľovať k vlastnej bránke.</p>
+          </div>
+          <div class="tk-rule">
+            <span class="tk-n">3</span>
+            <h4>Chránime stred, nie mantinely</h4>
+            <p>Góly padajú spred bránky, nie z rohov. Súpera pokojne pusť k mantinelu — ale priestor pred naším brankárom musíme mať stále pod kontrolou: postavením tela medzi súpera a bránku a upratanou hokejkou.</p>
+          </div>
+          <div class="tk-rule">
+            <span class="tk-n">4</span>
+            <h4>Jednoduché puky von z tretiny</h4>
+            <p>Vo vlastnom pásme sa nehráme na kľučky. Keď získame puk pri bránke, posielame ho von po mantineli alebo krátkou prihrávkou spoluhráčovi, ktorý má čas. Stratiť ho práve tu znamená takmer istý gól.</p>
+          </div>
+          <div class="tk-rule tk-full">
+            <span class="tk-n">5</span>
+            <h4>Strieľame a chodíme pred brankára</h4>
+            <p>Keď útočíme, nehráme na krásu. Puk ide na bránku a niekto musí stáť pred brankárom — cloniť mu a doraziť, čo vyrazí. Väčšina našich gólov nepríde z peknej kombinácie, ale z dorážok a odrazených pukov, po ktorých sa načiahneme skôr než súper.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 04 PREČO NÁM TO SEDÍ -->
+      <div class="tk-sec">
+        <div class="tk-sec-head"><span class="tk-num">04</span><span class="tk-title">Prečo to sedí práve nášmu kmeňu</span></div>
+        <div class="tk-why">
+          <div><b>Netreba skill</b>Postaviť sa na správne miesto a vracať sa dozadu zvládne každý, kto do toho dá srdce. Je to o vôli, nie o technike.</div>
+          <div><b>Netreba kondíciu navyše</b>Práveže nešpurtujeme zbytočne dopredu. Držať kompaktný blok stojí menej síl než celý zápas niekoho agresívne naháňať.</div>
+          <div><b>Odmeňuje konzistenciu</b>Keď to odhráme poctivo celý zápas, súperove šance postupne vysychajú a tie naše rastú z jeho chýb.</div>
+          <div><b>Pomáha brankárovi</b>Dostáva hlavne strely zvonku, na ktoré vidí a stihne sa pripraviť. Gólov zblízka, čo ho prekvapia, je oveľa menej.</div>
+        </div>
+      </div>
+
+      <!-- 05 TRÉNING -->
+      <div class="tk-sec">
+        <div class="tk-sec-head"><span class="tk-num">05</span><span class="tk-title">Ako to natrénovať</span></div>
+        <div class="tk-drill">
+          <h4>Jedna jaskyňa, jedno cvičenie, stále dokola</h4>
+          <p><b>Hráme päť na päť v strednom a obrannom pásme.</b> Brániaci tím nacvičuje, ako držať blok 1-2-2 a vracať sa naspäť všetci piati. Nejde nám o kombinácie — brúsime polohy a návyk, kde má kto stáť.</p>
+          <p><b>A pred každým zápasom</b> si tých päť pravidiel povieme nahlas. Dovtedy, kým ich chalani nebudú odrapotávať sami od seba.</p>
+        </div>
+      </div>
+
+      <!-- 06 KABÍNA -->
+      <div class="tk-sec">
+        <div class="tk-sec-head"><span class="tk-num">06</span><span class="tk-title">Kabína a dochádzka</span></div>
+        <p class="tk-sub">Disciplína sa nezačína na buly, ale v šatni.</p>
+        <div class="tk-rules">
+          <div class="tk-rule">
+            <span class="tk-n">⏱</span>
+            <h4>V šatni 20 minút pred zápasom</h4>
+            <p>Minimálne. Nech sa stihneme v pokoji obliecť, prejsť si päť pravidiel a nastúpiť na ľad ako tím, nie ako jednotlivci, čo dobiehajú na buly.</p>
+          </div>
+          <div class="tk-rule">
+            <span class="tk-n">🍺</span>
+            <h4>Kto mešká, platí rundu</h4>
+            <p>Bez výnimiek a bez výhovoriek. Je to lacnejšie než rozhádzaná príprava celého tímu — a po zápase aspoň bude o čom.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="tk-foot">
+        <div class="tk-cave">Ugh. Múr stojí. Nech si súper vylomí zuby.</div>
+        <p>Drž systém, drž disciplínu — a body prídu samy.</p>
+      </div>
+
     </div>
   </div>
 </div>
@@ -1658,7 +1851,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.21.0</div>
+  <div id="version-badge">v3.22.0</div>
 </footer>
 </div><!-- /main-site -->
 
