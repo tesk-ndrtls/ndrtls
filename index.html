@@ -1705,7 +1705,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.25.3</div>
+  <div id="version-badge">v3.25.4</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2649,6 +2649,17 @@ function extractYoutubeId(url) {
 // Malé červené YouTube logo v rohu — len signalizuje, že oznam má video (prehrá sa až v detaile).
 const NEWS_YT_BADGE = '<div style="position:absolute;top:.5rem;right:.5rem;z-index:2;filter:drop-shadow(0 1px 4px rgba(0,0,0,.6));">'
   + '<svg width="34" height="24" viewBox="0 0 68 48"><path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="#ff0000"/><path d="M45 24L27 14v20" fill="#fff"/></svg></div>';
+/* Dátum, podľa ktorého sa oznam radí — ten istý, aký je na karte vidieť.
+   Radiť len podľa event_date nestačí: oznam bez neho by spadol pod staré
+   oznamy, ktoré ho majú vyplnený, aj keby bol pridaný dnes. */
+function newsSortTime(n){
+  const t = new Date(n.event_date || n.created_at).getTime();
+  return isNaN(t) ? 0 : t;
+}
+function sortNewsNewestFirst(rows){
+  return (rows || []).slice().sort((a, b) => newsSortTime(b) - newsSortTime(a));
+}
+
 let _newsCache = null;
 async function loadPublicNews() {
   const list=document.getElementById('pub-news-list');
@@ -2659,7 +2670,7 @@ async function loadPublicNews() {
     list.innerHTML='<div class="empty-state"><div class="es-icon">⚠️</div><p>Chyba načítania: '+error.message+'</p></div>';
     return;
   }
-  _newsCache = data;
+  _newsCache = sortNewsNewestFirst(data);
   renderPublicNews();
 }
 function renderPublicNews() {
@@ -2888,9 +2899,10 @@ async function adminSetRole(userId, role) {
 async function loadAdminNews() {
   const list=document.getElementById('admin-news-list');
   if (!list) return;
-  const { data }=await sb.from('news').select('*').order('event_date',{ascending:false,nullsFirst:false}).order('created_at',{ascending:false});
+  const { data:raw }=await sb.from('news').select('*').order('event_date',{ascending:false,nullsFirst:false}).order('created_at',{ascending:false});
   const months=['jan','feb','mar','apr','máj','jún','júl','aug','sep','okt','nov','dec'];
-  if (!data?.length) { list.innerHTML='<div class="empty-state"><div class="es-icon">📋</div><p>Žiadne príspevky.</p></div>'; return; }
+  if (!raw?.length) { list.innerHTML='<div class="empty-state"><div class="es-icon">📋</div><p>Žiadne príspevky.</p></div>'; return; }
+  const data = sortNewsNewestFirst(raw);
   list.innerHTML=data.map(n=>{
     const d=new Date(n.event_date || n.created_at);
     const badge=n.youtube_url?' · <span style="color:var(--rust-light)">YouTube</span>':n.image_url?' · <span style="color:var(--rust-light)">Foto</span>':'';
