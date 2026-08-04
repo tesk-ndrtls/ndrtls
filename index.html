@@ -1851,7 +1851,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.23.0</div>
+  <div id="version-badge">v3.23.1</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2494,11 +2494,11 @@ async function init() {
 
   // Not logged in — restore last public section, otherwise always land on news
   const savedPub = lsGet('ndrtls-section');
-  const privateSecs = ['events','finance','internal','profile','admin-news','admin-users','admin-events','admin-payments','admin-media','login','onboarding'];
-  const hash = (window.location.hash || '');
-  if (hash.startsWith('#sec-') && document.getElementById('sec-' + hash.slice(5))) {
+  const privateSecs = PRIVATE_SECTIONS.concat(['login','onboarding']);
+  const linked = hashSection();
+  if (linked) {
     hideSplash();
-    showSection(hash.slice(5));
+    showSection(linked); // showSection sama presmeruje na prihlásenie, ak je sekcia súkromná
   } else if (savedPub && document.getElementById('sec-' + savedPub) && !privateSecs.includes(savedPub)) {
     hideSplash();
     showSection(savedPub);
@@ -2658,7 +2658,14 @@ function renderTraining() {
   }
 }
 
+// Sekcie len pre prihlásených. Jediné miesto, kde je tento zoznam definovaný.
+const PRIVATE_SECTIONS = ['events','finance','internal','profile',
+  'admin-news','admin-users','admin-events','admin-payments','admin-media','admin-contacts'];
+
 function showSection(id) {
+  // Zámok: na súkromnú sekciu sa bez prihlásenia nedá dostať ani odkazom (#sec-...).
+  // Hash v URL zostáva, takže po prihlásení používateľa dosmerujeme tam, kam chcel ísť.
+  if (PRIVATE_SECTIONS.includes(id) && !currentUser) { showSection('login'); return; }
   document.querySelectorAll('.page-section').forEach(s=>{
     s.classList.remove('active');
     s.style.display = '';  // reset inline display
