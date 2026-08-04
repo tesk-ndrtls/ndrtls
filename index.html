@@ -1705,7 +1705,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.25.2</div>
+  <div id="version-badge">v3.25.3</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -3416,14 +3416,20 @@ function renderMatchDetail(data, details, profIdx){
 
   // Príslušnosť akcie k tímu, vo vrstvách (neskoršia vrstva vyhráva):
   // box score → prírastok skóre (góly z RAHL) → súpiska → manuálne zadaný tím → admin override.
-  const mdTeamOf = (ev, key, ov, player) => {
-    let t = boxTeamIdx.get(mdNormName(ev.player_name)) || boxTeamIdx.get(mdNormName(player.name));
+  // Meno pred spárovaním so súpiskou. Párovanie mení len číslo a post, nie meno,
+  // takže sa tím dá určiť ešte predtým, než hráča poskladáme.
+  const mdRawName = (ev, ov) => (ov && ov.player_name) || ev.player_name || '';
+  const mdTeamOf = (ev, key, ov, rawName) => {
+    let t = boxTeamIdx.get(mdNormName(ev.player_name)) || boxTeamIdx.get(mdNormName(rawName));
     if (scoreDeltaTeam[key]) t = scoreDeltaTeam[key];
-    if (!t) t = mdApplyRoster(player.name, profIdx) ? 'nea' : null;
+    if (!t) t = mdApplyRoster(rawName, profIdx) ? 'nea' : null;
     if (ev.team === 'nea' || ev.team === 'opp') t = ev.team;
     if (ov && (ov.team === 'nea' || ov.team === 'opp')) t = ov.team;
     return t || 'opp';
   };
+  // Naša súpiska platí len na našich hráčov. Bez tohto by sa súperov hráč
+  // s rovnakým priezviskom spároval s naším profilom a prebral si jeho číslo.
+  const mdRosterFor = team => (team === 'nea' ? profIdx : null);
 
   // Góly/asistencie spočítané zo skutočného priebehu zápasu (timeline, s admin opravami
   // strelca/asistencií) — toto je "reálny" stav a má prednosť pred pôvodnými číslami z RAHL
@@ -3434,9 +3440,9 @@ function renderMatchDetail(data, details, profIdx){
   events.forEach(ev => {
     const key = ev.key || ((ev.period != null ? ev.period : '?') + '_' + (ev.time || '?') + '_' + (ev.type || '?'));
     const ov = overrides[key];
-    const player = mdComposePlayer(ev, profIdx, ov);
-    const team = mdTeamOf(ev, key, ov, player);
+    const team = mdTeamOf(ev, key, ov, mdRawName(ev, ov));
     eventTeam[key] = team;
+    const player = mdComposePlayer(ev, mdRosterFor(team), ov);
     if (ev.type !== 'goal') return;
     const p = ev.period != null ? ev.period : 1;
     if (!periodTally[p]) periodTally[p] = { nea: 0, opp: 0 };
@@ -3446,7 +3452,7 @@ function renderMatchDetail(data, details, profIdx){
       if (!computedStats[k]) computedStats[k] = { name: player.name, goals: 0, assists: 0 };
       computedStats[k].goals++;
     }
-    mdComposeAssists(ev.assists, profIdx, ov).forEach(a => {
+    mdComposeAssists(ev.assists, mdRosterFor(team), ov).forEach(a => {
       if (!a.name) return;
       const k = mdNormName(a.name);
       if (!computedStats[k]) computedStats[k] = { name: a.name, goals: 0, assists: 0 };
@@ -3522,7 +3528,7 @@ function renderMatchDetail(data, details, profIdx){
       const ov = overrides[key];
       const isGoal = ev.type === 'goal';
       const cls = isGoal ? 'goal' : 'penalty';
-      const player = mdComposePlayer(ev, profIdx, ov);
+      const player = mdComposePlayer(ev, mdRosterFor(eventTeam[key]), ov);
       const p = ev.period != null ? ev.period : 1;
       if (p !== lastPeriod){
         html += '<div class="md-tl-period-divider">' + p + '. tretina</div>';
@@ -3540,7 +3546,7 @@ function renderMatchDetail(data, details, profIdx){
 
       let subParts = [];
       if (isGoal){
-        const assists = mdComposeAssists(ev.assists, profIdx, ov);
+        const assists = mdComposeAssists(ev.assists, mdRosterFor(eventTeam[key]), ov);
         if (assists.length){
           subParts.push('Asistencie: ' + assists.map(a =>
             (a.num !== '' ? '#' + mdEsc(a.num) + ' ' : '') + mdEsc(a.name)).join(', '));
@@ -3608,7 +3614,7 @@ function renderMatchDetail(data, details, profIdx){
       players.forEach(pl => {
         const key = mdBoxKey(tName, pl.name);
         const ov = boxOverrides[key] || {};
-        const hit = mdApplyRoster(pl.name, profIdx);
+        const hit = isNeaTeam(tName) ? mdApplyRoster(pl.name, profIdx) : null;
         const computed = computedStats[mdNormName(pl.name)];
         const num = ov.num != null ? ov.num
                     : ((hit && hit.number != null && hit.number !== '') ? hit.number : (pl.num != null ? pl.num : ''));
@@ -3635,7 +3641,7 @@ function renderMatchDetail(data, details, profIdx){
         if (editing){
           html += mdBoxRowInputs(row, row.id, null);
         } else if (row && row.name){
-          html += '<tr class="roster-match">'
+          html += '<tr' + (isNeaTeam(tName) ? ' class="roster-match"' : '') + '>'
             + '<td>' + mdEsc(row.num || '') + '</td>'
             + '<td>' + mdEsc(row.name || '') + '</td>'
             + '<td>' + (row.goals || 0) + '</td>'
