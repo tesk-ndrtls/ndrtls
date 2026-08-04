@@ -453,9 +453,11 @@ header{
 /* zdieľané prvky */
 .md-admin-lbl{display:block; font-family:'Oswald'; font-weight:600; font-size:.66rem;
   letter-spacing:.08em; text-transform:uppercase; color:var(--bone); margin-bottom:.25rem;}
+/* font-size musí byť aspoň 16px — pri menšom iOS Safari po kliknutí do poľa
+   nazoomuje stránku a späť ju už nevráti. Preto tu zámerne px, nie rem. */
 .md-admin-inp{width:100%; background:rgba(21,17,15,.7); border:1px solid var(--line);
   border-radius:6px; padding:.5rem .65rem; color:var(--cream); font-family:'Barlow Condensed';
-  font-size:.95rem; box-sizing:border-box;}
+  font-size:16px; box-sizing:border-box;}
 .md-admin-inp:focus{outline:none; border-color:var(--rust-light);}
 .md-admin-hint{color:var(--bone); font-size:.72rem; margin-top:.3rem; line-height:1.4;}
 .md-admin-wide{grid-column:1 / -1;}
@@ -506,7 +508,7 @@ header{
 /* box score — admin edit */
 .md-box-team-row{display:flex; align-items:center; justify-content:space-between; gap:.6rem; margin:1rem 0 .5rem;}
 .md-box-team-row .md-box-team{margin:0;}
-.md-box td .md-admin-inp{padding:.3rem .4rem; font-size:.85rem;}
+.md-box td .md-admin-inp{padding:.3rem .25rem; font-size:16px;}
 .md-box-toolbar{display:flex; flex-wrap:wrap; gap:.5rem; margin:.4rem 0 1.2rem;}
 
 /* ── ADMIN: interná poznámka k prihláške ── */
@@ -517,7 +519,7 @@ header{
 .app-note-hint{font-weight:400; text-transform:none; letter-spacing:0; color:var(--bone);}
 .app-note-inp{width:100%; box-sizing:border-box; background:rgba(21,17,15,.7);
   border:1px solid var(--line); border-radius:6px; padding:.55rem .7rem; color:var(--cream);
-  font-family:'Barlow Condensed'; font-size:.95rem; resize:vertical; min-height:44px;}
+  font-family:'Barlow Condensed'; font-size:16px; resize:vertical; min-height:44px;}
 .app-note-inp:focus{outline:none; border-color:var(--rust-light);}
 .app-note-foot{display:flex; align-items:center; gap:.8rem; margin-top:.5rem; flex-wrap:wrap;}
 .app-note-meta{font-family:'Oswald'; font-size:.72rem; color:var(--bone);}
@@ -1703,7 +1705,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.25.0</div>
+  <div id="version-badge">v3.25.1</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2083,7 +2085,7 @@ body.md-open #admin-preview-banner{display:none !important;}
         <div style="flex:1;height:1px;background:var(--line);"></div>
       </div>
       <div style="display:flex;gap:.4rem;">
-        <input type="url" id="new-photo-url" placeholder="https://... URL fotky" style="flex:1;background:var(--ink);border:1px solid var(--line);border-radius:6px;padding:.6rem .8rem;color:var(--cream);font-family:'Barlow Condensed';font-size:.95rem;">
+        <input type="url" id="new-photo-url" placeholder="https://... URL fotky" style="flex:1;background:var(--ink);border:1px solid var(--line);border-radius:6px;padding:.6rem .8rem;color:var(--cream);font-family:'Barlow Condensed';font-size:16px;">
         <button class="btn-admin edit" onclick="addPhotoToGallery()">+ Pridať</button>
       </div>
       <p style="font-size:.8rem;color:var(--bone);opacity:.6;margin-top:.4rem;">Prvá fotka = náhľad. Ostatné sa zobrazia po rozkliknutí.</p>
