@@ -1703,7 +1703,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.24.0</div>
+  <div id="version-badge">v3.25.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -3482,9 +3482,12 @@ function renderMatchDetail(data, details, profIdx){
 
   // Video
   if (ytId){
+    // allow musí obsahovať autoplay, inak prehliadač prehratie z kódu zakáže
+    // (aj keď je v URL autoplay=1). playsinline drží video na iPhone v stránke.
     html += '<div class="md-video"><iframe id="md-yt" loading="lazy" '
-      + 'src="https://www.youtube-nocookie.com/embed/' + mdEsc(ytId) + '?rel=0" '
-      + 'title="Záznam zápasu" allow="accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" '
+      + 'src="https://www.youtube-nocookie.com/embed/' + mdEsc(ytId)
+      + '?rel=0&playsinline=1&enablejsapi=1&origin=' + encodeURIComponent(location.origin) + '" '
+      + 'title="Záznam zápasu" allow="autoplay;accelerometer;clipboard-write;encrypted-media;gyroscope;picture-in-picture" '
       + 'allowfullscreen></iframe></div>';
   } else {
     html += '<div class="md-video"><div class="md-video-none">Video zatiaľ nie je priradené.</div></div>';
@@ -3654,6 +3657,7 @@ function renderMatchDetail(data, details, profIdx){
   }
 
   body.innerHTML = html;
+  mdInitYtPlayer();
 }
 
 /* Inline editor pre JEDNU akciu (skrytý, rozbalí sa cez ✎).
@@ -4057,6 +4061,36 @@ async function mdSaveBox(idx){
 }
 
 // Prehraj video od zadaného času zápasu-vo-videu (mm:ss alebo hh:mm:ss)
+/* ── YOUTUBE PREHRÁVAČ ──
+   Cez IFrame API vieme skočiť na čas a pustiť video bez znovunačítania iframu.
+   To je rozdiel aj vizuálne: pri reloade sa zakaždým znova ukáže úvodná vrstva
+   YouTube s názvom a „Watch on YouTube", pri seekTo sa neukáže vôbec.
+   Ak sa API nenačíta (blokovaný skript, offline), padáme späť na reload iframu. */
+let _ytPlayer = null, _ytReady = false, _ytApiLoading = false;
+
+function mdLoadYtApi(){
+  if (_ytApiLoading || window.YT) return;
+  _ytApiLoading = true;
+  const s = document.createElement('script');
+  s.src = 'https://www.youtube.com/iframe_api';
+  s.onerror = () => { _ytApiLoading = false; }; // necháme fallback nech si poradí
+  document.head.appendChild(s);
+}
+
+// Volá sa po každom prekreslení detailu — iframe je zakaždým nový element
+function mdInitYtPlayer(){
+  _ytPlayer = null; _ytReady = false;
+  if (!document.getElementById('md-yt')) return;
+  if (!window.YT || !window.YT.Player) { mdLoadYtApi(); return; }
+  try {
+    _ytPlayer = new YT.Player('md-yt', { events: {
+      onReady: () => { _ytReady = true; }
+    }});
+  } catch(e){ console.warn('YT player init zlyhal, použije sa fallback:', e); }
+}
+// API zavolá túto funkciu samo, keď dobehne
+window.onYouTubeIframeAPIReady = function(){ mdInitYtPlayer(); };
+
 function mdSeek(offset){
   const parts = String(offset).split(':').map(n => parseInt(n,10) || 0);
   let secs = 0;
@@ -4065,10 +4099,20 @@ function mdSeek(offset){
   else secs = parts[0] || 0;
   const iframe = document.getElementById('md-yt');
   if (!iframe || !_mdCurrent) return;
+
+  if (_ytReady && _ytPlayer && typeof _ytPlayer.seekTo === 'function'){
+    try {
+      _ytPlayer.seekTo(secs, true);
+      _ytPlayer.playVideo();
+      iframe.closest('.md-video').scrollIntoView({ behavior:'smooth', block:'center' });
+      return;
+    } catch(e){ console.warn('seekTo zlyhal, reloadujem iframe:', e); }
+  }
+
   const ytId = _mdCurrent.details.youtube_id || _mdCurrent.data.youtube;
   iframe.src = 'https://www.youtube-nocookie.com/embed/' + ytId
-    + '?rel=0&start=' + secs + '&autoplay=1';
-  // scroll video do zorného poľa v rámci modálu
+    + '?rel=0&playsinline=1&enablejsapi=1&start=' + secs + '&autoplay=1'
+    + '&origin=' + encodeURIComponent(location.origin);
   iframe.closest('.md-video').scrollIntoView({ behavior:'smooth', block:'center' });
 }
 
