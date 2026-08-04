@@ -1851,7 +1851,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.22.1</div>
+  <div id="version-badge">v3.23.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2569,7 +2569,9 @@ async function _onLoginInner(user) {
   let restoreSection = 'news';
   const saved = lsGet('ndrtls-section');
   const savedIsAdminOnly = saved && saved.startsWith('admin-');
-  if (saved && saved !== 'login' && saved !== 'onboarding' && document.getElementById('sec-' + saved)
+  const linked = hashSection(); // odkaz na sekciu má prednosť pred poslednou navštívenou
+  if (linked) restoreSection = linked;
+  else if (saved && saved !== 'login' && saved !== 'onboarding' && document.getElementById('sec-' + saved)
       && !(savedIsAdminOnly && !isAdminUI())) restoreSection = saved;
   showSection(restoreSection);
 
@@ -2690,10 +2692,19 @@ function showSection(id) {
   requestAnimationFrame(() => window.scrollTo(0,0));
   if (id !== 'login' && id !== 'onboarding') lsSet('ndrtls-section', id);
 }
-function handleHash() {
-  const hash=window.location.hash;
-  if (hash && hash.startsWith('#sec-')) { hideSplash(); showSection(hash.slice(5)); }
+// Odkaz na konkrétnu sekciu, napr. ndrtls.com/#sec-internal
+function hashSection(){
+  const h = window.location.hash || '';
+  if (!h.startsWith('#sec-')) return '';
+  const id = h.slice(5);
+  return document.getElementById('sec-' + id) ? id : '';
 }
+function handleHash() {
+  const id = hashSection();
+  if (id) { hideSplash(); showSection(id); }
+}
+// Bez tohto by klik na odkaz v už otvorenej stránke len zmenil URL a nič viac
+window.addEventListener('hashchange', handleHash);
 function toggleNav() { document.getElementById('sidenav').classList.toggle('open'); document.getElementById('nav-overlay').classList.toggle('show'); }
 function closeNav() { document.getElementById('sidenav').classList.remove('open'); document.getElementById('nav-overlay').classList.remove('show'); }
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }
