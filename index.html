@@ -1705,7 +1705,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.25.1</div>
+  <div id="version-badge">v3.25.2</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -4069,6 +4069,7 @@ async function mdSaveBox(idx){
    YouTube s názvom a „Watch on YouTube", pri seekTo sa neukáže vôbec.
    Ak sa API nenačíta (blokovaný skript, offline), padáme späť na reload iframu. */
 let _ytPlayer = null, _ytReady = false, _ytApiLoading = false;
+let _ytPending = null, _ytPendingTimer = null, _ytRetryTimer = null;
 
 function mdLoadYtApi(){
   if (_ytApiLoading || window.YT) return;
@@ -4082,16 +4083,49 @@ function mdLoadYtApi(){
 // Volá sa po každom prekreslení detailu — iframe je zakaždým nový element
 function mdInitYtPlayer(){
   _ytPlayer = null; _ytReady = false;
-  if (!document.getElementById('md-yt')) return;
+  clearTimeout(_ytRetryTimer);
+  if (!document.getElementById('md-yt')) { _ytPending = null; clearTimeout(_ytPendingTimer); return; }
   if (!window.YT || !window.YT.Player) { mdLoadYtApi(); return; }
   try {
     _ytPlayer = new YT.Player('md-yt', { events: {
-      onReady: () => { _ytReady = true; }
+      onReady: () => {
+        _ytReady = true;
+        // klik, ktorý prišiel skôr než bol prehrávač pripravený, dobehneme teraz
+        if (_ytPending != null){
+          const s = _ytPending; _ytPending = null; clearTimeout(_ytPendingTimer);
+          mdPlayAt(s);
+        }
+      }
     }});
   } catch(e){ console.warn('YT player init zlyhal, použije sa fallback:', e); }
 }
 // API zavolá túto funkciu samo, keď dobehne
 window.onYouTubeIframeAPIReady = function(){ mdInitYtPlayer(); };
+
+// Skoč na čas a prehraj. playVideo() vie YouTube zhltnúť, ak dorazí počas
+// prepínania stavu (buffering), preto po chvíli overíme, či sa naozaj rozbehlo.
+function mdPlayAt(secs){
+  if (!_ytPlayer || typeof _ytPlayer.seekTo !== 'function') return false;
+  try {
+    _ytPlayer.seekTo(secs, true);
+    _ytPlayer.playVideo();
+  } catch(e){ console.warn('seekTo/playVideo zlyhal:', e); return false; }
+  clearTimeout(_ytRetryTimer);
+  _ytRetryTimer = setTimeout(() => {
+    try {
+      const st = _ytPlayer && _ytPlayer.getPlayerState && _ytPlayer.getPlayerState();
+      if (st !== 1 && st !== 3) _ytPlayer.playVideo(); // 1 = hrá, 3 = načítava
+    } catch(e){}
+  }, 700);
+  return true;
+}
+
+function mdSeekFallback(secs, iframe){
+  const ytId = _mdCurrent.details.youtube_id || _mdCurrent.data.youtube;
+  iframe.src = 'https://www.youtube-nocookie.com/embed/' + ytId
+    + '?rel=0&playsinline=1&enablejsapi=1&start=' + secs + '&autoplay=1'
+    + '&origin=' + encodeURIComponent(location.origin);
+}
 
 function mdSeek(offset){
   const parts = String(offset).split(':').map(n => parseInt(n,10) || 0);
@@ -4101,21 +4135,21 @@ function mdSeek(offset){
   else secs = parts[0] || 0;
   const iframe = document.getElementById('md-yt');
   if (!iframe || !_mdCurrent) return;
-
-  if (_ytReady && _ytPlayer && typeof _ytPlayer.seekTo === 'function'){
-    try {
-      _ytPlayer.seekTo(secs, true);
-      _ytPlayer.playVideo();
-      iframe.closest('.md-video').scrollIntoView({ behavior:'smooth', block:'center' });
-      return;
-    } catch(e){ console.warn('seekTo zlyhal, reloadujem iframe:', e); }
-  }
-
-  const ytId = _mdCurrent.details.youtube_id || _mdCurrent.data.youtube;
-  iframe.src = 'https://www.youtube-nocookie.com/embed/' + ytId
-    + '?rel=0&playsinline=1&enablejsapi=1&start=' + secs + '&autoplay=1'
-    + '&origin=' + encodeURIComponent(location.origin);
   iframe.closest('.md-video').scrollIntoView({ behavior:'smooth', block:'center' });
+
+  if (_ytReady && mdPlayAt(secs)) return;
+
+  // Prehrávač ešte nie je pripravený. Klik si zapamätáme a spustíme ho hneď,
+  // ako bude — predtým sa v tomto prípade reloadoval iframe a prehratie často
+  // neprešlo, takže bolo treba kliknúť druhýkrát.
+  _ytPending = secs;
+  mdLoadYtApi();
+  clearTimeout(_ytPendingTimer);
+  _ytPendingTimer = setTimeout(() => {
+    if (_ytPending == null) return; // medzitým sa to podarilo
+    _ytPending = null;
+    mdSeekFallback(secs, iframe); // API sa nenačítalo — reload iframu ako posledná možnosť
+  }, 2500);
 }
 
 
