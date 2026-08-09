@@ -718,8 +718,21 @@ a:hover{color:var(--cream-bright);}
   padding:calc(1rem + env(safe-area-inset-top,0px)) calc(1rem + env(safe-area-inset-right,0px)) calc(1rem + env(safe-area-inset-bottom,0px)) calc(1rem + env(safe-area-inset-left,0px));
   box-sizing:border-box;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
 .modal-overlay.show{display:flex;}
-#pm-track{scrollbar-width:none;}
-#pm-track::-webkit-scrollbar{display:none;}
+#pm-track,#gl-track{scrollbar-width:none;}
+#pm-track::-webkit-scrollbar,#gl-track::-webkit-scrollbar{display:none;}
+/* Lightbox ide cez celý displej, takže hlavička musí obísť Dynamic Island —
+   bez toho sedelo ✕ pod ňou a galéria sa nedala zavrieť. */
+#gl-head{
+  padding:calc(1rem + env(safe-area-inset-top,0px)) calc(1.2rem + env(safe-area-inset-right,0px))
+    1rem calc(1.2rem + env(safe-area-inset-left,0px));
+}
+#gl-thumbs{
+  padding:0 calc(1.2rem + env(safe-area-inset-right,0px))
+    calc(1.2rem + env(safe-area-inset-bottom,0px)) calc(1.2rem + env(safe-area-inset-left,0px));
+}
+.gl-slide{flex:0 0 100%;height:100%;display:flex;align-items:center;justify-content:center;
+  scroll-snap-align:center;padding:0 .4rem;box-sizing:border-box;}
+.gl-slide img{max-width:100%;max-height:100%;object-fit:contain;}
 /* Zamknutie scrollu pod otvorenou vrstvou.
    Pozadie držíme na mieste tak, že v JS zahodíme touchmove/wheel mimo vnútra
    vrstvy — layout sa nemení vôbec. Skôr sa na to používalo
@@ -1725,7 +1738,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.31.0</div>
+  <div id="version-badge">v3.32.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -1935,11 +1948,6 @@ body.md-open #admin-preview-banner{display:none !important;}
     <div id="pm-view">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:1rem;">
         <div style="background:var(--charcoal);border-radius:8px;padding:.8rem;text-align:center;">
-          <div id="pm-number" style="font-family:'Anton';font-size:2rem;color:var(--maroon);"></div>
-          <div style="font-family:'Oswald';font-size:.7rem;letter-spacing:.1em;
-            text-transform:uppercase;color:var(--bone);">Číslo</div>
-        </div>
-        <div style="background:var(--charcoal);border-radius:8px;padding:.8rem;text-align:center;">
           <div id="pm-gp" style="font-family:'Anton';font-size:2rem;color:var(--cream-bright);"></div>
           <div style="font-family:'Oswald';font-size:.7rem;letter-spacing:.1em;
             text-transform:uppercase;color:var(--bone);">Zápasy</div>
@@ -1953,6 +1961,11 @@ body.md-open #admin-preview-banner{display:none !important;}
           <div id="pm-assists" style="font-family:'Anton';font-size:2rem;color:var(--cream-bright);"></div>
           <div style="font-family:'Oswald';font-size:.7rem;letter-spacing:.1em;
             text-transform:uppercase;color:var(--bone);">Asistencie</div>
+        </div>
+        <div style="background:var(--charcoal);border-radius:8px;padding:.8rem;text-align:center;">
+          <div id="pm-points" style="font-family:'Anton';font-size:2rem;color:var(--rust-light);"></div>
+          <div style="font-family:'Oswald';font-size:.7rem;letter-spacing:.1em;
+            text-transform:uppercase;color:var(--bone);">Body</div>
         </div>
       </div>
       <div id="pm-note" style="color:var(--bone);font-size:.95rem;
@@ -2146,20 +2159,23 @@ body.md-open #admin-preview-banner{display:none !important;}
 
 <!-- ══ GALLERY LIGHTBOX ══ -->
 <div id="gallery-lightbox" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.95);flex-direction:column;">
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.2rem;">
-    <div>
+  <div id="gl-head" style="display:flex;align-items:center;justify-content:space-between;">
+    <div style="min-width:0;">
       <div id="gl-title" style="font-family:'Oswald';font-weight:700;font-size:1rem;color:var(--cream-bright);text-transform:uppercase;letter-spacing:.05em;"></div>
       <div id="gl-counter" style="font-family:'Oswald';font-size:.8rem;color:var(--bone);margin-top:.2rem;"></div>
     </div>
-    <button onclick="closeGallery()" style="background:none;border:0;color:var(--cream-bright);font-size:2rem;cursor:pointer;line-height:1;padding:0 .5rem;">&times;</button>
+    <button onclick="closeGallery()" style="background:none;border:0;color:var(--cream-bright);font-size:2rem;cursor:pointer;line-height:1;padding:.2rem .5rem;flex-shrink:0;">&times;</button>
   </div>
-  <div id="gl-viewport" style="flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;touch-action:pan-y;">
-    <button onclick="galleryPrev()" id="gl-prev" style="position:absolute;left:.5rem;z-index:5;background:rgba(0,0,0,.5);border:1px solid var(--line);color:var(--cream-bright);font-size:1.5rem;width:44px;height:44px;border-radius:50%;cursor:pointer;">‹</button>
-    <img id="gl-image" src="" style="max-width:100%;max-height:100%;object-fit:contain;">
-    <button onclick="galleryNext()" id="gl-next" style="position:absolute;right:.5rem;z-index:5;background:rgba(0,0,0,.5);border:1px solid var(--line);color:var(--cream-bright);font-size:1.5rem;width:44px;height:44px;border-radius:50%;cursor:pointer;">›</button>
+  <div id="gl-viewport" style="flex:1;position:relative;overflow:hidden;">
+    <!-- Swipe rieši natívny scroll so scroll-snap, takže fotka ide za prstom
+         a nepreskakuje až po pustení. -->
+    <div id="gl-track" style="position:absolute;inset:0;display:flex;overflow-x:auto;overflow-y:hidden;
+      scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;"></div>
+    <button onclick="galleryPrev()" id="gl-prev" style="position:absolute;left:.5rem;top:50%;transform:translateY(-50%);z-index:5;background:rgba(0,0,0,.5);border:1px solid var(--line);color:var(--cream-bright);font-size:1.5rem;width:44px;height:44px;border-radius:50%;cursor:pointer;">‹</button>
+    <button onclick="galleryNext()" id="gl-next" style="position:absolute;right:.5rem;top:50%;transform:translateY(-50%);z-index:5;background:rgba(0,0,0,.5);border:1px solid var(--line);color:var(--cream-bright);font-size:1.5rem;width:44px;height:44px;border-radius:50%;cursor:pointer;">›</button>
   </div>
   <div id="gl-caption" style="padding:1rem 1.2rem;text-align:center;color:var(--bone);font-size:.9rem;min-height:2.5rem;"></div>
-  <div id="gl-thumbs" style="display:flex;gap:.4rem;padding:0 1.2rem 1.2rem;overflow-x:auto;justify-content:center;"></div>
+  <div id="gl-thumbs" style="display:flex;gap:.4rem;overflow-x:auto;justify-content:center;"></div>
 </div>
 
 <div class="modal-overlay" id="modal-event">
@@ -4338,8 +4354,8 @@ function pmOpenFullscreen(i) {
   _galleryPhotos = _pmPhotos.map(u => ({ image_url: u, caption: '' }));
   _galleryIndex = Math.min(Math.max(i, 0), _pmPhotos.length - 1);
   document.getElementById('gl-title').textContent = _pmName;
-  renderGallery();
   document.getElementById('gallery-lightbox').style.display = 'flex';
+  renderGallery();   // až po zobrazení — dráha potrebuje známu šírku
 }
 
 (function initPmGallery(){
@@ -4372,10 +4388,11 @@ function openPlayerCard(playerId) {
   document.getElementById('pm-num-badge').textContent=p.number||'—';
   document.getElementById('pm-name').textContent=p.name;
   document.getElementById('pm-pos-badge').innerHTML=`<span class="pos-badge ${pc}">${p.position||'?'} — ${pl}</span>`;
-  document.getElementById('pm-number').textContent=p.number||'—';
   document.getElementById('pm-gp').textContent=p.gp||0;
   document.getElementById('pm-goals').textContent=p.goals||0;
   document.getElementById('pm-assists').textContent=p.assists||0;
+  document.getElementById('pm-points').textContent=
+    (p.points != null ? p.points : (p.goals||0) + (p.assists||0));
   const ne=document.getElementById('pm-note');
   if (p.note) { ne.textContent=p.note; ne.style.display='block'; } else ne.style.display='none';
   document.getElementById('pm-edit-btn').style.display=isAdminUI()?'block':'none';
@@ -6102,7 +6119,6 @@ function renderPublicMedia() {
 /* ── GALLERY LIGHTBOX ─────────────────────────── */
 let _galleryPhotos = [];
 let _galleryIndex = 0;
-let _touchStartX = 0;
 
 async function openGallery(mediaId) {
   const lb = document.getElementById('gallery-lightbox');
@@ -6119,29 +6135,74 @@ async function openGallery(mediaId) {
   _galleryIndex = 0;
 
   document.getElementById('gl-title').textContent = media.title || '';
+  lb.style.display = 'flex';   // až potom render — dráha potrebuje známu šírku
   renderGallery();
-  lb.style.display = 'flex';
 }
 
+/* Fotky sú slidy v scroll-snap dráhe, takže swipe ide za prstom. Prekresľujeme
+   ich len keď sa zmení zoznam — inak by nám prestavovanie DOM zabíjalo scroll
+   uprostred gesta. Metadáta (počítadlo, popis, náhľady) sa preberajú z pozície
+   dráhy pri scrollovaní. */
 function renderGallery() {
-  const p = _galleryPhotos[_galleryIndex];
-  if (!p) return;
-  document.getElementById('gl-image').src = p.image_url;
-  document.getElementById('gl-caption').textContent = p.caption || '';
-  document.getElementById('gl-counter').textContent = `${_galleryIndex+1} / ${_galleryPhotos.length}`;
+  const track = document.getElementById('gl-track');
+  track.innerHTML = _galleryPhotos.map(ph =>
+    `<div class="gl-slide"><img src="${ph.image_url}" alt=""></div>`).join('');
   const single = _galleryPhotos.length <= 1;
   document.getElementById('gl-prev').style.display = single ? 'none' : 'block';
   document.getElementById('gl-next').style.display = single ? 'none' : 'block';
-  // Thumbnails
+  glScrollTo(_galleryIndex, 'auto');
+  glSyncMeta();
+}
+
+/* Popis, počítadlo a náhľady podľa práve zobrazenej fotky. */
+function glSyncMeta() {
+  const p = _galleryPhotos[_galleryIndex];
+  document.getElementById('gl-caption').textContent = (p && p.caption) || '';
+  document.getElementById('gl-counter').textContent =
+    `${_galleryIndex+1} / ${_galleryPhotos.length}`;
   const thumbs = document.getElementById('gl-thumbs');
-  thumbs.innerHTML = single ? '' : _galleryPhotos.map((ph, i) =>
+  thumbs.innerHTML = _galleryPhotos.length <= 1 ? '' : _galleryPhotos.map((ph, i) =>
     `<img src="${ph.image_url}" onclick="galleryGoTo(${i})" style="width:52px;height:52px;object-fit:cover;border-radius:5px;cursor:pointer;flex-shrink:0;border:2px solid ${i===_galleryIndex?'var(--rust)':'transparent'};opacity:${i===_galleryIndex?1:.5};">`
   ).join('');
 }
 
-function galleryGoTo(i) { _galleryIndex = i; renderGallery(); }
-function galleryNext() { _galleryIndex = (_galleryIndex + 1) % _galleryPhotos.length; renderGallery(); }
-function galleryPrev() { _galleryIndex = (_galleryIndex - 1 + _galleryPhotos.length) % _galleryPhotos.length; renderGallery(); }
+/* Kým beží plynulý posun po šípke či náhľade, chodia priebežné scroll udalosti
+   so starou pozíciou. Bez tohto zámku by nám prepísali index späť a šípka by
+   vyzerala, že nerobí nič. Po dobehnutí index dopočítame zo skutočnej pozície,
+   nech sedí aj keď medzitým používateľ potiahol prstom. */
+let _glLock = false, _glLockTimer = 0;
+function glScrollTo(i, behavior) {
+  const track = document.getElementById('gl-track');
+  const b = behavior || 'smooth';
+  clearTimeout(_glLockTimer);
+  track.scrollTo({ left: i * track.clientWidth, behavior: b });
+  // Okamžitý skok netreba zamykať — nasledujúca scroll udalosť už nesie
+  // konečnú pozíciu. Zamykáme len animovaný posun.
+  if (b !== 'smooth') { _glLock = false; return; }
+  _glLock = true;
+  _glLockTimer = setTimeout(() => { _glLock = false; glSyncFromScroll(); }, 450);
+}
+
+function glSyncFromScroll() {
+  const track = document.getElementById('gl-track');
+  if (!track) return;
+  const i = Math.round(track.scrollLeft / Math.max(1, track.clientWidth));
+  if (i === _galleryIndex || i < 0 || i >= _galleryPhotos.length) return;
+  _galleryIndex = i;
+  glSyncMeta();
+}
+
+/* Šípky a náhľady posúvajú dráhu, index si potom zoberie sám scroll poslucháč.
+   Na krajoch nepretáčame dokola — pri scroll-snap dráhe by skok cez celú šírku
+   pôsobil ako porucha. */
+function galleryGoTo(i) {
+  _galleryIndex = Math.min(Math.max(i, 0), _galleryPhotos.length - 1);
+  glScrollTo(_galleryIndex);
+  glSyncMeta();
+}
+function galleryNext() { galleryGoTo(_galleryIndex + 1); }
+function galleryPrev() { galleryGoTo(_galleryIndex - 1); }
+
 function closeGallery() {
   document.getElementById('gallery-lightbox').style.display = 'none';
 }
@@ -6359,12 +6420,11 @@ if (document.readyState === 'loading') {
 
 // Swipe support
 function initGallerySwipe() {
-  const vp = document.getElementById('gl-viewport');
-  if (!vp) return;
-  vp.addEventListener('touchstart', e => { _touchStartX = e.changedTouches[0].screenX; }, { passive: true });
-  vp.addEventListener('touchend', e => {
-    const dx = e.changedTouches[0].screenX - _touchStartX;
-    if (Math.abs(dx) > 50) { dx < 0 ? galleryNext() : galleryPrev(); }
+  const track = document.getElementById('gl-track');
+  if (!track) return;
+  track.addEventListener('scroll', () => {
+    if (_glLock) return;   // beží plynulý posun, index drží galleryGoTo()
+    glSyncFromScroll();
   }, { passive: true });
   // Keyboard
   document.addEventListener('keydown', e => {
