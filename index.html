@@ -718,6 +718,8 @@ a:hover{color:var(--cream-bright);}
   padding:calc(1rem + env(safe-area-inset-top,0px)) calc(1rem + env(safe-area-inset-right,0px)) calc(1rem + env(safe-area-inset-bottom,0px)) calc(1rem + env(safe-area-inset-left,0px));
   box-sizing:border-box;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
 .modal-overlay.show{display:flex;}
+#pm-track{scrollbar-width:none;}
+#pm-track::-webkit-scrollbar{display:none;}
 /* Zamknutie scrollu pod otvorenou vrstvou.
    Pozadie držíme na mieste tak, že v JS zahodíme touchmove/wheel mimo vnútra
    vrstvy — layout sa nemení vôbec. Skôr sa na to používalo
@@ -1723,7 +1725,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.30.0</div>
+  <div id="version-badge">v3.31.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -1905,11 +1907,14 @@ body.md-open #admin-preview-banner{display:none !important;}
            preloženom cez pravý dolný roh — kruh nadväzuje na okrúhly avatar,
            ktorý tu bol predtým, a v rohu neprekrýva tvár. -->
       <div id="pm-photo-wrap" style="position:relative;flex:0 0 48%;width:48%;aspect-ratio:3/4;">
-        <div id="pm-avatar" style="position:absolute;inset:0;border-radius:12px;
-          background-color:var(--maroon-deep);border:2px solid var(--rust);overflow:hidden;
-          background-size:cover;background-position:center top;
-          display:grid;place-items:center;font-family:'Anton';font-size:2.4rem;
-          color:var(--cream);">?</div>
+        <!-- Galéria hráča. Swipe rieši natívny scroll so scroll-snap, takže
+             sa nemusíme starať o gestá a na iOS to ide plynulo. -->
+        <div id="pm-track" style="position:absolute;inset:0;border-radius:12px;
+          border:2px solid var(--rust);background-color:var(--maroon-deep);
+          overflow-x:auto;overflow-y:hidden;display:flex;
+          scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;"></div>
+        <div id="pm-dots" style="position:absolute;left:0;right:0;bottom:7px;
+          display:flex;gap:5px;justify-content:center;pointer-events:none;"></div>
         <div id="pm-num-badge" style="position:absolute;right:-9px;bottom:-9px;
           min-width:42px;height:42px;padding:0 .3rem;border-radius:999px;
           background:var(--maroon);border:2px solid var(--rust);
@@ -1979,15 +1984,14 @@ body.md-open #admin-preview-banner{display:none !important;}
         <input type="text" id="pm-edit-note" placeholder="napr. Kapitán">
       </div>
       <div class="form-group">
-        <label>Fotka</label>
-        <input type="hidden" id="pm-edit-photo">
-        <input type="file" id="pm-photo-upload" accept="image/*" style="display:none;"
-          onchange="uploadPlayerPhoto(this.files[0])">
+        <label>Fotky</label>
+        <input type="file" id="pm-photo-upload" accept="image/*" multiple style="display:none;"
+          onchange="uploadPlayerPhotos(this.files)">
         <button class="btn-admin save" style="width:100%;padding:.6rem;margin-bottom:.5rem;"
-          onclick="document.getElementById('pm-photo-upload').click()">📤 Nahrať fotku</button>
+          onclick="document.getElementById('pm-photo-upload').click()">📤 Nahrať fotky</button>
         <div id="pm-upload-progress" style="display:none;font-family:'Oswald';font-size:.85rem;
           color:var(--rust-light);margin-bottom:.5rem;"></div>
-        <div id="pm-photo-preview" style="display:none;"></div>
+        <div id="pm-photo-list"></div>
       </div>
       <div class="modal-actions">
         <button class="btn-admin save" onclick="savePlayerCard()">✓ Uložiť</button>
@@ -4274,32 +4278,97 @@ function mdSeek(offset){
 
 
 /* ── PLAYER CARD ──────────────────────────────── */
-/* Fotka hráča sa v modale používa dvakrát: ostro v ľavej hornej štvrtine a
-   rozmazane cez celé okno ako pozadie. Pozadie skladáme ako v <body> — plná
-   plocha --charcoal s nízkou priehľadnosťou nad obrázkom, takže text ostane
-   čitateľný a fotka len jemne presvitá. Bez fotky vraciame pôvodné pozadie. */
-function pmApplyPhoto(photo, initials) {
-  const av = document.getElementById('pm-avatar');
-  const modal = document.querySelector('#modal-player .modal');
-  if (photo) {
-    av.style.backgroundImage = `url("${photo}")`;
-    av.textContent = '';
-    modal.style.background =
-      `linear-gradient(rgba(38,34,32,.93),rgba(38,34,32,.93)), url("${photo}") center/cover no-repeat`;
-  } else {
-    // Bez fotky nechávame iniciály na klubovom prechode — plochá farba na takej
-    // veľkej ploche pôsobila ako prázdne miesto.
-    av.style.backgroundImage = 'linear-gradient(160deg,var(--maroon),var(--maroon-deep))';
-    av.textContent = initials;
-    modal.style.background = '';   // späť na var(--charcoal) z CSS
-  }
+/* ── GALÉRIA HRÁČA ──
+   Zdroj pravdy je stĺpec players.photos (jsonb pole adries). Poradie nesie
+   význam: prvá je hlavná, druhá ide na pozadie modalu. Staršie karty, ktoré
+   majú vyplnené len photo_url, čítame ako jednoprvkové pole, takže sa nič
+   nestratí a netreba dáta prevádzať. */
+function pmPhotoList(p) {
+  if (Array.isArray(p?.photos) && p.photos.length) return p.photos.filter(Boolean);
+  return p?.photo_url ? [p.photo_url] : [];
 }
+
+let _pmPhotos = [];   // práve zobrazená galéria (kvôli celoobrazovkovému náhľadu)
+let _pmName = '';
+
+/* Fotka sa v modale používa dvakrát: ostro v ľavej hornej štvrtine a jemne cez
+   celé okno ako pozadie. Pozadie skladáme ako v <body> — plná plocha --charcoal
+   s nízkou priehľadnosťou nad obrázkom, takže text ostane čitateľný. */
+function pmApplyPhotos(list, initials) {
+  const track = document.getElementById('pm-track');
+  const dots  = document.getElementById('pm-dots');
+  const modal = document.querySelector('#modal-player .modal');
+  _pmPhotos = list;
+
+  const slide = 'flex:0 0 100%;height:100%;scroll-snap-align:center;'
+    + 'background-size:cover;background-position:center top;';
+  track.innerHTML = list.length
+    ? list.map((u, i) => `<div class="pm-slide" data-i="${i}" style="${slide}`
+        + `background-image:url(&quot;${u}&quot;);cursor:zoom-in;"></div>`).join('')
+    : `<div style="${slide}background-image:linear-gradient(160deg,var(--maroon),var(--maroon-deep));`
+        + `display:grid;place-items:center;font-family:'Anton';font-size:2.4rem;color:var(--cream);">`
+        + `${initials}</div>`;
+  track.scrollLeft = 0;
+
+  dots.innerHTML = list.length > 1
+    ? list.map((_, i) => `<span style="width:6px;height:6px;border-radius:50%;`
+        + `background:${i ? 'rgba(233,220,195,.35)' : 'var(--cream-bright)'};"></span>`).join('')
+    : '';
+
+  // Pozadie berie druhú v poradí — ostane tak iná než tá veľká navrchu.
+  const bg = list[1] || list[0];
+  modal.style.background = bg
+    ? `linear-gradient(rgba(38,34,32,.93),rgba(38,34,32,.93)), url("${bg}") center/cover no-repeat`
+    : '';   // späť na var(--charcoal) z CSS
+}
+
+function pmSyncDots() {
+  const track = document.getElementById('pm-track');
+  const dots = document.getElementById('pm-dots').children;
+  if (!dots.length) return;
+  const i = Math.round(track.scrollLeft / Math.max(1, track.clientWidth));
+  for (let k = 0; k < dots.length; k++)
+    dots[k].style.background = (k === i) ? 'var(--cream-bright)' : 'rgba(233,220,195,.35)';
+}
+
+/* Celoobrazovkový náhľad — používame ten istý lightbox ako galéria v médiách,
+   takže sa dostaneme aj k šípkam, počítadlu a náhľadom zadarmo. */
+function pmOpenFullscreen(i) {
+  if (!_pmPhotos.length) return;
+  _galleryPhotos = _pmPhotos.map(u => ({ image_url: u, caption: '' }));
+  _galleryIndex = Math.min(Math.max(i, 0), _pmPhotos.length - 1);
+  document.getElementById('gl-title').textContent = _pmName;
+  renderGallery();
+  document.getElementById('gallery-lightbox').style.display = 'flex';
+}
+
+(function initPmGallery(){
+  const start = () => {
+    const track = document.getElementById('pm-track');
+    if (!track) return;
+    track.addEventListener('scroll', pmSyncDots, { passive:true });
+    // Ťahanie prstom nesmie skončiť otvorením náhľadu — otvárame len pri klepnutí.
+    let x0 = 0, dragged = false;
+    track.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; dragged = false; }, { passive:true });
+    track.addEventListener('touchmove', e => {
+      if (Math.abs(e.touches[0].clientX - x0) > 10) dragged = true;
+    }, { passive:true });
+    track.addEventListener('click', e => {
+      if (dragged) { dragged = false; return; }
+      const s = e.target.closest('.pm-slide');
+      if (s) pmOpenFullscreen(+s.dataset.i || 0);
+    });
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+})();
 
 function openPlayerCard(playerId) {
   const p=rosterData.find(x=>x.id===playerId); if (!p) return;
   const pc=p.position==='B'?'g':p.position==='O'?'d':'f';
   const pl=p.position==='B'?'Brankár':p.position==='O'?'Obranca':'Útočník';
-  pmApplyPhoto(p.photo_url, p.name.slice(0,2).toUpperCase());
+  _pmName = p.name;
+  pmApplyPhotos(pmPhotoList(p), p.name.slice(0,2).toUpperCase());
   document.getElementById('pm-num-badge').textContent=p.number||'—';
   document.getElementById('pm-name').textContent=p.name;
   document.getElementById('pm-pos-badge').innerHTML=`<span class="pos-badge ${pc}">${p.position||'?'} — ${pl}</span>`;
@@ -4320,44 +4389,74 @@ function enablePlayerEdit() {
   document.getElementById('pm-edit-number').value=p.number||'';
   document.getElementById('pm-edit-pos').value=p.position||'Ú';
   document.getElementById('pm-edit-note').value=p.note||'';
-  document.getElementById('pm-edit-photo').value=p.photo_url||'';
-  pmRenderPhotoPreview(p.photo_url||'');
+  _pmEditPhotos = pmPhotoList(p).slice();
+  pmRenderPhotoList();
   document.getElementById('pm-view').style.display='none'; document.getElementById('pm-edit').style.display='block';
 }
 function cancelPlayerEdit() { document.getElementById('pm-view').style.display='block'; document.getElementById('pm-edit').style.display='none'; }
 
-function pmRenderPhotoPreview(url) {
-  const box = document.getElementById('pm-photo-preview');
-  if (!url) { box.style.display='none'; box.innerHTML=''; return; }
-  box.style.display='block';
-  box.innerHTML = `<img src="${url}" style="width:96px;height:96px;object-fit:cover;object-position:center top;`
-    + `border-radius:10px;border:1px solid var(--line);vertical-align:middle;">`
-    + `<button class="btn-admin cancel" style="margin-left:.6rem;padding:.4rem .7rem;"`
-    + ` onclick="pmClearPhoto()">Odobrať fotku</button>`;
+let _pmEditPhotos = [];
+
+/* Poradie fotiek nesie význam, tak ho v zozname rovno pomenujeme — admin
+   nemusí hádať, ktorá skončí na pozadí. */
+function pmPhotoRole(i) {
+  return i === 0 ? 'Hlavná' : i === 1 ? 'Pozadie' : (i + 1) + '.';
 }
-function pmClearPhoto() {
-  document.getElementById('pm-edit-photo').value='';
-  pmRenderPhotoPreview('');
+function pmRenderPhotoList() {
+  const box = document.getElementById('pm-photo-list');
+  if (!_pmEditPhotos.length) {
+    box.innerHTML = `<div style="color:var(--bone);opacity:.6;font-size:.9rem;">Zatiaľ žiadne fotky.</div>`;
+    return;
+  }
+  box.innerHTML = _pmEditPhotos.map((u, i) => `
+    <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem;">
+      <img src="${u}" style="width:54px;height:72px;object-fit:cover;object-position:center top;
+        border-radius:8px;border:1px solid ${i===0?'var(--rust)':'var(--line)'};flex-shrink:0;">
+      <div style="flex:1;min-width:0;font-family:'Oswald';font-size:.78rem;letter-spacing:.1em;
+        text-transform:uppercase;color:${i===0?'var(--rust-light)':'var(--bone)'};">${pmPhotoRole(i)}</div>
+      ${i === 0 ? '' : `<button class="btn-admin edit" style="padding:.35rem .6rem;"
+        title="Nastaviť ako hlavnú" onclick="pmSetMainPhoto(${i})">★</button>`}
+      ${i === 0 ? '' : `<button class="btn-admin edit" style="padding:.35rem .6rem;"
+        title="Posunúť vyššie" onclick="pmMovePhoto(${i},-1)">↑</button>`}
+      <button class="btn-admin cancel" style="padding:.35rem .6rem;"
+        title="Odobrať" onclick="pmRemovePhoto(${i})">✕</button>
+    </div>`).join('');
+}
+function pmSetMainPhoto(i) {
+  _pmEditPhotos.unshift(_pmEditPhotos.splice(i, 1)[0]);
+  pmRenderPhotoList();
+}
+function pmMovePhoto(i, dir) {
+  const j = i + dir;
+  if (j < 0 || j >= _pmEditPhotos.length) return;
+  [_pmEditPhotos[i], _pmEditPhotos[j]] = [_pmEditPhotos[j], _pmEditPhotos[i]];
+  pmRenderPhotoList();
+}
+function pmRemovePhoto(i) {
+  _pmEditPhotos.splice(i, 1);
+  pmRenderPhotoList();
 }
 
-async function uploadPlayerPhoto(file) {
-  if (!file) return;
+async function uploadPlayerPhotos(files) {
+  const list = Array.from(files || []);
+  if (!list.length) return;
   const prog = document.getElementById('pm-upload-progress');
   const input = document.getElementById('pm-photo-upload');
   prog.style.display='block'; prog.style.color='var(--rust-light)';
-  prog.textContent='Spracúvam fotku…';
   try {
-    file = await compressImage(file);
-    prog.textContent='Nahrávam…';
-    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-    const path = `players/${document.getElementById('pm-edit-id').value}-${Date.now()}.${ext}`;
-    const { error: upErr } = await sb.storage.from('media').upload(path, file, { cacheControl:'3600', upsert:false });
-    if (upErr) { prog.textContent='Chyba: '+upErr.message; prog.style.color='#bf6d6d'; return; }
-    const { data: urlData } = sb.storage.from('media').getPublicUrl(path);
-    const url = urlData?.publicUrl;
-    if (!url) { prog.textContent='Chyba: nepodarilo sa získať adresu fotky'; prog.style.color='#bf6d6d'; return; }
-    document.getElementById('pm-edit-photo').value = url;
-    pmRenderPhotoPreview(url);
+    for (let i = 0; i < list.length; i++) {
+      prog.textContent = list.length > 1
+        ? `Nahrávam ${i+1} z ${list.length}…` : 'Nahrávam…';
+      const file = await compressImage(list[i]);
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+      const path = `players/${document.getElementById('pm-edit-id').value}-${Date.now()}-${i}.${ext}`;
+      const { error: upErr } = await sb.storage.from('media').upload(path, file, { cacheControl:'3600', upsert:false });
+      if (upErr) { prog.textContent='Chyba: '+upErr.message; prog.style.color='#bf6d6d'; return; }
+      const { data: urlData } = sb.storage.from('media').getPublicUrl(path);
+      if (!urlData?.publicUrl) { prog.textContent='Chyba: nepodarilo sa získať adresu fotky'; prog.style.color='#bf6d6d'; return; }
+      _pmEditPhotos.push(urlData.publicUrl);
+      pmRenderPhotoList();
+    }
     prog.textContent='✓ Nahraté'; prog.style.color='#6dbf6d';
     setTimeout(() => prog.style.display='none', 2000);
   } finally {
@@ -4370,12 +4469,14 @@ async function savePlayerCard() {
   const number=document.getElementById('pm-edit-number').value.trim();
   const pos=document.getElementById('pm-edit-pos').value;
   const note=document.getElementById('pm-edit-note').value.trim();
-  const photo=document.getElementById('pm-edit-photo').value.trim();
+  const photos=_pmEditPhotos.slice();
+  // photo_url držíme zosynchronizované s hlavnou fotkou, nech starší stĺpec
+  // nezostane visieť s neplatnou adresou.
   const { error }=await sb.from('players')
-    .update({number,position:pos,note:note||null,photo_url:photo||null}).eq('id',id);
+    .update({number,position:pos,note:note||null,photos,photo_url:photos[0]||null}).eq('id',id);
   if (error) { toast('Chyba: '+error.message,'error'); return; }
   const p=rosterData.find(x=>x.id===id);
-  if (p) { p.number=number; p.position=pos; p.note=note; p.photo_url=photo||null; }
+  if (p) { p.number=number; p.position=pos; p.note=note; p.photos=photos; p.photo_url=photos[0]||null; }
   closeModal('modal-player'); renderRosterTable(); toast('Hráč uložený ✓','success');
 }
 
