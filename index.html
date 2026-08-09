@@ -1002,6 +1002,18 @@ body.md-open #admin-preview-banner{display:none !important;}
   transition: .2s;
   box-sizing: border-box;
 }
+/* WebKit dáva dátumovým poliam vlastnú vnútornú šírku podľa formátu dátumu,
+   takže vedľa ostatných polí trčali. Vypnutím natívneho vzhľadu sa správajú
+   ako bežný input a `width:100%` na ne konečne platí. */
+.form-group input[type="date"],
+.form-group input[type="datetime-local"],
+.form-group input[type="time"] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+}
 .form-group input:focus,
 .form-group textarea:focus {
   outline: none;
@@ -1711,7 +1723,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.29.1</div>
+  <div id="version-badge">v3.30.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -1888,14 +1900,26 @@ body.md-open #admin-preview-banner{display:none !important;}
 <!-- ══ PLAYER CARD MODAL ══ -->
 <div class="modal-overlay" id="modal-player">
   <div class="modal">
-    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem;">
-      <div id="pm-avatar" style="width:52px;height:52px;border-radius:50%;
-        background:var(--maroon);border:2px solid var(--rust);
-        display:grid;place-items:center;font-family:'Anton';font-size:1.4rem;
-        color:var(--cream);flex-shrink:0;">?</div>
-      <div>
+    <div style="display:flex;align-items:flex-start;gap:1rem;margin-bottom:1.2rem;position:relative;z-index:1;">
+      <!-- Fotka zaberá ľavú hornú štvrtinu modalu. Číslo dresu sedí v kruhu
+           preloženom cez pravý dolný roh — kruh nadväzuje na okrúhly avatar,
+           ktorý tu bol predtým, a v rohu neprekrýva tvár. -->
+      <div id="pm-photo-wrap" style="position:relative;flex:0 0 48%;width:48%;aspect-ratio:3/4;">
+        <div id="pm-avatar" style="position:absolute;inset:0;border-radius:12px;
+          background-color:var(--maroon-deep);border:2px solid var(--rust);overflow:hidden;
+          background-size:cover;background-position:center top;
+          display:grid;place-items:center;font-family:'Anton';font-size:2.4rem;
+          color:var(--cream);">?</div>
+        <div id="pm-num-badge" style="position:absolute;right:-9px;bottom:-9px;
+          min-width:42px;height:42px;padding:0 .3rem;border-radius:999px;
+          background:var(--maroon);border:2px solid var(--rust);
+          box-shadow:0 2px 10px rgba(0,0,0,.55);
+          display:grid;place-items:center;font-family:'Anton';font-size:1.15rem;
+          color:var(--cream-bright);"></div>
+      </div>
+      <div style="flex:1;min-width:0;">
         <h3 id="pm-name" style="margin:0;font-size:1.6rem;"></h3>
-        <div id="pm-pos-badge" style="margin-top:.3rem;"></div>
+        <div id="pm-pos-badge" style="margin-top:.3rem;white-space:nowrap;"></div>
       </div>
       <button onclick="closeModal('modal-player')"
         style="margin-left:auto;background:none;border:0;color:var(--bone);
@@ -1953,6 +1977,17 @@ body.md-open #admin-preview-banner{display:none !important;}
       <div class="form-group">
         <label>Poznámka</label>
         <input type="text" id="pm-edit-note" placeholder="napr. Kapitán">
+      </div>
+      <div class="form-group">
+        <label>Fotka</label>
+        <input type="hidden" id="pm-edit-photo">
+        <input type="file" id="pm-photo-upload" accept="image/*" style="display:none;"
+          onchange="uploadPlayerPhoto(this.files[0])">
+        <button class="btn-admin save" style="width:100%;padding:.6rem;margin-bottom:.5rem;"
+          onclick="document.getElementById('pm-photo-upload').click()">📤 Nahrať fotku</button>
+        <div id="pm-upload-progress" style="display:none;font-family:'Oswald';font-size:.85rem;
+          color:var(--rust-light);margin-bottom:.5rem;"></div>
+        <div id="pm-photo-preview" style="display:none;"></div>
       </div>
       <div class="modal-actions">
         <button class="btn-admin save" onclick="savePlayerCard()">✓ Uložiť</button>
@@ -4239,11 +4274,33 @@ function mdSeek(offset){
 
 
 /* ── PLAYER CARD ──────────────────────────────── */
+/* Fotka hráča sa v modale používa dvakrát: ostro v ľavej hornej štvrtine a
+   rozmazane cez celé okno ako pozadie. Pozadie skladáme ako v <body> — plná
+   plocha --charcoal s nízkou priehľadnosťou nad obrázkom, takže text ostane
+   čitateľný a fotka len jemne presvitá. Bez fotky vraciame pôvodné pozadie. */
+function pmApplyPhoto(photo, initials) {
+  const av = document.getElementById('pm-avatar');
+  const modal = document.querySelector('#modal-player .modal');
+  if (photo) {
+    av.style.backgroundImage = `url("${photo}")`;
+    av.textContent = '';
+    modal.style.background =
+      `linear-gradient(rgba(38,34,32,.93),rgba(38,34,32,.93)), url("${photo}") center/cover no-repeat`;
+  } else {
+    // Bez fotky nechávame iniciály na klubovom prechode — plochá farba na takej
+    // veľkej ploche pôsobila ako prázdne miesto.
+    av.style.backgroundImage = 'linear-gradient(160deg,var(--maroon),var(--maroon-deep))';
+    av.textContent = initials;
+    modal.style.background = '';   // späť na var(--charcoal) z CSS
+  }
+}
+
 function openPlayerCard(playerId) {
   const p=rosterData.find(x=>x.id===playerId); if (!p) return;
   const pc=p.position==='B'?'g':p.position==='O'?'d':'f';
   const pl=p.position==='B'?'Brankár':p.position==='O'?'Obranca':'Útočník';
-  document.getElementById('pm-avatar').textContent=p.name.slice(0,2).toUpperCase();
+  pmApplyPhoto(p.photo_url, p.name.slice(0,2).toUpperCase());
+  document.getElementById('pm-num-badge').textContent=p.number||'—';
   document.getElementById('pm-name').textContent=p.name;
   document.getElementById('pm-pos-badge').innerHTML=`<span class="pos-badge ${pc}">${p.position||'?'} — ${pl}</span>`;
   document.getElementById('pm-number').textContent=p.number||'—';
@@ -4263,18 +4320,62 @@ function enablePlayerEdit() {
   document.getElementById('pm-edit-number').value=p.number||'';
   document.getElementById('pm-edit-pos').value=p.position||'Ú';
   document.getElementById('pm-edit-note').value=p.note||'';
+  document.getElementById('pm-edit-photo').value=p.photo_url||'';
+  pmRenderPhotoPreview(p.photo_url||'');
   document.getElementById('pm-view').style.display='none'; document.getElementById('pm-edit').style.display='block';
 }
 function cancelPlayerEdit() { document.getElementById('pm-view').style.display='block'; document.getElementById('pm-edit').style.display='none'; }
+
+function pmRenderPhotoPreview(url) {
+  const box = document.getElementById('pm-photo-preview');
+  if (!url) { box.style.display='none'; box.innerHTML=''; return; }
+  box.style.display='block';
+  box.innerHTML = `<img src="${url}" style="width:96px;height:96px;object-fit:cover;object-position:center top;`
+    + `border-radius:10px;border:1px solid var(--line);vertical-align:middle;">`
+    + `<button class="btn-admin cancel" style="margin-left:.6rem;padding:.4rem .7rem;"`
+    + ` onclick="pmClearPhoto()">Odobrať fotku</button>`;
+}
+function pmClearPhoto() {
+  document.getElementById('pm-edit-photo').value='';
+  pmRenderPhotoPreview('');
+}
+
+async function uploadPlayerPhoto(file) {
+  if (!file) return;
+  const prog = document.getElementById('pm-upload-progress');
+  const input = document.getElementById('pm-photo-upload');
+  prog.style.display='block'; prog.style.color='var(--rust-light)';
+  prog.textContent='Spracúvam fotku…';
+  try {
+    file = await compressImage(file);
+    prog.textContent='Nahrávam…';
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const path = `players/${document.getElementById('pm-edit-id').value}-${Date.now()}.${ext}`;
+    const { error: upErr } = await sb.storage.from('media').upload(path, file, { cacheControl:'3600', upsert:false });
+    if (upErr) { prog.textContent='Chyba: '+upErr.message; prog.style.color='#bf6d6d'; return; }
+    const { data: urlData } = sb.storage.from('media').getPublicUrl(path);
+    const url = urlData?.publicUrl;
+    if (!url) { prog.textContent='Chyba: nepodarilo sa získať adresu fotky'; prog.style.color='#bf6d6d'; return; }
+    document.getElementById('pm-edit-photo').value = url;
+    pmRenderPhotoPreview(url);
+    prog.textContent='✓ Nahraté'; prog.style.color='#6dbf6d';
+    setTimeout(() => prog.style.display='none', 2000);
+  } finally {
+    input.value = '';
+  }
+}
+
 async function savePlayerCard() {
   const id=parseInt(document.getElementById('pm-edit-id').value);
   const number=document.getElementById('pm-edit-number').value.trim();
   const pos=document.getElementById('pm-edit-pos').value;
   const note=document.getElementById('pm-edit-note').value.trim();
-  const { error }=await sb.from('players').update({number,position:pos,note:note||null}).eq('id',id);
+  const photo=document.getElementById('pm-edit-photo').value.trim();
+  const { error }=await sb.from('players')
+    .update({number,position:pos,note:note||null,photo_url:photo||null}).eq('id',id);
   if (error) { toast('Chyba: '+error.message,'error'); return; }
   const p=rosterData.find(x=>x.id===id);
-  if (p) { p.number=number; p.position=pos; p.note=note; }
+  if (p) { p.number=number; p.position=pos; p.note=note; p.photo_url=photo||null; }
   closeModal('modal-player'); renderRosterTable(); toast('Hráč uložený ✓','success');
 }
 
