@@ -1711,7 +1711,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.25.5</div>
+  <div id="version-badge">v3.26.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2605,7 +2605,32 @@ function handleHash() {
 window.addEventListener('hashchange', handleHash);
 function toggleNav() { document.getElementById('sidenav').classList.toggle('open'); document.getElementById('nav-overlay').classList.toggle('show'); }
 function closeNav() { document.getElementById('sidenav').classList.remove('open'); document.getElementById('nav-overlay').classList.remove('show'); }
-function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+/* Zastaví prehrávanie vo vnútri vrstvy. Samotné skrytie vrstvy video nezastaví —
+   iframe žije ďalej a zvuk hrá v pozadí. Obsah modalov sa pri otvorení vždy
+   prekresľuje, takže vyprázdnenie iframu nič nestratí. */
+function stopMediaIn(el){
+  if (!el) return;
+  el.querySelectorAll('iframe').forEach(f => { if (f.src) f.src = 'about:blank'; });
+  el.querySelectorAll('video,audio').forEach(m => { try { m.pause(); } catch(e){} });
+}
+
+function closeModal(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('show');
+  stopMediaIn(el);
+}
+
+/* Klik na stmavené pozadie (teda mimo samotného okna) vrstvu zatvorí.
+   Kontrola na e.target znamená, že klik vnútri okna sem nedôjde — tam je
+   cieľom niektoré z jeho detí, nie samotný overlay. */
+document.addEventListener('click', e => {
+  const el = e.target;
+  if (el instanceof Element && el.id
+      && el.classList.contains('modal-overlay') && el.classList.contains('show')) {
+    closeModal(el.id);
+  }
+});
 function toast(msg,type) {
   const t=document.getElementById('toast');
   t.textContent=msg; t.className='show '+(type||'');
@@ -3373,7 +3398,11 @@ async function openMatchDetail(eventId){
 
 // Zavri detail zápasu a vráť stránku tam, kde bola pred otvorením
 function closeMatchDetail(){
-  document.getElementById('modal-match-detail').classList.remove('show');
+  const page = document.getElementById('modal-match-detail');
+  page.classList.remove('show');
+  // Bez tohto by video hralo ďalej aj po zatvorení — počuť ho v pozadí.
+  mdStopVideo();
+  stopMediaIn(page);
   document.body.classList.remove('md-open');
   window.scrollTo(0, _mdReturnY);
 }
@@ -4142,6 +4171,14 @@ function mdPlayAt(secs){
     } catch(e){}
   }, 700);
   return true;
+}
+
+// Zastav prehrávanie a zahoď rozrobené skoky na čas (pri zatvorení detailu)
+function mdStopVideo(){
+  clearTimeout(_ytRetryTimer); clearTimeout(_ytPendingTimer);
+  _ytPending = null;
+  try { if (_ytPlayer && typeof _ytPlayer.stopVideo === 'function') _ytPlayer.stopVideo(); } catch(e){}
+  _ytPlayer = null; _ytReady = false;
 }
 
 function mdSeekFallback(secs, iframe){
