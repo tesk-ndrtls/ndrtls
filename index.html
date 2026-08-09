@@ -1719,7 +1719,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.27.1</div>
+  <div id="version-badge">v3.27.2</div>
 </footer>
 </div><!-- /main-site -->
 </div><!-- /page -->
@@ -5945,11 +5945,38 @@ function closeGallery() {
    scroll pozadia. Scrolluje sa len vnútro aktívnej vrstvy. Zachováme scroll
    pozíciu, aby stránka po zatvorení neposkočila hore. */
 /* ── DOČASNÁ DIAGNOSTIKA ROZMEROV ──
-   Zapne sa len cez ndrtls.com/?diag=1 — pri bežnom používaní sa nespustí vôbec.
-   Vypisuje skutočné rozmery zo zariadenia, aby sa pás pod vrstvou dal zmerať
-   namiesto odhadovania. Po vyriešení to celé vyhoď. */
+   Zapne sa cez ndrtls.com/?diag=1 alebo trojklikom na verziu v pätičke
+   (kvôli appke z plochy, kam sa URL parameter nedá napísať). Stav si pamätá
+   v localStorage. Vypisuje skutočné rozmery zo zariadenia, aby sa pás pod
+   vrstvou dal zmerať namiesto odhadovania. Po vyriešení to celé vyhoď. */
 (function initDiag(){
-  if (!/[?&]diag=1/.test(location.search)) return;
+  const KEY = 'ndrtls-diag';
+  if (/[?&]diag=1/.test(location.search)) { try { localStorage.setItem(KEY,'1'); } catch(e){} }
+
+  /* Trojklik na verziu prepne diagnostiku a stránku načíta znova. */
+  (function bindToggle(){
+    const badge = document.getElementById('version-badge');
+    if (!badge) return;
+    let n = 0, t = 0;
+    badge.style.cursor = 'pointer';
+    badge.addEventListener('click', () => {
+      const now = Date.now();
+      n = (now - t < 1200) ? n + 1 : 1;
+      t = now;
+      if (n < 3) return;
+      n = 0;
+      try {
+        const on = localStorage.getItem(KEY) === '1';
+        if (on) localStorage.removeItem(KEY); else localStorage.setItem(KEY,'1');
+      } catch(e){}
+      location.href = location.pathname;
+    });
+  })();
+
+  let on = false;
+  try { on = localStorage.getItem(KEY) === '1'; } catch(e){}
+  if (!on) return;
+
   const mk = (css) => { const d = document.createElement('div'); d.style.cssText = css;
     document.body.appendChild(d); return d; };
   const box = mk('position:fixed;top:calc(env(safe-area-inset-top,0px) + 4px);left:4px;right:4px;'
@@ -5957,16 +5984,28 @@ function closeGallery() {
     + 'padding:6px 8px;border:1px solid #4f4;border-radius:5px;pointer-events:none;white-space:pre;');
   const pTop = mk('position:fixed;top:0;left:0;width:0;height:env(safe-area-inset-top,0px);visibility:hidden;');
   const pBot = mk('position:fixed;top:0;left:0;width:0;height:env(safe-area-inset-bottom,0px);visibility:hidden;');
+  /* Tyrkysový prúžok = kam siahne `position:fixed;bottom:0`. Ak ho na fotke
+     vidno nad spodkom obrazovky, stránka sa nevykresľuje po celý displej. */
+  mk('position:fixed;left:0;right:0;bottom:0;height:4px;background:#0ff;z-index:2147483647;pointer-events:none;');
+  /* Žltý prúžok = spodok elementu s výškou 100dvh, pre porovnanie s tyrkysovým. */
+  mk('position:fixed;left:0;width:40px;top:0;height:100dvh;border-bottom:4px solid #ff0;'
+    + 'z-index:2147483647;pointer-events:none;');
+
   const R = el => el.getBoundingClientRect();
+  const mode = (navigator.standalone === true) ? 'standalone(iOS)'
+    : (matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'prehliadač');
   function tick(){
     const ov = document.querySelector('.modal-overlay.show') || document.querySelector('.md-page.show');
     const b = R(document.body), vv = window.visualViewport;
     box.textContent =
-      'innerH ' + window.innerHeight + '   clientH ' + document.documentElement.clientHeight + '\n'
+      mode + '   dpr ' + window.devicePixelRatio + '\n'
+      + 'innerH ' + window.innerHeight + '  clientH ' + document.documentElement.clientHeight
+      + '  outerH ' + window.outerHeight + '\n'
+      + 'screen ' + screen.width + 'x' + screen.height
+      + '  avail ' + screen.availWidth + 'x' + screen.availHeight + '\n'
       + (vv ? 'visualVP h ' + Math.round(vv.height) + '  offTop ' + Math.round(vv.offsetTop)
               + '  scale ' + vv.scale.toFixed(2) + '\n' : '')
-      + 'safe top ' + Math.round(R(pTop).height) + '  bottom ' + Math.round(R(pBot).height)
-      + '   dpr ' + window.devicePixelRatio + '\n'
+      + 'safe top ' + Math.round(R(pTop).height) + '  bottom ' + Math.round(R(pBot).height) + '\n'
       + 'body ' + Math.round(b.top) + '..' + Math.round(b.bottom) + '   scrollY ' + Math.round(window.scrollY) + '\n'
       + (ov ? 'vrstva ' + (ov.id || ov.className) + ' ' + Math.round(R(ov).top) + '..' + Math.round(R(ov).bottom)
             : 'vrstva: žiadna otvorená');
