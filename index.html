@@ -1711,7 +1711,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.29.0</div>
+  <div id="version-badge">v3.29.1</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2677,6 +2677,16 @@ function extractYoutubeId(url) {
   const m=url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/);
   return m?m[1]:null;
 }
+/* Náhľad videa: začíname najostrejším, ktorý YouTube ponúka, a padáme nižšie len
+   keď ho dané video nemá (staršie a niektoré nahrávky maxres nemajú — vtedy
+   vráti 404). Krok si pamätáme na elemente, aby sa onerror nezacyklil. */
+const YT_THUMBS = ['maxresdefault', 'sddefault', 'hqdefault'];
+function ytThumbFallback(img, ytId) {
+  const next = (+img.dataset.ytStep || 0) + 1;
+  if (next >= YT_THUMBS.length) { img.onerror = null; return; }
+  img.dataset.ytStep = next;
+  img.src = 'https://img.youtube.com/vi/' + ytId + '/' + YT_THUMBS[next] + '.jpg';
+}
 // Malé červené YouTube logo v rohu — len signalizuje, že oznam má video (prehrá sa až v detaile).
 const NEWS_YT_BADGE = '<div style="position:absolute;top:.5rem;right:.5rem;z-index:2;filter:drop-shadow(0 1px 4px rgba(0,0,0,.6));">'
   + '<svg width="34" height="24" viewBox="0 0 68 48"><path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="#ff0000"/><path d="M45 24L27 14v20" fill="#fff"/></svg></div>';
@@ -2725,8 +2735,13 @@ function renderPublicNews() {
         + `</div>`;
     } else if (ytId) {
       // Len video, žiadne foto → náhľad z YouTube s tlačidlom prehrať (video sa aj tak otvorí až v detaile).
+      // hqdefault má len 480×360, čo je na šírku karty na telefóne asi 2,5× dopyt
+      // a náhľad je rozmazaný. Berieme maxresdefault (1280×720) a padáme nižšie
+      // len ak ho video nemá — rovnako ako v sekcii médiá.
       media = `<div class="media-thumb">`
-        + `<img src="https://img.youtube.com/vi/${ytId}/hqdefault.jpg" alt="${title}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">`
+        + `<img src="https://img.youtube.com/vi/${ytId}/maxresdefault.jpg" alt="${title}"`
+        + ` onerror="ytThumbFallback(this,'${ytId}')"`
+        + ` style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">`
         + NEWS_YT_BADGE
         + `</div>`;
     }
@@ -5850,7 +5865,7 @@ function renderPublicMedia() {
           const dStr = m.event_date ? new Date(m.event_date).toLocaleDateString('sk-SK',{day:'numeric',month:'short',year:'numeric'}) : '';
           return `<div class="media-item">
             <div class="media-thumb" id="${domId}" onclick="playVideo('${domId}','${ytId}')" style="cursor:pointer;">
-              <img src="https://img.youtube.com/vi/${ytId}/maxresdefault.jpg" onerror="this.src='https://img.youtube.com/vi/${ytId}/hqdefault.jpg'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" alt="${title}">
+              <img src="https://img.youtube.com/vi/${ytId}/maxresdefault.jpg" onerror="ytThumbFallback(this,'${ytId}')" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" alt="${title}">
               <div class="yt-play-btn"><svg viewBox="0 0 68 48" width="68" height="48"><path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="#ff0000"/><path d="M45 24L27 14v20" fill="#fff"/></svg></div>
             </div>
             <div class="media-info">${dStr?`<div style="font-family:'Oswald';font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--rust-light);margin-bottom:.3rem;">${dStr}</div>`:''}<h4>${title}</h4><p>${desc}</p></div>
