@@ -1738,7 +1738,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.32.0</div>
+  <div id="version-badge">v3.33.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2708,13 +2708,33 @@ async function loadRosterFromDB() {
     if (tbody) tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:1rem;color:#bf6d6d;">Chyba: '+e.message+'</td></tr>';
   }
 }
+/* Malý avatar do súpisky. Číslo ide do kruhu v rohu rovnako ako na karte hráča.
+   Avatar má 34 px a bunka menší zvislý padding, takže riadok ostane rovnako
+   vysoký ako predtým — výšku určuje text mena, nie obrázok. */
+function rosterAvatar(p) {
+  const photo = pmPhotoList(p)[0];
+  const initials = (p.name || '').slice(0, 2).toUpperCase();
+  const face = photo
+    ? `url(&quot;${photo}&quot;) center top/cover`
+    : 'linear-gradient(160deg,var(--maroon),var(--maroon-deep))';
+  return `<div style="position:relative;width:34px;height:34px;">
+    <div style="position:absolute;inset:0;border-radius:9px;border:1px solid var(--rust);
+      background:${face};overflow:hidden;display:grid;place-items:center;
+      font-family:'Anton';font-size:.78rem;color:var(--cream);">${photo ? '' : initials}</div>
+    <div style="position:absolute;right:-5px;bottom:-5px;min-width:18px;height:18px;padding:0 3px;
+      border-radius:999px;background:var(--maroon);border:1px solid var(--rust);
+      box-shadow:0 1px 4px rgba(0,0,0,.5);display:grid;place-items:center;
+      font-family:'Anton';font-size:.6rem;color:var(--cream-bright);">${p.number || '—'}</div>
+  </div>`;
+}
+
 function renderRosterTable() {
   const tbody=document.getElementById('roster-tbody');
   if (!tbody||!rosterData.length) return;
   tbody.innerHTML=rosterData.map(p=>{
     const pc=p.position==='B'?'g':p.position==='O'?'d':'f';
     return `<tr onclick="openPlayerCard(${p.id})" style="cursor:pointer;">
-      <td style="font-family:'Anton';color:var(--maroon);font-size:1.1rem">${p.number||'—'}</td>
+      <td style="padding-top:.35rem;padding-bottom:.35rem;padding-right:.7rem;">${rosterAvatar(p)}</td>
       <td style="color:var(--cream-bright);font-weight:600">${p.name}</td>
       <td><span class="pos-badge ${pc}">${p.position||'?'}</span></td>
       <td style="text-align:center;color:var(--bone)">${p.gp||0}</td>
