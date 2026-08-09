@@ -110,12 +110,12 @@ header{
 
 /* ── SIDE NAV ── */
 #sidenav{
-  position:fixed; top:0; left:0; bottom:0; width:280px; z-index:100;
+  position:fixed; top:0; left:0; bottom:calc(-1 * var(--vp-extra,0px)); width:280px; z-index:100;
   background:rgba(15,11,9,.97); border-right:2px solid var(--maroon);
   transform:translateX(-100%); transition:transform .3s ease;
   display:flex; flex-direction:column; overflow-y:auto;
   overscroll-behavior:contain; -webkit-overflow-scrolling:touch;
-  padding-bottom:env(safe-area-inset-bottom,0px);
+  padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--vp-extra,0px));
   padding-left:env(safe-area-inset-left,0px);
 }
 #sidenav.open{transform:none;}
@@ -714,10 +714,20 @@ a:hover{color:var(--cream-bright);}
 .btn-rsvp.yes:hover,.btn-rsvp.yes.active{background:#4a8a4a;color:var(--cream-bright);border-color:#4a8a4a;}
 .btn-rsvp.no{background:rgba(138,74,74,.2);color:#bf6d6d;border:1px solid rgba(138,74,74,.4);}
 .btn-rsvp.no:hover,.btn-rsvp.no.active{background:#8a4a4a;color:var(--cream-bright);border-color:#8a4a4a;}
-.modal-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;
-  padding:calc(1rem + env(safe-area-inset-top,0px)) calc(1rem + env(safe-area-inset-right,0px)) calc(1rem + env(safe-area-inset-bottom,0px)) calc(1rem + env(safe-area-inset-left,0px));
+/* --vp-extra = o koľko je displej vyšší než layout viewport. V appke z plochy
+   hlási iOS documentElement.clientHeight 812, hoci webview maľuje celých 874 px
+   displeja. Prekryv s `position:fixed; inset:0` sa preto natiahne len po 812 a
+   spodných 62 px ostane nezatmavených — to je ten pás. Vrstvy o toľko predĺžime
+   pod spodok viewportu a o rovnako zväčšíme spodný padding, aby obsah ostal
+   vycentrovaný vo viditeľnej časti. Na zdravom zariadení je --vp-extra 0 a
+   nemení sa vôbec nič. Hodnotu meria initViewportExtra(). */
+.modal-overlay{display:none;position:fixed;inset:0;bottom:calc(-1 * var(--vp-extra,0px));z-index:200;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;
+  padding:calc(1rem + env(safe-area-inset-top,0px)) calc(1rem + env(safe-area-inset-right,0px)) calc(1rem + env(safe-area-inset-bottom,0px) + var(--vp-extra,0px)) calc(1rem + env(safe-area-inset-left,0px));
   box-sizing:border-box;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
 .modal-overlay.show{display:flex;}
+/* Lightbox má inset:0 v inline štýle, preto !important. */
+#gallery-lightbox{bottom:calc(-1 * var(--vp-extra,0px)) !important;
+  padding-bottom:var(--vp-extra,0px);box-sizing:border-box;}
 /* Scroll-lock pozadia, keď je otvorená vrstva (modal / menu / lightbox).
    Scrolluje sa len vnútro aktívnej vrstvy, pozadie stojí. */
 /* JS nastavuje telu `top:-savedY`. Pri `height:100%` by malo telo výšku presne
@@ -730,7 +740,7 @@ a:hover{color:var(--cream-bright);}
    drží obal #page. Skôr sa posúvalo telo cez top:-savedY, čím jeho box končil
    savedY px nad spodkom obrazovky; WebKit (iOS) tam potom orezal obsah aj
    vrstvu nad ním a vznikol ten nezatmavený pás. Takto niet čo orezať. */
-body.layer-open{position:fixed;inset:0;width:100%;overscroll-behavior:none;}
+body.layer-open{position:fixed;inset:0;bottom:calc(-1 * var(--vp-extra,0px));width:100%;overscroll-behavior:none;}
 #page{position:relative;}
 .modal{background:var(--charcoal);border:1px solid var(--maroon);border-radius:14px;padding:2rem;width:100%;max-width:500px;
   max-height:calc(100vh - 2rem - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
@@ -1719,7 +1729,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.27.3</div>
+  <div id="version-badge">v3.28.0</div>
 </footer>
 </div><!-- /main-site -->
 </div><!-- /page -->
@@ -5998,9 +6008,12 @@ function closeGallery() {
     const ov = document.querySelector('.modal-overlay.show') || document.querySelector('.md-page.show');
     const b = R(document.body), vv = window.visualViewport;
     box.textContent =
-      mode + '   dpr ' + window.devicePixelRatio + '\n'
+      (document.getElementById('version-badge')?.textContent || '?')
+      + '  ' + mode + '  dpr ' + window.devicePixelRatio + '\n'
       + 'innerH ' + window.innerHeight + '  clientH ' + document.documentElement.clientHeight
       + '  outerH ' + window.outerHeight + '\n'
+      + 'vp-extra ' + (getComputedStyle(document.documentElement)
+          .getPropertyValue('--vp-extra').trim() || '0px') + '\n'
       + 'screen ' + screen.width + 'x' + screen.height
       + '  avail ' + screen.availWidth + 'x' + screen.availHeight + '\n'
       + (vv ? 'visualVP h ' + Math.round(vv.height) + '  offTop ' + Math.round(vv.offsetTop)
@@ -6012,6 +6025,38 @@ function closeGallery() {
     requestAnimationFrame(tick);
   }
   tick();
+})();
+
+/* ── O KOĽKO JE DISPLEJ VYŠŠÍ NEŽ LAYOUT VIEWPORT ──
+   Namerané v appke z plochy na iPhone:
+     bez otvorenej vrstvy   innerHeight 874   clientHeight 812
+     s otvoreným modalom    innerHeight 812   clientHeight 812
+   clientHeight (layout viewport) je teda 812 stále, ale webview maľuje celých
+   874 px displeja. Preto sa `position:fixed; inset:0` natiahne len po 812 a
+   spodných 62 px displeja ostane mimo každej vrstvy — a keďže ich iOS vyfarbí
+   pozadím stránky, pod zatmaveným modalom to vyzerá ako svetlejší pás.
+   Rozdiel vieme zmerať jedine kým nie je nič otvorené (potom innerHeight klesne
+   na 812), takže meriame pri štarte a po otočení displeja. Výsledok ide do
+   --vp-extra a vrstvy sa oň v CSS predĺžia. Na zdravom zariadení vyjde 0. */
+(function initViewportExtra(){
+  let best = 0;
+  const measure = () => {
+    if (document.body.classList.contains('layer-open')) return;
+    const extra = window.innerHeight - document.documentElement.clientHeight;
+    // Rastieme len nahor — prechodné stavy (zatváranie vrstvy, klávesnica)
+    // hlásia menej a nesmú nameranú hodnotu zhodiť.
+    if (!(extra > best) || extra > 200) return;
+    best = extra;
+    document.documentElement.style.setProperty('--vp-extra', extra + 'px');
+  };
+  const remeasure = () => {
+    best = 0;
+    document.documentElement.style.setProperty('--vp-extra', '0px');
+    measure();
+  };
+  measure();
+  setTimeout(measure, 600);
+  window.addEventListener('orientationchange', () => setTimeout(remeasure, 400));
 })();
 
 (function initScrollLock(){
