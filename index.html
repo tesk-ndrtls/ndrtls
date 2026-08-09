@@ -725,8 +725,12 @@ a:hover{color:var(--cream-bright);}
    boxu — a WebKit (iOS) tam oreže aj position:fixed vrstvy nad ním. Odtiaľ ten
    nezatmavený pás pod otvoreným modalom. `bottom:0` + `height:auto` donúti telo
    siahať po spodok obrazovky bez ohľadu na scroll pozíciu. */
+/* Zámerne BEZ overflow:hidden. Scrollovaniu bráni už samotné position:fixed
+   (overené), kým overflow:hidden navyše oreže obsah na hranici boxu tela —
+   a WebKit (iOS) na tej istej hranici oreže aj position:fixed vrstvy nad ním.
+   Odtiaľ ten nezatmavený pás pri spodku obrazovky. */
 body.layer-open{position:fixed;left:0;right:0;bottom:0;height:auto;width:100%;
-  overflow:hidden;overscroll-behavior:none;}
+  overscroll-behavior:none;}
 .modal{background:var(--charcoal);border:1px solid var(--maroon);border-radius:14px;padding:2rem;width:100%;max-width:500px;
   max-height:calc(100vh - 2rem - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
   overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
@@ -1711,7 +1715,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.26.0</div>
+  <div id="version-badge">v3.26.1</div>
 </footer>
 </div><!-- /main-site -->
 
