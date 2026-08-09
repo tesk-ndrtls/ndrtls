@@ -1719,7 +1719,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.27.2</div>
+  <div id="version-badge">v3.27.3</div>
 </footer>
 </div><!-- /main-site -->
 </div><!-- /page -->
@@ -6017,15 +6017,45 @@ function closeGallery() {
 (function initScrollLock(){
   let locked = false;
   let savedY = 0;
+  let curCanvas = '';
+
+  /* Farba plátna (canvas) pod otvorenou vrstvou.
+     V appke z plochy je webview o kus nižšie ako displej — namerané:
+     screen 874, innerHeight 812. Tých 62 px na spodku obrazovky je úplne mimo
+     stránky, takže tam nedosiahne ani `position:fixed; bottom:0`. iOS ten prúžok
+     vyfarbí plátnom dokumentu, ktoré sa dedí z <body>, teda čistým --ink. Kým je
+     stránka nezatmavená, prúžok splýva a nevidno ho; len čo sa nad ňu položí
+     modal s `rgba(0,0,0,.7)`, zatmavenie skončí na 812 px a zvyšok ostane svetlejší
+     — to je ten pás. Riešenie: kým je vrstva otvorená, dáme plátnu rovno zatmavenú
+     farbu, takže prúžok splynie s vrstvou.
+     Bočné menu zatmavuje len svojich 280 px, nie celú obrazovku, takže tam
+     plátno necháme tak — inak by pás vznikol naopak, tmavší než stránka. */
+  const lightboxOpen = () =>
+    document.getElementById('gallery-lightbox')?.style.display === 'flex';
+
+  function canvasColor(){
+    // rgba(0,0,0,.95) nad #15110f  ->  0.05 * (21,17,15)  =  #010101
+    if (lightboxOpen()) return '#010101';
+    // rgba(0,0,0,.7)  nad #15110f  ->  0.30 * (21,17,15) + vodoznak  =  #070605 (odmerané)
+    if (document.querySelector('.modal-overlay.show')) return '#070605';
+    return '';
+  }
 
   const anyLayerOpen = () =>
     !!document.querySelector('.modal-overlay.show') ||
     document.getElementById('sidenav')?.classList.contains('open') ||
-    document.getElementById('gallery-lightbox')?.style.display === 'flex';
+    lightboxOpen();
 
   function apply(){
     const open = anyLayerOpen();
     const page = document.getElementById('page');
+    // Farbu plátna prepočítaj vždy — vrstvy sa vedia vystriedať aj bez odomknutia
+    // (napr. lightbox otvorený nad modalom).
+    const c = canvasColor();
+    if (c !== curCanvas){
+      curCanvas = c;
+      document.documentElement.style.backgroundColor = c;
+    }
     if (open && !locked){
       savedY = window.scrollY || document.documentElement.scrollTop || 0;
       // Posúva sa obal, nie telo — telo tak ostane presne na rozmer obrazovky
