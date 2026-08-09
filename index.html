@@ -725,12 +725,13 @@ a:hover{color:var(--cream-bright);}
    boxu — a WebKit (iOS) tam oreže aj position:fixed vrstvy nad ním. Odtiaľ ten
    nezatmavený pás pod otvoreným modalom. `bottom:0` + `height:auto` donúti telo
    siahať po spodok obrazovky bez ohľadu na scroll pozíciu. */
-/* Zámerne BEZ overflow:hidden. Scrollovaniu bráni už samotné position:fixed
-   (overené), kým overflow:hidden navyše oreže obsah na hranici boxu tela —
-   a WebKit (iOS) na tej istej hranici oreže aj position:fixed vrstvy nad ním.
-   Odtiaľ ten nezatmavený pás pri spodku obrazovky. */
-body.layer-open{position:fixed;left:0;right:0;bottom:0;height:auto;width:100%;
-  overscroll-behavior:none;}
+/* Zamknutie scrollu pod otvorenou vrstvou.
+   Telo dostane presne rozmer obrazovky (inset:0) a NEPOSÚVA sa — scroll pozíciu
+   drží obal #page. Skôr sa posúvalo telo cez top:-savedY, čím jeho box končil
+   savedY px nad spodkom obrazovky; WebKit (iOS) tam potom orezal obsah aj
+   vrstvu nad ním a vznikol ten nezatmavený pás. Takto niet čo orezať. */
+body.layer-open{position:fixed;inset:0;width:100%;overscroll-behavior:none;}
+#page{position:relative;}
 .modal{background:var(--charcoal);border:1px solid var(--maroon);border-radius:14px;padding:2rem;width:100%;max-width:500px;
   max-height:calc(100vh - 2rem - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
   overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
@@ -742,7 +743,7 @@ body.layer-open{position:fixed;left:0;right:0;bottom:0;height:auto;width:100%;
 /* Kým je detail otvorený, zvyšok stránky je skrytý cez triedu na <body> —
    nesiahame na inline display, takže sa po zatvorení nič nerozbije. */
 body.md-open #main-site,
-body.md-open > header,
+body.md-open header,
 body.md-open #admin-preview-banner{display:none !important;}
 .md-page-inner{
   padding:calc(1.4rem + env(safe-area-inset-top,0px)) calc(1.2rem + env(safe-area-inset-right,0px))
@@ -1142,6 +1143,9 @@ body.md-open #admin-preview-banner{display:none !important;}
 </nav>
 
 <!-- ══ HEADER ══ -->
+<!-- Obal, ktorý sa posúva pri zamknutí scrollu namiesto <body>. Vďaka tomu
+     má telo presne rozmer obrazovky a nemá čo orezať. Modaly sú mimo neho. -->
+<div id="page">
 <header>
   <button class="menu-btn" onclick="toggleNav()">&#9776;</button>
   <div class="brand" onclick="goHome()">
@@ -1715,9 +1719,10 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.26.1</div>
+  <div id="version-badge">v3.27.0</div>
 </footer>
 </div><!-- /main-site -->
+</div><!-- /page -->
 
 <!-- ── DETAIL ZÁPASU ──
      Zámerne mimo #main-site a mimo position:fixed: pri otvorení sa #main-site skryje
@@ -5950,14 +5955,16 @@ function closeGallery() {
 
   function apply(){
     const open = anyLayerOpen();
+    const page = document.getElementById('page');
     if (open && !locked){
       savedY = window.scrollY || document.documentElement.scrollTop || 0;
-      document.body.style.top = (-savedY) + 'px';
+      // Posúva sa obal, nie telo — telo tak ostane presne na rozmer obrazovky
+      if (page) page.style.top = (-savedY) + 'px';
       document.body.classList.add('layer-open');
       locked = true;
     } else if (!open && locked){
       document.body.classList.remove('layer-open');
-      document.body.style.top = '';
+      if (page) page.style.top = '';
       window.scrollTo(0, savedY);
       locked = false;
     }
