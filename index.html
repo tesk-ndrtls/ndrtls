@@ -1738,7 +1738,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.33.0</div>
+  <div id="version-badge">v3.33.1</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2440,6 +2440,27 @@ async function onLogin(user) {
   }
 }
 
+/* Číslo dresu do hlavičky. Hlavný zdroj je profil — tam si ho hráč nastavuje sám.
+   Zo súpisky ho hádame len keď v profile nie je, a vtedy musí sedieť aj krstné
+   meno: na súpiske sú dvaja Vondráčekovia a pôvodné `ilike` na priezvisko
+   s `limit(1)` vracalo číslo toho druhého. Keď je zhoda nejednoznačná, radšej
+   nevrátime nič — iniciály sú lepšie než cudzie číslo. */
+async function lookupJerseyNumber(fullName) {
+  const parts = String(fullName || '').trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return null;
+  const last = parts[parts.length - 1];
+  const first = parts.length > 1 ? parts[0] : null;
+  try {
+    const { data } = await sb.from('players').select('name,number').ilike('name', '%' + last + '%');
+    const rows = data || [];
+    if (rows.length === 1) return rows[0].number || null;
+    if (rows.length < 2 || !first) return null;
+    const norm = s => String(s || '').toLocaleLowerCase('sk');
+    const byFirst = rows.filter(r => norm(r.name).includes(norm(first)));
+    return byFirst.length === 1 ? (byFirst[0].number || null) : null;
+  } catch(e) { console.warn('Player lookup failed:', e); return null; }
+}
+
 async function _onLoginInner(user) {
 
   // --- Profile fetch (never let a failure abort the login UI) ---
@@ -2454,15 +2475,9 @@ async function _onLoginInner(user) {
   const fullName = profile?.full_name || user.email.split('@')[0];
   const name     = profile?.nickname  || fullName;
 
-  // --- Jersey number lookup (optional, must not block) ---
-  let playerNum = null;
-  try {
-    const lastName = fullName.split(' ').slice(-1)[0];
-    if (lastName) {
-      const { data: pd } = await sb.from('players').select('number').ilike('name', '%' + lastName + '%').limit(1);
-      playerNum = pd?.[0]?.number || null;
-    }
-  } catch(e) { console.warn('Player lookup failed:', e); }
+  // --- Jersey number (optional, must not block) ---
+  let playerNum = currentProfile?.number ?? null;
+  if (playerNum == null) playerNum = await lookupJerseyNumber(fullName);
 
   const avatarText = playerNum || name.split(' ').map(p=>p[0]||'').join('').slice(0,2).toUpperCase() || '?';
 
@@ -4892,13 +4907,9 @@ async function saveOnboarding() {
   const displayName = nick || name;
   const setEl = (id, fn) => { const el = document.getElementById(id); if (el) fn(el); };
   setEl('user-name', el => el.textContent = displayName);
-  try {
-    const lastName = name.split(' ').slice(-1)[0];
-    const { data: pd } = await sb.from('players').select('number').ilike('name', '%' + lastName + '%').limit(1);
-    const num = pd?.[0]?.number;
-    setEl('user-avatar', el => el.textContent =
-      num || displayName.split(' ').map(p=>p[0]||'').join('').slice(0,2).toUpperCase());
-  } catch(e) {}
+  const num = currentProfile?.number ?? await lookupJerseyNumber(name);
+  setEl('user-avatar', el => el.textContent =
+    num || displayName.split(' ').map(p=>p[0]||'').join('').slice(0,2).toUpperCase());
 
   if (msg) { msg.textContent = 'Hotovo ✓'; msg.style.color = '#6dbf6d'; msg.style.display = 'block'; }
   if (btn) { btn.disabled = false; btn.textContent = 'Uložiť a pokračovať'; }
