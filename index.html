@@ -735,6 +735,36 @@ a:hover{color:var(--cream-bright);}
 .cal-legend{display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:1.4rem;}
 .cal-legend span{font-family:'Oswald'; font-weight:700; font-size:.6rem; letter-spacing:.14em;
   text-transform:uppercase; padding:.22rem .6rem; border-radius:4px;}
+.cal-switch{display:flex; gap:.4rem; margin-bottom:1rem;}
+.cal-switch button{flex:1; font-family:'Oswald'; font-weight:700; font-size:.72rem; letter-spacing:.12em;
+  text-transform:uppercase; padding:.55rem .8rem; border-radius:6px; cursor:pointer;
+  background:var(--charcoal); color:var(--bone); border:1px solid var(--line); transition:.2s;}
+.cal-switch button.active{background:var(--maroon); color:var(--cream-bright); border-color:var(--maroon);}
+.cal-nav{display:flex; align-items:center; justify-content:space-between; margin-bottom:.8rem;}
+.cal-nav button{background:var(--charcoal); border:1px solid var(--line); color:var(--cream-bright);
+  width:38px; height:38px; border-radius:8px; font-size:1.2rem; line-height:1; cursor:pointer;}
+.cal-nav .lbl{font-family:'Oswald'; font-weight:700; font-size:.9rem; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--cream-bright);}
+.cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:3px;}
+.cal-dow{font-family:'Oswald'; font-weight:700; font-size:.58rem; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--bone); text-align:center; padding-bottom:.3rem;}
+.cal-cell{aspect-ratio:1; border:1px solid var(--line); border-radius:6px; background:var(--charcoal);
+  padding:.2rem; display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+  font-family:'Barlow Condensed'; font-size:.85rem; color:var(--bone); overflow:hidden;}
+.cal-cell.out{opacity:.25;}
+.cal-cell.has{cursor:pointer;}
+.cal-cell.sel{border-color:var(--rust); box-shadow:0 0 0 1px var(--rust) inset;}
+.cal-cell.today .num{color:var(--rust-light); font-weight:700;}
+/* Voľný víkend: sobota aj nedeľa bez jedinej aktivity. Zámerne nie farbou
+   kategórie — je to neprítomnosť programu, nie ďalší jeho druh. */
+.cal-cell.free{background:rgba(205,191,159,.07); border-style:dashed; border-color:rgba(205,191,159,.3);}
+.cal-cell .num{line-height:1.1; margin-bottom:.15rem;}
+.cal-dots{display:flex; flex-wrap:wrap; gap:2px; justify-content:center;}
+.cal-dots i{width:5px; height:5px; border-radius:50%; display:block;}
+.cal-day-head{font-family:'Oswald'; font-weight:700; font-size:.75rem; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--rust-light); margin:1.4rem 0 .6rem;}
+.cal-rsvp{display:flex; gap:.4rem; align-items:center; margin-top:.5rem; flex-wrap:wrap;}
+.cal-rsvp .cal-count{font-family:'Oswald'; font-size:.72rem; color:var(--bone);}
 .btn-rsvp{font-family:'Oswald';font-weight:700;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;padding:.5rem 1rem;border-radius:6px;border:0;cursor:pointer;transition:.2s;white-space:nowrap;}
 .btn-rsvp.yes{background:rgba(74,138,74,.2);color:#6dbf6d;border:1px solid rgba(74,138,74,.4);}
 .btn-rsvp.yes:hover,.btn-rsvp.yes.active{background:#4a8a4a;color:var(--cream-bright);border-color:#4a8a4a;}
@@ -1252,6 +1282,10 @@ body.md-open #admin-preview-banner{display:none !important;}
     <div class="sec-head">
       <h2 data-i="calH">Kalendár</h2>
       <p data-i="calP">Všetko, čo tím čaká — zápasy, tréningy aj partičky.</p>
+    </div>
+    <div class="cal-switch">
+      <button id="cal-btn-list" onclick="calSetView('list')">☰ Zoznam</button>
+      <button id="cal-btn-grid" onclick="calSetView('grid')">▦ Mesiac</button>
     </div>
     <div class="cal-legend" id="cal-legend"></div>
     <div id="cal-list"><div class="empty-state"><div class="es-icon">🗓️</div><p>Načítavam…</p></div></div>
@@ -1777,7 +1811,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.34.0</div>
+  <div id="version-badge">v3.35.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2833,11 +2867,11 @@ const RAHL_SCHEDULE = [
 /* Farby kategórií. Ligové zápasy klubovou červenou, tréningy hrdzavou,
    partičky zlatou — tri veci, ktoré od seba treba rozoznať na prvý pohľad. */
 const CAL_KINDS = {
-  liga:     { label:'Ligový zápas', color:'#d1616b', bg:'rgba(181,48,58,.22)',  line:'#b5303a' },
-  zapas:    { label:'Zápas',        color:'#d1616b', bg:'rgba(181,48,58,.22)',  line:'#b5303a' },
+  liga:     { label:'Ligový zápas', color:'#8fc07a', bg:'rgba(127,176,105,.18)',line:'#7fb069' },
+  zapas:    { label:'Zápas',        color:'#8fc07a', bg:'rgba(127,176,105,.18)',line:'#7fb069' },
   trening:  { label:'Tréning',      color:'#d98a5f', bg:'rgba(181,83,44,.22)',  line:'#b5532c' },
   particka: { label:'Partička',     color:'#d9a441', bg:'rgba(217,164,65,.18)', line:'#d9a441' },
-  turnaj:   { label:'Turnaj',       color:'#8fc07a', bg:'rgba(127,176,105,.18)',line:'#7fb069' },
+  turnaj:   { label:'Turnaj',       color:'#d1616b', bg:'rgba(181,48,58,.22)',  line:'#b5303a' },
   akcia:    { label:'Akcia',        color:'var(--bone)', bg:'rgba(205,191,159,.12)', line:'var(--line)' },
 };
 const CAL_MONTHS = ['január','február','marec','apríl','máj','jún',
@@ -2846,76 +2880,252 @@ const CAL_MON_SHORT = ['jan','feb','mar','apr','máj','jún','júl','aug','sep',
 
 const calKind = k => CAL_KINDS[k] || CAL_KINDS.akcia;
 const calTime = d => d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+const calDayKey = d => d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
+
+let _calView  = lsGet('ndrtls-cal-view') === 'grid' ? 'grid' : 'list';
+let _calItems = [];
+let _calMonth = null;      // prvý deň zobrazeného mesiaca v mriežke
+let _calSelDay = null;     // vybraný deň v mriežke
+let _calRsvp = {};         // event_id -> môj status
+let _calCounts = {};       // event_id -> počet prihlásených
+
+function calSetView(v) {
+  _calView = v;
+  lsSet('ndrtls-cal-view', v);
+  calRender();
+}
 
 async function loadCalendar() {
   const list = document.getElementById('cal-list');
-  const legend = document.getElementById('cal-legend');
   if (!list) return;
-
-  legend.innerHTML = ['liga','trening','particka','turnaj','akcia'].map(k => {
-    const c = CAL_KINDS[k];
-    return `<span style="background:${c.bg};color:${c.color};">${c.label}</span>`;
-  }).join('');
 
   // Udalosti sú v Supabase a riadi ich RLS — neprihlásený teda uvidí len to, čo
   // preň politika pustí. Keď nepríde nič, kalendár aj tak zobrazí rozpis ligy.
   let events = [];
   try {
     const { data } = await sb.from('events')
-      .select('id,title,type,date,location').order('date', { ascending: true });
+      .select('id,title,type,date,location,max_players').order('date', { ascending: true });
     events = data || [];
   } catch(e) { console.warn('Kalendár — udalosti sa nenačítali:', e); }
 
-  const items = RAHL_SCHEDULE.map(m => ({
+  _calRsvp = {}; _calCounts = {};
+  if (currentUser) {
+    try {
+      const { data: mine } = await sb.from('rsvp')
+        .select('event_id,status').eq('user_id', currentUser.id);
+      (mine || []).forEach(r => _calRsvp[r.event_id] = r.status);
+      const { data: yes } = await sb.from('rsvp').select('event_id').eq('status', 'yes');
+      (yes || []).forEach(r => _calCounts[r.event_id] = (_calCounts[r.event_id] || 0) + 1);
+    } catch(e) { console.warn('Kalendár — prihlášky sa nenačítali:', e); }
+  }
+
+  _calItems = RAHL_SCHEDULE.map(m => ({
       kind: 'liga',
       when: new Date(m.date),
       title: m.home + ' – ' + m.away,
       meta: m.round + '. kolo · ' + RAHL_VENUE,
+      id: null,
     })).concat(events.map(e => ({
       kind: e.type || 'akcia',
       when: new Date(e.date),
       title: e.title || '',
       meta: e.location || '',
+      id: e.id,
+      max: e.max_players || null,
     })))
     .filter(i => !isNaN(i.when))
     .sort((a, b) => a.when - b.when);
 
-  if (!items.length) {
+  // Mriežka sa otvorí na mesiaci najbližšej budúcej položky, nie na prázdnom
+  // aktuálnom mesiaci mimo sezóny.
+  if (!_calMonth) {
+    const next = _calItems.find(i => i.when.getTime() >= Date.now()) || _calItems[0];
+    const base = next ? next.when : new Date();
+    _calMonth = new Date(base.getFullYear(), base.getMonth(), 1);
+  }
+  calRender();
+}
+
+function calRender() {
+  const list = document.getElementById('cal-list');
+  const legend = document.getElementById('cal-legend');
+  if (!list) return;
+
+  document.getElementById('cal-btn-list').classList.toggle('active', _calView === 'list');
+  document.getElementById('cal-btn-grid').classList.toggle('active', _calView === 'grid');
+
+  let leg = ['liga','trening','particka','turnaj','akcia'].map(k => {
+    const c = CAL_KINDS[k];
+    return `<span style="background:${c.bg};color:${c.color};">${c.label}</span>`;
+  });
+  if (_calView === 'grid')
+    leg.push('<span style="background:rgba(205,191,159,.07);color:var(--bone);'
+      + 'border:1px dashed rgba(205,191,159,.4);">Voľný víkend</span>');
+  legend.innerHTML = leg.join('');
+
+  if (!_calItems.length) {
     list.innerHTML = '<div class="empty-state"><div class="es-icon">🗓️</div>'
       + '<p>Zatiaľ tu nič nie je.</p></div>';
     return;
   }
+  list.innerHTML = _calView === 'grid' ? calGridHtml() : calListHtml();
 
-  const now = Date.now();
+  if (_calView === 'list') {
+    // Skoč na najbližšiu budúcu položku, nech sa človek nemusí prehrabávať sezónou.
+    const idx = _calItems.findIndex(i => i.when.getTime() >= Date.now());
+    if (idx > 0) {
+      const el = list.querySelectorAll('.cal-item')[idx];
+      if (el) el.scrollIntoView({ block:'center' });
+    }
+  }
+}
+
+/* Prihlasovanie priamo z kalendára. Ligové zápasy z rozpisu nemajú v databáze
+   udalosť, takže sa na ne prihlásiť nedá — tlačidlá dostanú len položky, ktoré
+   majú id. */
+function calRsvpHtml(i) {
+  if (!currentUser || !i.id) return '';
+  const st = _calRsvp[i.id];
+  const cnt = _calCounts[i.id] || 0;
+  return `<div class="cal-rsvp">
+    <button class="btn-rsvp yes${st==='yes'?' active':''}" onclick="calSetRsvp(event,${i.id},'yes')">Idem</button>
+    <button class="btn-rsvp no${st==='no'?' active':''}" onclick="calSetRsvp(event,${i.id},'no')">Neidem</button>
+    <span class="cal-count">👥 ${cnt}${i.max ? ' / ' + i.max : ''}</span>
+  </div>`;
+}
+
+async function calSetRsvp(ev, eventId, status) {
+  if (ev) ev.stopPropagation();
+  if (!currentUser) { showSection('login'); return; }
+  const prev = _calRsvp[eventId];
+  if (prev === status) return;
+
+  // Optimisticky prekresli, po chybe vrátime späť.
+  _calRsvp[eventId] = status;
+  if (status === 'yes') _calCounts[eventId] = (_calCounts[eventId] || 0) + 1;
+  else if (prev === 'yes') _calCounts[eventId] = Math.max(0, (_calCounts[eventId] || 1) - 1);
+  calRender();
+
+  const { error } = await sb.from('rsvp').upsert(
+    { event_id: eventId, user_id: currentUser.id, status },
+    { onConflict: 'event_id,user_id' });
+  if (error) {
+    _calRsvp[eventId] = prev;
+    if (status === 'yes') _calCounts[eventId] = Math.max(0, (_calCounts[eventId] || 1) - 1);
+    else if (prev === 'yes') _calCounts[eventId] = (_calCounts[eventId] || 0) + 1;
+    calRender();
+    toast('Chyba pri ukladaní.', 'error');
+    return;
+  }
+  toast(status === 'yes' ? '✓ Prihlásený!' : 'Odhlásený', 'success');
+}
+
+function calItemHtml(i, withRsvp) {
+  const c = calKind(i.kind);
+  const meta = [calTime(i.when), i.meta].filter(Boolean).join(' · ');
+  return `<div class="cal-item${i.when.getTime() < Date.now() ? ' past' : ''}" style="border-left-color:${c.line};">
+    <div class="cal-date">
+      <span class="d">${i.when.getDate()}</span>
+      <span class="m">${CAL_MON_SHORT[i.when.getMonth()]}</span>
+    </div>
+    <div class="cal-body">
+      <span class="cal-tag" style="background:${c.bg};color:${c.color};">${c.label}</span>
+      <div class="cal-title">${mdEsc(i.title)}</div>
+      <div class="cal-meta">${mdEsc(meta)}</div>
+      ${withRsvp === false ? '' : calRsvpHtml(i)}
+    </div>
+  </div>`;
+}
+
+function calListHtml() {
   let html = '', lastMonth = '';
-  items.forEach(i => {
+  _calItems.forEach(i => {
     const mk = i.when.getFullYear() + '-' + i.when.getMonth();
     if (mk !== lastMonth) {
       lastMonth = mk;
       html += `<div class="cal-month">${CAL_MONTHS[i.when.getMonth()]} ${i.when.getFullYear()}</div>`;
     }
-    const c = calKind(i.kind);
-    const meta = [calTime(i.when), i.meta].filter(Boolean).join(' · ');
-    html += `<div class="cal-item${i.when.getTime() < now ? ' past' : ''}" style="border-left-color:${c.line};">
-      <div class="cal-date">
-        <span class="d">${i.when.getDate()}</span>
-        <span class="m">${CAL_MON_SHORT[i.when.getMonth()]}</span>
-      </div>
-      <div class="cal-body">
-        <span class="cal-tag" style="background:${c.bg};color:${c.color};">${c.label}</span>
-        <div class="cal-title">${mdEsc(i.title)}</div>
-        <div class="cal-meta">${mdEsc(meta)}</div>
-      </div>
-    </div>`;
+    html += calItemHtml(i);
   });
-  list.innerHTML = html;
+  return html;
+}
 
-  // Skoč na najbližšiu budúcu položku, nech sa človek nemusí prehrabávať sezónou.
-  const idx = items.findIndex(i => i.when.getTime() >= now);
-  if (idx > 0) {
-    const el = list.querySelectorAll('.cal-item')[idx];
-    if (el) el.scrollIntoView({ block:'center' });
+function calShiftMonth(delta) {
+  _calMonth = new Date(_calMonth.getFullYear(), _calMonth.getMonth() + delta, 1);
+  _calSelDay = null;
+  calRender();
+}
+function calSelectDay(key) {
+  _calSelDay = (_calSelDay === key) ? null : key;
+  calRender();
+}
+
+function calGridHtml() {
+  const y = _calMonth.getFullYear(), m = _calMonth.getMonth();
+  const byDay = {};
+  _calItems.forEach(i => {
+    const k = calDayKey(i.when);
+    (byDay[k] = byDay[k] || []).push(i);
+  });
+
+  const first = new Date(y, m, 1);
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  // Týždeň začína pondelkom, preto posun nedele zo 0 na 6.
+  const lead = (first.getDay() + 6) % 7;
+  const cells = [];
+  for (let n = 0; n < lead; n++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(y, m, d));
+  while (cells.length % 7) cells.push(null);
+
+  /* Voľný víkend = sobota aj nedeľa toho istého víkendu bez jedinej aktivity.
+     Keby sme značili každý prázdny víkendový deň zvlášť, víkend s piatkovým
+     zápasom a prázdnou nedeľou by vyzeral ako voľný. */
+  const isFreeWeekend = (d) => {
+    const dow = d.getDay();
+    if (dow !== 0 && dow !== 6) return false;
+    const sat = new Date(d); sat.setDate(d.getDate() + (dow === 0 ? -1 : 0));
+    const sun = new Date(sat); sun.setDate(sat.getDate() + 1);
+    return !(byDay[calDayKey(sat)] || byDay[calDayKey(sun)]);
+  };
+
+  const todayKey = calDayKey(new Date());
+  let html = `<div class="cal-nav">
+      <button onclick="calShiftMonth(-1)" aria-label="Predchádzajúci mesiac">‹</button>
+      <span class="lbl">${CAL_MONTHS[m]} ${y}</span>
+      <button onclick="calShiftMonth(1)" aria-label="Nasledujúci mesiac">›</button>
+    </div><div class="cal-grid">`;
+  ['Po','Ut','St','Št','Pi','So','Ne'].forEach(d => html += `<div class="cal-dow">${d}</div>`);
+
+  cells.forEach(d => {
+    if (!d) { html += '<div class="cal-cell out"></div>'; return; }
+    const k = calDayKey(d);
+    const items = byDay[k] || [];
+    const cls = ['cal-cell'];
+    if (items.length) cls.push('has');
+    if (isFreeWeekend(d)) cls.push('free');
+    if (k === todayKey) cls.push('today');
+    if (k === _calSelDay) cls.push('sel');
+    const dots = items.slice(0, 4).map(i =>
+      `<i style="background:${calKind(i.kind).line};"></i>`).join('');
+    html += `<div class="${cls.join(' ')}"${items.length ? ` onclick="calSelectDay('${k}')"` : ''}>
+      <span class="num">${d.getDate()}</span><span class="cal-dots">${dots}</span></div>`;
+  });
+  html += '</div>';
+
+  // Pod mriežkou detail vybraného dňa; bez výberu program celého mesiaca.
+  const inMonth = _calItems.filter(i => i.when.getFullYear() === y && i.when.getMonth() === m);
+  const shown = _calSelDay ? (byDay[_calSelDay] || []) : inMonth;
+  if (!shown.length) {
+    html += `<div class="cal-day-head">Program mesiaca</div>`
+      + `<div class="empty-state" style="padding:2rem 1rem;"><p>V tomto mesiaci nič nemáme.</p></div>`;
+  } else {
+    const d0 = shown[0].when;
+    html += `<div class="cal-day-head">${_calSelDay
+      ? d0.getDate() + '. ' + CAL_MONTHS[d0.getMonth()]
+      : 'Program mesiaca'}</div>`;
+    html += shown.map(i => calItemHtml(i)).join('');
   }
+  return html;
 }
 
 /* ── NEWS ─────────────────────────────────────── */
