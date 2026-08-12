@@ -709,6 +709,32 @@ a:hover{color:var(--cream-bright);}
 .ev-type.trening{background:rgba(138,58,30,.3);color:var(--rust-light);}
 .ev-type.turnaj{background:rgba(74,20,29,.5);color:var(--cream);}
 .ev-type.akcia{background:rgba(38,34,32,.9);color:var(--bone);border:1px solid var(--line);}
+.ev-type.particka{background:rgba(217,164,65,.18);color:#d9a441;}
+
+/* ── KALENDÁR ── */
+.cal-month{font-family:'Oswald'; font-weight:700; font-size:.8rem; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--rust-light); margin:1.6rem 0 .7rem;
+  padding-bottom:.4rem; border-bottom:1px solid var(--line);}
+.cal-month:first-child{margin-top:0;}
+.cal-item{display:flex; gap:.9rem; align-items:stretch; background:var(--charcoal);
+  border:1px solid var(--line); border-left:3px solid var(--line);
+  border-radius:8px; padding:.7rem .9rem; margin-bottom:.5rem;}
+.cal-item.past{opacity:.45;}
+.cal-date{flex:0 0 44px; text-align:center; display:flex; flex-direction:column;
+  justify-content:center; border-right:1px solid var(--line); padding-right:.7rem;}
+.cal-date .d{font-family:'Anton'; font-size:1.35rem; line-height:1; color:var(--cream-bright);}
+.cal-date .m{font-family:'Oswald'; font-size:.6rem; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--bone); margin-top:.15rem;}
+.cal-body{min-width:0; flex:1;}
+.cal-tag{display:inline-block; font-family:'Oswald'; font-weight:700; font-size:.6rem;
+  letter-spacing:.14em; text-transform:uppercase; padding:.16rem .5rem;
+  border-radius:4px; margin-bottom:.3rem;}
+.cal-title{font-family:'Barlow Condensed'; font-size:1.05rem; font-weight:600;
+  color:var(--cream-bright); line-height:1.25;}
+.cal-meta{font-size:.85rem; color:var(--bone); margin-top:.15rem;}
+.cal-legend{display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:1.4rem;}
+.cal-legend span{font-family:'Oswald'; font-weight:700; font-size:.6rem; letter-spacing:.14em;
+  text-transform:uppercase; padding:.22rem .6rem; border-radius:4px;}
 .btn-rsvp{font-family:'Oswald';font-weight:700;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;padding:.5rem 1rem;border-radius:6px;border:0;cursor:pointer;transition:.2s;white-space:nowrap;}
 .btn-rsvp.yes{background:rgba(74,138,74,.2);color:#6dbf6d;border:1px solid rgba(74,138,74,.4);}
 .btn-rsvp.yes:hover,.btn-rsvp.yes.active{background:#4a8a4a;color:var(--cream-bright);border-color:#4a8a4a;}
@@ -1119,6 +1145,7 @@ body.md-open #admin-preview-banner{display:none !important;}
     <div class="nav-item" onclick="enterSite('news')" id="nav-news"><span class="nav-ic">📋</span><span data-i="navNews">Oznamy & Novinky</span></div>
     <div class="nav-item" onclick="enterSite('roster')" id="nav-roster"><span class="nav-ic">🏒</span><span data-i="navRoster">A-tím / Súpiska</span></div>
     <div class="nav-item" onclick="enterSite('rahl')" id="nav-rahl"><span class="nav-ic">🏆</span><span data-i="navRahl">Liga RAHL</span></div>
+    <div class="nav-item" onclick="enterSite('calendar')" id="nav-calendar"><span class="nav-ic">🗓️</span><span data-i="navCalendar">Kalendár</span></div>
     <div class="nav-item" onclick="enterSite('media')" id="nav-media"><span class="nav-ic">📸</span><span data-i="navMedia">Médiá</span></div>
     <div class="nav-item" onclick="enterSite('contact')" id="nav-contact"><span class="nav-ic">✉️</span><span data-i="navContact">Kontakt</span></div>
     <div class="nav-item" onclick="enterSite('training')" id="nav-training"><span class="nav-ic">💪</span><span data-i="navTraining">Suchý tréning</span></div>
@@ -1216,6 +1243,18 @@ body.md-open #admin-preview-banner{display:none !important;}
       </table>
     </div>
     <p data-i="rosterLegend" style="margin-top:.8rem;color:var(--bone);font-size:.88rem;">B = Brankár · O = Obranca · Ú = Útočník · <a href="https://szalh.sk" target="_blank">szalh.sk ↗</a></p>
+  </div>
+</div>
+
+<!-- ── KALENDÁR (verejný) ── -->
+<div class="page-section" id="sec-calendar">
+  <div class="sec-wrap">
+    <div class="sec-head">
+      <h2 data-i="calH">Kalendár</h2>
+      <p data-i="calP">Všetko, čo tím čaká — zápasy, tréningy aj partičky.</p>
+    </div>
+    <div class="cal-legend" id="cal-legend"></div>
+    <div id="cal-list"><div class="empty-state"><div class="es-icon">🗓️</div><p>Načítavam…</p></div></div>
   </div>
 </div>
 
@@ -1738,7 +1777,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.33.1</div>
+  <div id="version-badge">v3.34.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2192,6 +2231,7 @@ body.md-open #admin-preview-banner{display:none !important;}
         <option value="zapas">Zápas</option>
         <option value="trening">Tréning</option>
         <option value="turnaj">Turnaj</option>
+        <option value="particka">Partička</option>
         <option value="akcia">Akcia</option>
       </select>
     </div>
@@ -2626,6 +2666,7 @@ function showSection(id) {
   if (id==='media') loadPublicMedia();
   if (id==='roster') loadRosterFromDB();
   if (id==='rahl' && !window._rahlLoaded) { window._rahlLoaded=true; loadRAHL(); }
+  if (id==='calendar') loadCalendar();
   if (id==='training') renderTraining();
   closeNav(); window.scrollTo(0,0);
   // Zatvorenie menu spúšťa scroll-lock (MutationObserver), ktorý o chvíľu
@@ -2759,6 +2800,122 @@ function renderRosterTable() {
       <td style="color:var(--bone);font-size:.9rem">${p.note||'—'}</td>
     </tr>`;
   }).join('');
+}
+
+
+/* ── KALENDÁR ────────────────────────────────────
+   Verejná sekcia: rozpis ligy plus udalosti tímu na jednej osi.
+
+   Rozpis RAHL1 2026/27 je prepísaný z ligového rozpisu a je fixný na sezónu,
+   takže ho držíme priamo tu — netreba naň tabuľku ani migráciu. Sú v ňom len
+   naše zápasy; v 4. a 13. kole máme voľno, preto tie čísla chýbajú.
+   Čas je lokálny (bez "Z"), rovnako ako ho zadáva formulár udalostí. */
+const RAHL_VENUE = 'Hala B';
+const RAHL_SCHEDULE = [
+  { round: 1,  date:'2026-09-05T12:15', home:'Uličníci',          away:'Neanderthals' },
+  { round: 2,  date:'2026-09-12T09:45', home:'Neanderthals',      away:'AHC Pezinok Ducks' },
+  { round: 3,  date:'2026-09-19T08:30', home:'Black Jokers',      away:'Neanderthals' },
+  { round: 5,  date:'2026-10-03T09:45', home:'Neanderthals',      away:'HK Petržalka' },
+  { round: 6,  date:'2026-10-10T09:45', home:'Wild Hogs',         away:'Neanderthals' },
+  { round: 7,  date:'2026-10-17T11:00', home:'Neanderthals',      away:'WT Karaoke' },
+  { round: 8,  date:'2026-10-24T08:30', home:'Mad Vipers',        away:'Neanderthals' },
+  { round: 9,  date:'2026-11-07T11:00', home:'Neanderthals',      away:'AHS' },
+  { round:10,  date:'2026-11-14T11:00', home:'Neanderthals',      away:'Uličníci' },
+  { round:11,  date:'2026-11-21T12:15', home:'AHS',               away:'Neanderthals' },
+  { round:12,  date:'2026-11-28T09:45', home:'Neanderthals',      away:'Black Jokers' },
+  { round:14,  date:'2026-12-12T08:30', home:'HK Petržalka',      away:'Neanderthals' },
+  { round:15,  date:'2026-12-19T11:00', home:'Neanderthals',      away:'Wild Hogs' },
+  { round:16,  date:'2027-01-23T11:00', home:'WT Karaoke',        away:'Neanderthals' },
+  { round:17,  date:'2027-01-30T12:15', home:'Neanderthals',      away:'Mad Vipers' },
+  { round:18,  date:'2027-02-06T11:00', home:'AHC Pezinok Ducks', away:'Neanderthals' },
+];
+
+/* Farby kategórií. Ligové zápasy klubovou červenou, tréningy hrdzavou,
+   partičky zlatou — tri veci, ktoré od seba treba rozoznať na prvý pohľad. */
+const CAL_KINDS = {
+  liga:     { label:'Ligový zápas', color:'#d1616b', bg:'rgba(181,48,58,.22)',  line:'#b5303a' },
+  zapas:    { label:'Zápas',        color:'#d1616b', bg:'rgba(181,48,58,.22)',  line:'#b5303a' },
+  trening:  { label:'Tréning',      color:'#d98a5f', bg:'rgba(181,83,44,.22)',  line:'#b5532c' },
+  particka: { label:'Partička',     color:'#d9a441', bg:'rgba(217,164,65,.18)', line:'#d9a441' },
+  turnaj:   { label:'Turnaj',       color:'#8fc07a', bg:'rgba(127,176,105,.18)',line:'#7fb069' },
+  akcia:    { label:'Akcia',        color:'var(--bone)', bg:'rgba(205,191,159,.12)', line:'var(--line)' },
+};
+const CAL_MONTHS = ['január','február','marec','apríl','máj','jún',
+  'júl','august','september','október','november','december'];
+const CAL_MON_SHORT = ['jan','feb','mar','apr','máj','jún','júl','aug','sep','okt','nov','dec'];
+
+const calKind = k => CAL_KINDS[k] || CAL_KINDS.akcia;
+const calTime = d => d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+
+async function loadCalendar() {
+  const list = document.getElementById('cal-list');
+  const legend = document.getElementById('cal-legend');
+  if (!list) return;
+
+  legend.innerHTML = ['liga','trening','particka','turnaj','akcia'].map(k => {
+    const c = CAL_KINDS[k];
+    return `<span style="background:${c.bg};color:${c.color};">${c.label}</span>`;
+  }).join('');
+
+  // Udalosti sú v Supabase a riadi ich RLS — neprihlásený teda uvidí len to, čo
+  // preň politika pustí. Keď nepríde nič, kalendár aj tak zobrazí rozpis ligy.
+  let events = [];
+  try {
+    const { data } = await sb.from('events')
+      .select('id,title,type,date,location').order('date', { ascending: true });
+    events = data || [];
+  } catch(e) { console.warn('Kalendár — udalosti sa nenačítali:', e); }
+
+  const items = RAHL_SCHEDULE.map(m => ({
+      kind: 'liga',
+      when: new Date(m.date),
+      title: m.home + ' – ' + m.away,
+      meta: m.round + '. kolo · ' + RAHL_VENUE,
+    })).concat(events.map(e => ({
+      kind: e.type || 'akcia',
+      when: new Date(e.date),
+      title: e.title || '',
+      meta: e.location || '',
+    })))
+    .filter(i => !isNaN(i.when))
+    .sort((a, b) => a.when - b.when);
+
+  if (!items.length) {
+    list.innerHTML = '<div class="empty-state"><div class="es-icon">🗓️</div>'
+      + '<p>Zatiaľ tu nič nie je.</p></div>';
+    return;
+  }
+
+  const now = Date.now();
+  let html = '', lastMonth = '';
+  items.forEach(i => {
+    const mk = i.when.getFullYear() + '-' + i.when.getMonth();
+    if (mk !== lastMonth) {
+      lastMonth = mk;
+      html += `<div class="cal-month">${CAL_MONTHS[i.when.getMonth()]} ${i.when.getFullYear()}</div>`;
+    }
+    const c = calKind(i.kind);
+    const meta = [calTime(i.when), i.meta].filter(Boolean).join(' · ');
+    html += `<div class="cal-item${i.when.getTime() < now ? ' past' : ''}" style="border-left-color:${c.line};">
+      <div class="cal-date">
+        <span class="d">${i.when.getDate()}</span>
+        <span class="m">${CAL_MON_SHORT[i.when.getMonth()]}</span>
+      </div>
+      <div class="cal-body">
+        <span class="cal-tag" style="background:${c.bg};color:${c.color};">${c.label}</span>
+        <div class="cal-title">${mdEsc(i.title)}</div>
+        <div class="cal-meta">${mdEsc(meta)}</div>
+      </div>
+    </div>`;
+  });
+  list.innerHTML = html;
+
+  // Skoč na najbližšiu budúcu položku, nech sa človek nemusí prehrabávať sezónou.
+  const idx = items.findIndex(i => i.when.getTime() >= now);
+  if (idx > 0) {
+    const el = list.querySelectorAll('.cal-item')[idx];
+    if (el) el.scrollIntoView({ block:'center' });
+  }
 }
 
 /* ── NEWS ─────────────────────────────────────── */
@@ -4971,7 +5128,7 @@ async function saveProfilePassword() {
 
 /* ── ZONE FUNCTIONS (events, finance, admin) ──── */
 const months = ['jan','feb','mar','apr','máj','jún','júl','aug','sep','okt','nov','dec'];
-const typeLabels = { zapas: 'Zápas', trening: 'Tréning', turnaj: 'Turnaj', akcia: 'Akcia' };
+const typeLabels = { zapas: 'Zápas', trening: 'Tréning', turnaj: 'Turnaj', particka: 'Partička', akcia: 'Akcia' };
 
 async function loadEvents() {
   const { data: events, error } = await sb
@@ -5001,7 +5158,7 @@ async function loadEvents() {
     countMap[r.event_id] = (countMap[r.event_id] || 0) + 1;
   });
 
-  const typeLabels = { zapas:'Zápas', trening:'Tréning', turnaj:'Turnaj', akcia:'Akcia' };
+  const typeLabels = { zapas:'Zápas', trening:'Tréning', turnaj:'Turnaj', particka:'Partička', akcia:'Akcia' };
   const months = ['jan','feb','mar','apr','máj','jún','júl','aug','sep','okt','nov','dec'];
 
   // Get names of who's going (for display)
@@ -5326,7 +5483,7 @@ async function renderAdmGames() {
   }
 
   const months = ['jan','feb','mar','apr','máj','jún','júl','aug','sep','okt','nov','dec'];
-  const typeLabels = {zapas:'Zápas', trening:'Tréning', turnaj:'Turnaj', akcia:'Akcia'};
+  const typeLabels = {zapas:'Zápas', trening:'Tréning', turnaj:'Turnaj', particka:'Partička', akcia:'Akcia'};
 
   list.innerHTML = events.map(ev => {
     const d = new Date(ev.date);
@@ -5519,7 +5676,7 @@ async function loadAdminEvents() {
 
   const list = document.getElementById('admin-events-list');
   const months = ['jan','feb','mar','apr','máj','jún','júl','aug','sep','okt','nov','dec'];
-  const typeLabels = { zapas:'Zápas', trening:'Tréning', turnaj:'Turnaj', akcia:'Akcia' };
+  const typeLabels = { zapas:'Zápas', trening:'Tréning', turnaj:'Turnaj', particka:'Partička', akcia:'Akcia' };
 
   if (!data?.length) {
     list.innerHTML = '<div class="empty-state"><div class="es-icon">📅</div><p>Žiadne udalosti. Pridaj prvú!</p></div>';
