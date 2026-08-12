@@ -763,6 +763,13 @@ a:hover{color:var(--cream-bright);}
 .cal-dots i{width:5px; height:5px; border-radius:50%; display:block;}
 .cal-day-head{font-family:'Oswald'; font-weight:700; font-size:.75rem; letter-spacing:.14em;
   text-transform:uppercase; color:var(--rust-light); margin:1.4rem 0 .6rem;}
+.cal-title.matchup{font-family:'Anton'; font-size:1.4rem; letter-spacing:.04em; line-height:1.05;}
+.cal-sub{font-size:.85rem; color:var(--bone); margin-top:.1rem;}
+.cal-showpast{width:100%; font-family:'Oswald'; font-weight:700; font-size:.72rem;
+  letter-spacing:.12em; text-transform:uppercase; padding:.6rem; border-radius:6px;
+  background:var(--charcoal); color:var(--bone); border:1px dashed var(--line);
+  cursor:pointer; margin-bottom:1rem;}
+.cal-showpast:hover{color:var(--cream-bright); border-color:var(--rust);}
 .cal-rsvp{display:flex; gap:.4rem; align-items:center; margin-top:.5rem; flex-wrap:wrap;}
 .cal-rsvp .cal-count{font-family:'Oswald'; font-size:.72rem; color:var(--bone);}
 .btn-rsvp{font-family:'Oswald';font-weight:700;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;padding:.5rem 1rem;border-radius:6px;border:0;cursor:pointer;transition:.2s;white-space:nowrap;}
@@ -1812,7 +1819,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.36.0</div>
+  <div id="version-badge">v3.37.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2879,6 +2886,33 @@ const CAL_MONTHS = ['január','február','marec','apríl','máj','jún',
   'júl','august','september','október','november','december'];
 const CAL_MON_SHORT = ['jan','feb','mar','apr','máj','jún','júl','aug','sep','okt','nov','dec'];
 
+/* Skratky do náhľadu zápasu. Náš tím dávame vždy prvý, nech je na prvý pohľad
+   jasné, proti komu hráme — poradie domáci/hostia nesie riadok „doma / vonku“. */
+const CAL_ABBR = { 'Neanderthals':'NEA', 'Uličníci':'ULI', 'AHC Pezinok Ducks':'PEZ',
+  'Black Jokers':'BJK', 'HK Petržalka':'PET', 'Wild Hogs':'WHG', 'WT Karaoke':'WTK',
+  'Mad Vipers':'MVP', 'AHS':'AHS' };
+const CAL_US = 'Neanderthals';
+const calAbbr = n => CAL_ABBR[n]
+  || String(n || '').replace(/[^A-Za-zÀ-ž]/g, '').slice(0, 3).toUpperCase();
+
+function calMatchup(home, away) {
+  if (!home || !away) return null;
+  const weHome = home === CAL_US;
+  if (!weHome && away !== CAL_US) return null;   // cudzí zápas — nerozpisujeme
+  const opp = weHome ? away : home;
+  return { abbr: 'NEA – ' + calAbbr(opp), opponent: opp, home: weHome };
+}
+/* Zápas založený ako udalosť má súperov v názve („Uličníci – Neanderthals“).
+   Keď ho niekto premenuje, rozdelenie zlyhá a zobrazíme názov tak, ako je. */
+function calMatchupFromTitle(t) {
+  const parts = String(t || '').split(/\s+[–-]\s+/);
+  return parts.length === 2 ? calMatchup(parts[0].trim(), parts[1].trim()) : null;
+}
+const calRoundOf = notes => {
+  const m = String(notes || '').match(/^(\d+)\.\s*kolo/);
+  return m ? +m[1] : null;
+};
+
 const calKind = k => CAL_KINDS[k] || CAL_KINDS.akcia;
 const calTime = d => d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
 const calDayKey = d => d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
@@ -2890,6 +2924,7 @@ let _calSelDay = null;     // vybraný deň v mriežke
 let _calRsvp = {};         // event_id -> môj status
 let _calCounts = {};       // event_id -> počet prihlásených
 let _calMissing = [];      // zápasy z rozpisu, ktoré ešte nemajú udalosť
+let _calShowPast = false;  // v zozname sú minulé položky zbalené
 
 function calSetView(v) {
   _calView = v;
@@ -2933,13 +2968,17 @@ async function loadCalendar() {
       kind: 'liga',
       when: new Date(m.date),
       title: m.home + ' – ' + m.away,
-      meta: m.round + '. kolo · ' + RAHL_VENUE,
+      matchup: calMatchup(m.home, m.away),
+      round: m.round,
+      venue: RAHL_VENUE,
       id: null,
     })).concat(events.map(e => ({
       kind: e.type || 'akcia',
       when: new Date(e.date),
       title: e.title || '',
-      meta: e.location || '',
+      matchup: e.type === 'zapas' ? calMatchupFromTitle(e.title) : null,
+      round: calRoundOf(e.notes),
+      venue: e.location || '',
       id: e.id,
       max: e.max_players || null,
     })))
@@ -2988,14 +3027,6 @@ function calRender() {
   }
   list.innerHTML = _calView === 'grid' ? calGridHtml() : calListHtml();
 
-  if (_calView === 'list') {
-    // Skoč na najbližšiu budúcu položku, nech sa človek nemusí prehrabávať sezónou.
-    const idx = _calItems.findIndex(i => i.when.getTime() >= Date.now());
-    if (idx > 0) {
-      const el = list.querySelectorAll('.cal-item')[idx];
-      if (el) el.scrollIntoView({ block:'center' });
-    }
-  }
 }
 
 /* Prihlasovanie priamo z kalendára. Ligové zápasy z rozpisu nemajú v databáze
@@ -3074,24 +3105,49 @@ async function calImportLeague() {
 
 function calItemHtml(i, withRsvp) {
   const c = calKind(i.kind);
-  const meta = [calTime(i.when), i.meta].filter(Boolean).join(' · ');
-  return `<div class="cal-item${i.when.getTime() < Date.now() ? ' past' : ''}" style="border-left-color:${c.line};">
+  const mu = i.matchup;
+  const meta = [calTime(i.when), mu ? (mu.home ? 'doma' : 'vonku') : '', i.venue]
+    .filter(Boolean).join(' · ');
+  const tag = c.label + (i.round ? ' · ' + i.round + '. kolo' : '');
+  // Celé pole dostane farbu kategórie, nielen pruh — kategória sa tak dá
+  // rozoznať aj bez čítania odznaku.
+  return `<div class="cal-item${i.when.getTime() < Date.now() ? ' past' : ''}"
+    style="border-left-color:${c.line};background:linear-gradient(${c.bg},${c.bg}),var(--charcoal);">
     <div class="cal-date">
       <span class="d">${i.when.getDate()}</span>
       <span class="m">${CAL_MON_SHORT[i.when.getMonth()]}</span>
     </div>
     <div class="cal-body">
-      <span class="cal-tag" style="background:${c.bg};color:${c.color};">${c.label}</span>
-      <div class="cal-title">${mdEsc(i.title)}</div>
+      <span class="cal-tag" style="background:${c.bg};color:${c.color};">${tag}</span>
+      <div class="cal-title${mu ? ' matchup' : ''}" ${mu ? `style="color:${c.color};"` : ''}>${mdEsc(mu ? mu.abbr : i.title)}</div>
+      ${mu && mu.opponent !== calAbbr(mu.opponent)
+        ? `<div class="cal-sub">${mdEsc(mu.opponent)}</div>` : ''}
       <div class="cal-meta">${mdEsc(meta)}</div>
       ${withRsvp === false ? '' : calRsvpHtml(i)}
     </div>
   </div>`;
 }
 
+function calTogglePast() { _calShowPast = !_calShowPast; calRender(); }
+
 function calListHtml() {
-  let html = '', lastMonth = '';
-  _calItems.forEach(i => {
+  const now = Date.now();
+  const past = _calItems.filter(i => i.when.getTime() < now);
+  const rest = _calShowPast ? _calItems : _calItems.filter(i => i.when.getTime() >= now);
+
+  let html = '';
+  if (past.length) {
+    html += `<button class="cal-showpast" onclick="calTogglePast()">`
+      + (_calShowPast ? '▲ Skryť predošlé' : `▼ Zobraziť predošlé (${past.length})`)
+      + `</button>`;
+  }
+  if (!rest.length) {
+    return html + '<div class="empty-state"><div class="es-icon">🗓️</div>'
+      + '<p>Sezóna je odohraná, nič ďalšie zatiaľ nie je.</p></div>';
+  }
+
+  let lastMonth = '';
+  rest.forEach(i => {
     const mk = i.when.getFullYear() + '-' + i.when.getMonth();
     if (mk !== lastMonth) {
       lastMonth = mk;
@@ -5394,7 +5450,7 @@ const typeLabels = { zapas: 'Zápas', trening: 'Tréning', turnaj: 'Turnaj', par
 
 async function loadEvents() {
   const { data: events, error } = await sb
-    .from('events').select('*').order('date', { ascending: false });
+    .from('events').select('*').order('date', { ascending: true });
 
   const list = document.getElementById('events-list');
 
@@ -5439,7 +5495,14 @@ async function loadEvents() {
 
   const isAdmin = isAdminUI();
 
-  list.innerHTML = events.map(ev => {
+  /* Sekcia začína najbližšou udalosťou. Minulé sú zbalené za tlačidlom — inak
+     sa človek musel prescrollovať celou odohranou sezónou. */
+  const _now = new Date(); _now.setHours(0,0,0,0);
+  const isPastEv = ev => { const d = new Date(ev.date); d.setHours(0,0,0,0); return d < _now; };
+  const pastEvents = events.filter(isPastEv).reverse();   // najnovšie z minulých hore
+  const upcoming   = events.filter(ev => !isPastEv(ev));
+
+  const card = ev => {
     const d = new Date(ev.date);
     const _today = new Date(); _today.setHours(0,0,0,0);
     const _evDay = new Date(d); _evDay.setHours(0,0,0,0);
@@ -5487,8 +5550,42 @@ async function loadEvents() {
         <span id="ev-names-${ev.id}" style="margin-left:.4rem;">${namesStr}</span>
       </div>
     </div>`;
-  }).join('');
+  };
+
+  const monthKey = ev => { const d = new Date(ev.date); return d.getFullYear() + '-' + d.getMonth(); };
+  const monthLbl = ev => { const d = new Date(ev.date);
+    return CAL_MONTHS[d.getMonth()] + ' ' + d.getFullYear(); };
+
+  let html = '';
+  if (pastEvents.length) {
+    html += `<button class="cal-showpast" onclick="toggleEventsPast()">`
+      + (_evShowPast ? '▲ Skryť predošlé' : `▼ Zobraziť predošlé (${pastEvents.length})`)
+      + `</button>`;
+    if (_evShowPast) {
+      let lm = '';
+      pastEvents.forEach(ev => {
+        if (monthKey(ev) !== lm) { lm = monthKey(ev);
+          html += `<div class="cal-month">${monthLbl(ev)}</div>`; }
+        html += card(ev);
+      });
+    }
+  }
+  if (!upcoming.length) {
+    html += `<div class="empty-state"><div class="es-icon">📅</div>`
+      + `<p>Žiadna nadchádzajúca udalosť.</p></div>`;
+  } else {
+    let lm = '';
+    upcoming.forEach(ev => {
+      if (monthKey(ev) !== lm) { lm = monthKey(ev);
+        html += `<div class="cal-month">${monthLbl(ev)}</div>`; }
+      html += card(ev);
+    });
+  }
+  list.innerHTML = html;
 }
+
+let _evShowPast = false;
+function toggleEventsPast() { _evShowPast = !_evShowPast; loadEvents(); }
 
 async function setRsvp(eventId, status, btn) {
   // Optimistic UI
