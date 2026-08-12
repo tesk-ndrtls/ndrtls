@@ -1288,6 +1288,7 @@ body.md-open #admin-preview-banner{display:none !important;}
       <button id="cal-btn-grid" onclick="calSetView('grid')">▦ Mesiac</button>
     </div>
     <div class="cal-legend" id="cal-legend"></div>
+    <div id="cal-admin"></div>
     <div id="cal-list"><div class="empty-state"><div class="es-icon">🗓️</div><p>Načítavam…</p></div></div>
   </div>
 </div>
@@ -1811,7 +1812,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.35.0</div>
+  <div id="version-badge">v3.36.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2888,6 +2889,7 @@ let _calMonth = null;      // prvý deň zobrazeného mesiaca v mriežke
 let _calSelDay = null;     // vybraný deň v mriežke
 let _calRsvp = {};         // event_id -> môj status
 let _calCounts = {};       // event_id -> počet prihlásených
+let _calMissing = [];      // zápasy z rozpisu, ktoré ešte nemajú udalosť
 
 function calSetView(v) {
   _calView = v;
@@ -2919,7 +2921,15 @@ async function loadCalendar() {
     } catch(e) { console.warn('Kalendár — prihlášky sa nenačítali:', e); }
   }
 
-  _calItems = RAHL_SCHEDULE.map(m => ({
+  /* Keď je zápas z rozpisu už založený ako udalosť (typ zápas v ten istý čas),
+     zobrazíme udalosť a riadok z rozpisu vynecháme — inak by bol v kalendári
+     dvakrát a prihlásiť sa dalo len na jeden z nich. */
+  const bookedMatches = new Set(events
+    .filter(e => e.type === 'zapas')
+    .map(e => new Date(e.date).getTime()));
+  _calMissing = RAHL_SCHEDULE.filter(m => !bookedMatches.has(new Date(m.date).getTime()));
+
+  _calItems = _calMissing.map(m => ({
       kind: 'liga',
       when: new Date(m.date),
       title: m.home + ' – ' + m.away,
@@ -2962,6 +2972,14 @@ function calRender() {
     leg.push('<span style="background:rgba(205,191,159,.07);color:var(--bone);'
       + 'border:1px dashed rgba(205,191,159,.4);">Voľný víkend</span>');
   legend.innerHTML = leg.join('');
+
+  const adm = document.getElementById('cal-admin');
+  if (adm) {
+    adm.innerHTML = (isAdminUI() && _calMissing.length)
+      ? `<button class="btn-admin save" style="width:100%;padding:.7rem;margin-bottom:1rem;"
+           onclick="calImportLeague()">📥 Vytvoriť udalosti pre ligové zápasy (${_calMissing.length})</button>`
+      : '';
+  }
 
   if (!_calItems.length) {
     list.innerHTML = '<div class="empty-state"><div class="es-icon">🗓️</div>'
@@ -3018,6 +3036,40 @@ async function calSetRsvp(ev, eventId, status) {
     return;
   }
   toast(status === 'yes' ? '✓ Prihlásený!' : 'Odhlásený', 'success');
+}
+
+/* Založí udalosti pre zápasy z rozpisu, ktoré ešte v databáze nie sú. Vytvára
+   len chýbajúce, takže sa dá spustiť aj opakovane bez duplikátov. */
+async function calImportLeague() {
+  if (!isAdminUI() || !_calMissing.length) return;
+  if (!confirm('Vytvoriť ' + _calMissing.length + ' udalostí pre ligové zápasy?\n'
+      + 'Hráči sa na ne potom budú vedieť prihlasovať.')) return;
+
+  // Sezónu doplníme z databázy, nie odhadom — bez nej by zápasy vypadli
+  // zo sekcie financie.
+  let seasonId = null;
+  try {
+    const { data } = await sb.from('seasons').select('id,status').eq('status', 'active').limit(1);
+    seasonId = data?.[0]?.id ?? null;
+  } catch(e) { console.warn('Sezóna sa nenačítala:', e); }
+
+  const rows = _calMissing.map(m => {
+    const r = {
+      title: m.home + ' – ' + m.away,
+      type: 'zapas',
+      date: new Date(m.date).toISOString(),
+      location: RAHL_VENUE,
+      max_players: null,
+      notes: m.round + '. kolo · RAHL1',
+    };
+    if (seasonId != null) r.season_id = seasonId;
+    return r;
+  });
+
+  const { error } = await sb.from('events').insert(rows);
+  if (error) { toast('Chyba: ' + error.message, 'error'); return; }
+  toast('Vytvorených ' + rows.length + ' zápasov ✓', 'success');
+  await loadCalendar();
 }
 
 function calItemHtml(i, withRsvp) {
