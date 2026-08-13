@@ -301,7 +301,8 @@ header{
 
 /* ── PLAYER ZONE ── */
 .event-card{
-  background:var(--charcoal); border:1px solid var(--line); border-radius:12px;
+  background:var(--charcoal); border:1px solid var(--line);
+  border-left:3px solid var(--line); border-radius:12px;
   padding:1.2rem; margin-bottom:1rem; display:flex; align-items:center; gap:1.2rem;
   flex-wrap:wrap;
 }
@@ -705,11 +706,13 @@ a:hover{color:var(--cream-bright);}
   letter-spacing:.14em; text-transform:uppercase; padding:.22rem .6rem;
   border-radius:4px; margin-bottom:.35rem; line-height:1.3; white-space:nowrap;
 }
-.ev-type.zapas{background:rgba(107,31,42,.4);color:var(--cream);}
-.ev-type.trening{background:rgba(138,58,30,.3);color:var(--rust-light);}
-.ev-type.turnaj{background:rgba(74,20,29,.5);color:var(--cream);}
-.ev-type.akcia{background:rgba(38,34,32,.9);color:var(--bone);border:1px solid var(--line);}
+/* Rovnaká paleta ako v kalendári (CAL_KINDS) — udalosť má tú istú farbu
+   v oboch sekciách. */
+.ev-type.zapas{background:rgba(127,176,105,.18);color:#8fc07a;}
+.ev-type.trening{background:rgba(181,83,44,.22);color:#d98a5f;}
+.ev-type.turnaj{background:rgba(181,48,58,.22);color:#d1616b;}
 .ev-type.particka{background:rgba(217,164,65,.18);color:#d9a441;}
+.ev-type.akcia{background:rgba(205,191,159,.12);color:var(--bone);border:1px solid var(--line);}
 
 /* ── KALENDÁR ── */
 .cal-month{font-family:'Oswald'; font-weight:700; font-size:.8rem; letter-spacing:.18em;
@@ -769,6 +772,22 @@ a:hover{color:var(--cream-bright);}
 .cal-ctime{font-family:'Oswald'; font-size:.5rem; letter-spacing:.02em; color:var(--cream-bright);
   opacity:.75; line-height:1.2;}
 .cal-more{font-family:'Oswald'; font-size:.48rem; color:var(--bone); opacity:.7; line-height:1;}
+/* Prehľad sezóny: mini-mesiace vedľa seba, aby sa dalo plánovať bez listovania.
+   Bunky sú len farebné štvorčeky s dňom — na text tu miesto nie je. */
+.cal-season{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:1rem;}
+.cal-mini h4{font-family:'Oswald'; font-weight:700; font-size:.66rem; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--rust-light); margin-bottom:.35rem; cursor:pointer;}
+.cal-mini h4:hover{color:var(--cream-bright);}
+.cal-mini-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:2px;}
+.cal-mini-dow{font-family:'Oswald'; font-size:.44rem; letter-spacing:.04em; text-transform:uppercase;
+  color:var(--bone); opacity:.6; text-align:center;}
+.cal-mc{aspect-ratio:1; border-radius:3px; background:var(--charcoal); border:1px solid transparent;
+  display:grid; place-items:center; font-family:'Barlow Condensed'; font-size:.6rem;
+  color:var(--bone); line-height:1;}
+.cal-mc.out{background:transparent;}
+.cal-mc.free{background:rgba(205,191,159,.07); border:1px dashed rgba(205,191,159,.28);}
+.cal-mc.has{color:var(--ink); font-weight:700; cursor:pointer;}
+.cal-mc.today{outline:1px solid var(--rust); outline-offset:-1px;}
 .cal-day-head{font-family:'Oswald'; font-weight:700; font-size:.75rem; letter-spacing:.14em;
   text-transform:uppercase; color:var(--rust-light); margin:1.4rem 0 .6rem;}
 .cal-showpast{width:100%; font-family:'Oswald'; font-weight:700; font-size:.72rem;
@@ -1306,6 +1325,7 @@ body.md-open #admin-preview-banner{display:none !important;}
     <div class="cal-switch">
       <button id="cal-btn-list" onclick="calSetView('list')">☰ Zoznam</button>
       <button id="cal-btn-grid" onclick="calSetView('grid')">▦ Mesiac</button>
+      <button id="cal-btn-season" onclick="calSetView('season')">▤ Sezóna</button>
     </div>
     <div class="cal-legend" id="cal-legend"></div>
     <div id="cal-admin"></div>
@@ -1832,7 +1852,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.39.0</div>
+  <div id="version-badge">v3.40.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2932,7 +2952,7 @@ const calRoundOf = notes => {
 const calKind = k => CAL_KINDS[k] || CAL_KINDS.akcia;
 /* Do bunky mriežky sa zmestí zopár znakov: pri zápase skratka súpera,
    inak krátky názov kategórie. */
-const CAL_SHORT = { trening:'TRÉN', particka:'PARTY', turnaj:'TURNAJ', akcia:'AKCIA' };
+const CAL_SHORT = { trening:'TRE', particka:'PAR', turnaj:'TUR', akcia:'AKC' };
 function calCellLabel(i) {
   if (i.matchup) return calAbbr(i.matchup.opponent);
   return CAL_SHORT[i.kind] || CAL_SHORT.akcia;
@@ -2940,7 +2960,8 @@ function calCellLabel(i) {
 const calTime = d => d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
 const calDayKey = d => d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
 
-let _calView  = lsGet('ndrtls-cal-view') === 'grid' ? 'grid' : 'list';
+let _calView  = ['grid','season'].includes(lsGet('ndrtls-cal-view'))
+  ? lsGet('ndrtls-cal-view') : 'list';
 let _calItems = [];
 let _calMonth = null;      // prvý deň zobrazeného mesiaca v mriežke
 let _calSelDay = null;     // vybraný deň v mriežke
@@ -3025,12 +3046,13 @@ function calRender() {
 
   document.getElementById('cal-btn-list').classList.toggle('active', _calView === 'list');
   document.getElementById('cal-btn-grid').classList.toggle('active', _calView === 'grid');
+  document.getElementById('cal-btn-season').classList.toggle('active', _calView === 'season');
 
   let leg = ['liga','trening','particka','turnaj','akcia'].map(k => {
     const c = CAL_KINDS[k];
     return `<span style="background:${c.bg};color:${c.color};">${c.label}</span>`;
   });
-  if (_calView === 'grid')
+  if (_calView !== 'list')
     leg.push('<span style="background:rgba(205,191,159,.07);color:var(--bone);'
       + 'border:1px dashed rgba(205,191,159,.4);">Voľný víkend</span>');
   legend.innerHTML = leg.join('');
@@ -3048,7 +3070,9 @@ function calRender() {
       + '<p>Zatiaľ tu nič nie je.</p></div>';
     return;
   }
-  list.innerHTML = _calView === 'grid' ? calGridHtml() : calListHtml();
+  list.innerHTML = _calView === 'grid' ? calGridHtml()
+    : _calView === 'season' ? calSeasonHtml()
+    : calListHtml();
 
 }
 
@@ -3201,6 +3225,60 @@ function calAddOnDay(key) {
 function calSelectDay(key) {
   _calSelDay = (_calSelDay === key) ? null : key;
   calRender();
+}
+
+/* Rozsah sezóny berieme z dát — od mesiaca prvej položky po mesiac poslednej,
+   nech tam nevisia prázdne mesiace navyše. */
+function calSeasonHtml() {
+  const byDay = {};
+  _calItems.forEach(i => { const k = calDayKey(i.when); (byDay[k] = byDay[k] || []).push(i); });
+
+  const first = _calItems[0].when, last = _calItems[_calItems.length - 1].when;
+  const todayKey = calDayKey(new Date());
+  const freeWeekend = (d, days) => {
+    const dow = d.getDay();
+    if (dow !== 0 && dow !== 6) return false;
+    const sat = new Date(d); sat.setDate(d.getDate() + (dow === 0 ? -1 : 0));
+    const sun = new Date(sat); sun.setDate(sat.getDate() + 1);
+    return !(days[calDayKey(sat)] || days[calDayKey(sun)]);
+  };
+
+  let html = '<div class="cal-season">';
+  const cur = new Date(first.getFullYear(), first.getMonth(), 1);
+  const end = new Date(last.getFullYear(), last.getMonth(), 1);
+  while (cur <= end) {
+    const y = cur.getFullYear(), m = cur.getMonth();
+    html += `<div class="cal-mini"><h4 onclick="calOpenMonth(${y},${m})">`
+      + `${CAL_MONTHS[m]} ${y}</h4><div class="cal-mini-grid">`;
+    ['P','U','S','Š','P','S','N'].forEach(d => html += `<div class="cal-mini-dow">${d}</div>`);
+    const lead = (new Date(y, m, 1).getDay() + 6) % 7;
+    for (let n = 0; n < lead; n++) html += '<div class="cal-mc out"></div>';
+    const dim = new Date(y, m + 1, 0).getDate();
+    for (let d = 1; d <= dim; d++) {
+      const date = new Date(y, m, d), k = calDayKey(date);
+      const items = byDay[k] || [];
+      const cls = ['cal-mc'];
+      let st = '';
+      if (items.length) {
+        cls.push('has');
+        st = ` style="background:${calKind(items[0].kind).line};"`;
+      } else if (freeWeekend(date, byDay)) cls.push('free');
+      if (k === todayKey) cls.push('today');
+      html += `<div class="${cls.join(' ')}"${st}`
+        + (items.length ? ` onclick="calOpenDay(${y},${m},${d})"` : '') + `>${d}</div>`;
+    }
+    html += '</div></div>';
+    cur.setMonth(cur.getMonth() + 1);
+  }
+  return html + '</div>';
+}
+
+/* Z prehľadu sezóny sa klikom prepneme na mesiac, prípadne rovno na deň. */
+function calOpenMonth(y, m) {
+  _calMonth = new Date(y, m, 1); _calSelDay = null; calSetView('grid');
+}
+function calOpenDay(y, m, d) {
+  _calMonth = new Date(y, m, 1); _calSelDay = calDayKey(new Date(y, m, d)); calSetView('grid');
 }
 
 function calGridHtml() {
@@ -5572,7 +5650,10 @@ async function loadEvents() {
           style="color:var(--rust-light);" title="Upraviť">✏</button>`
       : '';
 
-    return `<div class="event-card${isPast?' past-event':''}" id="ecard-${ev.id}" style="flex-direction:column;align-items:stretch;cursor:default;${isPast?'opacity:.5;':''}">
+    const kc = calKind(ev.type);
+    return `<div class="event-card${isPast?' past-event':''}" id="ecard-${ev.id}"
+      style="flex-direction:column;align-items:stretch;cursor:default;${isPast?'opacity:.5;':''}
+      border-left-color:${kc.line};background:linear-gradient(${kc.bg},${kc.bg}),var(--charcoal);">
       <div style="display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap;">
         <div class="ev-date">${day}<span>${mon}</span></div>
         <div class="ev-info" style="flex:1">
