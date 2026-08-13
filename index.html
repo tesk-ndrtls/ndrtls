@@ -941,7 +941,14 @@ body.md-open #admin-preview-banner{display:none !important;}
 .news-card p{color:var(--bone);font-size:.95rem;line-height:1.5;}
 .profile-card{background:var(--charcoal);border:1px solid var(--line);border-radius:12px;padding:1.4rem;margin-bottom:1rem;}
 .profile-card h4{font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rust-light);margin-bottom:1rem;}
-#toast{position:fixed;bottom:calc(1.5rem + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%) translateY(100px);background:var(--charcoal);border:1px solid var(--line);border-radius:8px;padding:.7rem 1.2rem;font-family:'Oswald';font-weight:600;font-size:.9rem;letter-spacing:.06em;z-index:300;transition:transform .3s ease;white-space:nowrap;pointer-events:none;}
+#toast{position:fixed;bottom:calc(1.5rem + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%) translateY(100px);background:var(--charcoal);border:1px solid var(--line);border-radius:8px;padding:.7rem 1.2rem;font-family:'Oswald';font-weight:600;font-size:.9rem;letter-spacing:.06em;z-index:300;transition:transform .3s ease;pointer-events:none;
+  /* Chyby z databázy sú dlhé vety. S nowrap utiekli mimo obrazovku a nedali sa
+     dočítať — radšej ich zalomíme a necháme dlhšie svietiť. */
+  /* Pri `left:50%` je dostupná šírka len polovica obrazovky, takže by sa dlhá
+     hláška zalomila do úzkeho stĺpca. `width:max-content` to obíde, strop drží
+     max-width. */
+  width:max-content;max-width:min(92vw,520px);white-space:normal;text-align:center;
+  line-height:1.35;overflow-wrap:break-word;}
 #toast.show{transform:translateX(-50%) translateY(0);}
 #toast.success{border-color:#4a8a4a;color:#6dbf6d;}
 #toast.error{border-color:#8a4a4a;color:#bf6d6d;}
@@ -1825,7 +1832,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.38.0</div>
+  <div id="version-badge">v3.39.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2790,10 +2797,14 @@ document.addEventListener('click', e => {
     closeModal(el.id);
   }
 });
+let _toastTimer = 0;
 function toast(msg,type) {
   const t=document.getElementById('toast');
   t.textContent=msg; t.className='show '+(type||'');
-  setTimeout(()=>t.className='',2800);
+  clearTimeout(_toastTimer);
+  // Dlhšia hláška potrebuje dlhší čas na prečítanie, chyba obzvlášť.
+  const ms = Math.min(9000, Math.max(2800, String(msg).length * 90 + (type === 'error' ? 2000 : 0)));
+  _toastTimer = setTimeout(()=>t.className='', ms);
 }
 
 /* ── ROSTER ───────────────────────────────────── */
@@ -2892,13 +2903,10 @@ const CAL_MONTHS = ['január','február','marec','apríl','máj','jún',
   'júl','august','september','október','november','december'];
 const CAL_MON_SHORT = ['jan','feb','mar','apr','máj','jún','júl','aug','sep','okt','nov','dec'];
 
-/* Skratky súperov do buniek mesačnej mriežky. Nie sú prevzaté z ligovej stránky
-   (szalh.sk sa z prostredia nedá načítať), takže sú volené tak, aby sa dali
-   prečítať: vždy tri znaky z rozlišujúceho slova názvu. Keby liga používala
-   iné oficiálne kódy, stačí prepísať tento zoznam. */
-const CAL_ABBR = { 'Neanderthals':'NEA', 'Uličníci':'ULI', 'AHC Pezinok Ducks':'PEZ',
-  'Black Jokers':'JOK', 'HK Petržalka':'PET', 'Wild Hogs':'HOG', 'WT Karaoke':'WTK',
-  'Mad Vipers':'MAD', 'AHS':'AHS' };
+/* Skratky súperov do buniek mesačnej mriežky — kódy používané v lige. */
+const CAL_ABBR = { 'Neanderthals':'NEA', 'Uličníci':'ULI', 'AHC Pezinok Ducks':'DUC',
+  'Black Jokers':'BJK', 'HK Petržalka':'HKP', 'Wild Hogs':'WLH', 'WT Karaoke':'WTK',
+  'Mad Vipers':'MVP', 'AHS':'AHS' };
 const CAL_US = 'Neanderthals';
 const calAbbr = n => CAL_ABBR[n]
   || String(n || '').replace(/[^A-Za-zÀ-ž]/g, '').slice(0, 3).toUpperCase();
@@ -3176,6 +3184,20 @@ function calShiftMonth(delta) {
   _calSelDay = null;
   calRender();
 }
+const calDayFromKey = k => { const [y,m,d] = k.split('-').map(Number); return new Date(y,m,d); };
+
+/* Admin pridáva udalosť rovno z mriežky — otvorí sa bežný formulár s
+   predvyplneným dňom. Čas necháme na 18:00 ako rozumné východisko, dá sa
+   prepísať. */
+function calAddOnDay(key) {
+  if (!isAdminUI()) return;
+  const d = calDayFromKey(key);
+  openNewEventModal();
+  d.setHours(18, 0, 0, 0);
+  document.getElementById('ev-date').value =
+    new Date(d - d.getTimezoneOffset()*60000).toISOString().slice(0,16);
+}
+
 function calSelectDay(key) {
   _calSelDay = (_calSelDay === key) ? null : key;
   calRender();
@@ -3235,22 +3257,29 @@ function calGridHtml() {
         + `<span class="cal-ctime">${calTime(i0.when)}</span>`;
       if (items.length > 1) inner += `<span class="cal-more">+${items.length - 1}</span>`;
     }
-    html += `<div class="${cls.join(' ')}"${tint}${items.length ? ` onclick="calSelectDay('${k}')"` : ''}>${inner}</div>`;
+    // Admin klikne aj na prázdny deň — rovno z neho pridá udalosť.
+    const clickable = items.length || isAdminUI();
+    if (clickable && !items.length) cls.push('has');
+    html += `<div class="${cls.join(' ')}"${tint}${clickable
+      ? ` onclick="calSelectDay('${k}')"` : ''}>${inner}</div>`;
   });
   html += '</div>';
 
   // Pod mriežkou detail vybraného dňa; bez výberu program celého mesiaca.
   const inMonth = _calItems.filter(i => i.when.getFullYear() === y && i.when.getMonth() === m);
   const shown = _calSelDay ? (byDay[_calSelDay] || []) : inMonth;
-  if (!shown.length) {
-    html += `<div class="cal-day-head">Program mesiaca</div>`
-      + `<div class="empty-state" style="padding:2rem 1rem;"><p>V tomto mesiaci nič nemáme.</p></div>`;
-  } else {
-    const d0 = shown[0].when;
-    html += `<div class="cal-day-head">${_calSelDay
-      ? d0.getDate() + '. ' + CAL_MONTHS[d0.getMonth()]
-      : 'Program mesiaca'}</div>`;
-    html += shown.map(i => calItemHtml(i)).join('');
+  const selDate = _calSelDay ? calDayFromKey(_calSelDay) : null;
+  const head = selDate
+    ? selDate.getDate() + '. ' + CAL_MONTHS[selDate.getMonth()]
+    : 'Program mesiaca';
+  html += `<div class="cal-day-head">${head}</div>`;
+  html += shown.length
+    ? shown.map(i => calItemHtml(i)).join('')
+    : `<div class="empty-state" style="padding:1.6rem 1rem;"><p>${selDate
+        ? 'V tento deň nič nemáme.' : 'V tomto mesiaci nič nemáme.'}</p></div>`;
+  if (isAdminUI() && selDate) {
+    html += `<button class="btn-admin save" style="width:100%;padding:.7rem;margin-top:.4rem;"
+      onclick="calAddOnDay('${_calSelDay}')">+ Pridať udalosť na ${selDate.getDate()}. ${CAL_MONTHS[selDate.getMonth()]}</button>`;
   }
   return html;
 }
@@ -6049,8 +6078,13 @@ async function saveSeasonPayment() {
 }
 
 async function loadAdminEvents() {
-  const { data, error } = await sb.from('events')
-    .select('*, rsvp(count)').order('date', {ascending: false});
+  // Rovnaké poradie ako v Udalostiach a kalendári — najbližšia akcia hore,
+  // odohrané pod ňou od najnovšieho.
+  const { data: raw, error } = await sb.from('events')
+    .select('*, rsvp(count)').order('date', {ascending: true});
+  const _t = new Date(); _t.setHours(0,0,0,0);
+  const _pastEv = e => { const d = new Date(e.date); d.setHours(0,0,0,0); return d < _t; };
+  const data = raw ? raw.filter(e => !_pastEv(e)).concat(raw.filter(_pastEv).reverse()) : raw;
 
   const list = document.getElementById('admin-events-list');
   const months = ['jan','feb','mar','apr','máj','jún','júl','aug','sep','okt','nov','dec'];
@@ -6140,19 +6174,27 @@ async function saveEvent() {
 
   closeModal('modal-event');
   toast(editId ? 'Udalosť upravená ✓' : 'Udalosť pridaná ✓', 'success');
+  refreshEventViews();
+}
+
+/* Po zmene udalosti prekresli všetky tri miesta, kde sa zobrazuje. Kalendár len
+   keď je otvorený — inak by sme zbytočne ťahali dáta. */
+function refreshEventViews() {
   loadAdminEvents();
   loadEvents();
+  if (document.getElementById('sec-calendar')?.classList.contains('active')) loadCalendar();
 }
 
 async function deleteEvent() {
   const id = document.getElementById('ev-edit-id').value;
   if (!confirm('Naozaj vymazať túto udalosť?')) return;
   const { error } = await sb.from('events').delete().eq('id', id);
-  if (!error) {
-    closeModal('modal-event');
-    toast('Udalosť vymazaná', 'success');
-    loadAdminEvents(); loadEvents();
-  }
+  // Chybu treba ukázať — predtým sa mazanie potichu neudialo a vyzeralo to,
+  // akoby sa nič nestalo.
+  if (error) { toast('Chyba: ' + error.message, 'error'); return; }
+  closeModal('modal-event');
+  toast('Udalosť vymazaná', 'success');
+  refreshEventViews();
 }
 
 /* ── MAIN LANG (nav, header, verejné stránky) ──── */
