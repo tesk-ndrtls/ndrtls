@@ -748,9 +748,9 @@ a:hover{color:var(--cream-bright);}
 .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:3px;}
 .cal-dow{font-family:'Oswald'; font-weight:700; font-size:.58rem; letter-spacing:.1em;
   text-transform:uppercase; color:var(--bone); text-align:center; padding-bottom:.3rem;}
-.cal-cell{aspect-ratio:1; border:1px solid var(--line); border-radius:6px; background:var(--charcoal);
-  padding:.2rem; display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
-  font-family:'Barlow Condensed'; font-size:.85rem; color:var(--bone); overflow:hidden;}
+.cal-cell{aspect-ratio:.74; border:1px solid var(--line); border-radius:6px; background:var(--charcoal);
+  padding:.15rem .1rem; display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+  gap:.1rem; font-family:'Barlow Condensed'; font-size:.85rem; color:var(--bone); overflow:hidden;}
 .cal-cell.out{opacity:.25;}
 .cal-cell.has{cursor:pointer;}
 .cal-cell.sel{border-color:var(--rust); box-shadow:0 0 0 1px var(--rust) inset;}
@@ -761,10 +761,16 @@ a:hover{color:var(--cream-bright);}
 .cal-cell .num{line-height:1.1; margin-bottom:.15rem;}
 .cal-dots{display:flex; flex-wrap:wrap; gap:2px; justify-content:center;}
 .cal-dots i{width:5px; height:5px; border-radius:50%; display:block;}
+/* Deň s programom nesie farbu kategórie, skratku súpera a čas — v mriežke je
+   to jediné miesto, kde sa dá na prvý pohľad prečítať, o čo ide. */
+.cal-chip{font-family:'Oswald'; font-weight:700; font-size:.55rem; letter-spacing:.04em;
+  line-height:1.5; padding:0 .18rem; border-radius:3px; max-width:100%;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.cal-ctime{font-family:'Oswald'; font-size:.5rem; letter-spacing:.02em; color:var(--cream-bright);
+  opacity:.75; line-height:1.2;}
+.cal-more{font-family:'Oswald'; font-size:.48rem; color:var(--bone); opacity:.7; line-height:1;}
 .cal-day-head{font-family:'Oswald'; font-weight:700; font-size:.75rem; letter-spacing:.14em;
   text-transform:uppercase; color:var(--rust-light); margin:1.4rem 0 .6rem;}
-.cal-title.matchup{font-family:'Anton'; font-size:1.4rem; letter-spacing:.04em; line-height:1.05;}
-.cal-sub{font-size:.85rem; color:var(--bone); margin-top:.1rem;}
 .cal-showpast{width:100%; font-family:'Oswald'; font-weight:700; font-size:.72rem;
   letter-spacing:.12em; text-transform:uppercase; padding:.6rem; border-radius:6px;
   background:var(--charcoal); color:var(--bone); border:1px dashed var(--line);
@@ -1819,7 +1825,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.37.0</div>
+  <div id="version-badge">v3.38.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2886,11 +2892,13 @@ const CAL_MONTHS = ['január','február','marec','apríl','máj','jún',
   'júl','august','september','október','november','december'];
 const CAL_MON_SHORT = ['jan','feb','mar','apr','máj','jún','júl','aug','sep','okt','nov','dec'];
 
-/* Skratky do náhľadu zápasu. Náš tím dávame vždy prvý, nech je na prvý pohľad
-   jasné, proti komu hráme — poradie domáci/hostia nesie riadok „doma / vonku“. */
+/* Skratky súperov do buniek mesačnej mriežky. Nie sú prevzaté z ligovej stránky
+   (szalh.sk sa z prostredia nedá načítať), takže sú volené tak, aby sa dali
+   prečítať: vždy tri znaky z rozlišujúceho slova názvu. Keby liga používala
+   iné oficiálne kódy, stačí prepísať tento zoznam. */
 const CAL_ABBR = { 'Neanderthals':'NEA', 'Uličníci':'ULI', 'AHC Pezinok Ducks':'PEZ',
-  'Black Jokers':'BJK', 'HK Petržalka':'PET', 'Wild Hogs':'WHG', 'WT Karaoke':'WTK',
-  'Mad Vipers':'MVP', 'AHS':'AHS' };
+  'Black Jokers':'JOK', 'HK Petržalka':'PET', 'Wild Hogs':'HOG', 'WT Karaoke':'WTK',
+  'Mad Vipers':'MAD', 'AHS':'AHS' };
 const CAL_US = 'Neanderthals';
 const calAbbr = n => CAL_ABBR[n]
   || String(n || '').replace(/[^A-Za-zÀ-ž]/g, '').slice(0, 3).toUpperCase();
@@ -2914,6 +2922,13 @@ const calRoundOf = notes => {
 };
 
 const calKind = k => CAL_KINDS[k] || CAL_KINDS.akcia;
+/* Do bunky mriežky sa zmestí zopár znakov: pri zápase skratka súpera,
+   inak krátky názov kategórie. */
+const CAL_SHORT = { trening:'TRÉN', particka:'PARTY', turnaj:'TURNAJ', akcia:'AKCIA' };
+function calCellLabel(i) {
+  if (i.matchup) return calAbbr(i.matchup.opponent);
+  return CAL_SHORT[i.kind] || CAL_SHORT.akcia;
+}
 const calTime = d => d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
 const calDayKey = d => d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
 
@@ -3119,9 +3134,7 @@ function calItemHtml(i, withRsvp) {
     </div>
     <div class="cal-body">
       <span class="cal-tag" style="background:${c.bg};color:${c.color};">${tag}</span>
-      <div class="cal-title${mu ? ' matchup' : ''}" ${mu ? `style="color:${c.color};"` : ''}>${mdEsc(mu ? mu.abbr : i.title)}</div>
-      ${mu && mu.opponent !== calAbbr(mu.opponent)
-        ? `<div class="cal-sub">${mdEsc(mu.opponent)}</div>` : ''}
+      <div class="cal-title">${mdEsc(i.title)}</div>
       <div class="cal-meta">${mdEsc(meta)}</div>
       ${withRsvp === false ? '' : calRsvpHtml(i)}
     </div>
@@ -3213,10 +3226,16 @@ function calGridHtml() {
     if (isFreeWeekend(d)) cls.push('free');
     if (k === todayKey) cls.push('today');
     if (k === _calSelDay) cls.push('sel');
-    const dots = items.slice(0, 4).map(i =>
-      `<i style="background:${calKind(i.kind).line};"></i>`).join('');
-    html += `<div class="${cls.join(' ')}"${items.length ? ` onclick="calSelectDay('${k}')"` : ''}>
-      <span class="num">${d.getDate()}</span><span class="cal-dots">${dots}</span></div>`;
+    let inner = `<span class="num">${d.getDate()}</span>`;
+    let tint = '';
+    if (items.length) {
+      const i0 = items[0], c0 = calKind(i0.kind);
+      tint = ` style="background:linear-gradient(${c0.bg},${c0.bg}),var(--charcoal);border-color:${c0.line};"`;
+      inner += `<span class="cal-chip" style="background:${c0.bg};color:${c0.color};">${mdEsc(calCellLabel(i0))}</span>`
+        + `<span class="cal-ctime">${calTime(i0.when)}</span>`;
+      if (items.length > 1) inner += `<span class="cal-more">+${items.length - 1}</span>`;
+    }
+    html += `<div class="${cls.join(' ')}"${tint}${items.length ? ` onclick="calSelectDay('${k}')"` : ''}>${inner}</div>`;
   });
   html += '</div>';
 
