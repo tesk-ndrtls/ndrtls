@@ -1852,7 +1852,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.40.0</div>
+  <div id="version-badge">v3.40.1</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -5227,6 +5227,14 @@ function lineupRemoveSlot(slot){
   renderLineup();
   toast('Hráč odobraný','success');
 }
+/* Malý post pri mene. Keď sú v ponuke všetci, treba vidieť, kto je brankár
+   a kto obranca — inak by sa hráč bez postu nedal odlíšiť od vhodného. */
+function lPosTag(p) {
+  const t = { 'B':'B', 'O':'O', '\u00da':'\u00da', 'H':'\u00da/O' }[p.position] || '?';
+  return '<span style="float:right;font-family:\'Oswald\';font-size:.62rem;letter-spacing:.06em;'
+    + 'color:var(--bone);opacity:.65;margin-top:.15rem;">' + t + '</span>';
+}
+
 function lineupSlotClick(slot) {
   if (_lJustDragged) { _lJustDragged = false; return; } // klik hneď po drage — ignoruj
   if (!_lEd) return;
@@ -5237,9 +5245,13 @@ function lineupSlotClick(slot) {
   const pm = {'G':['B'],'LD':['O','H'],'RD':['O','H'],'LW':['\u00da','H'],'C':['\u00da','H'],'RW':['\u00da','H']};
   const al = pm[slot.dataset.pos] || ['B','O','\u00da','H'];
 
-  // Kandidáti = prihlásení registrovaní na danú pozíciu; ak nikto, ponúkni všetkých prihlásených
-  let cand = _lPool.filter(p => al.includes(p.position));
-  if (!cand.length) cand = _lPool.slice();
+  /* Ponúkame VŠETKÝCH registrovaných, len ich zoradíme — hráči na danú pozíciu
+     idú hore. Predtým sa nevyhovujúci odfiltrovali úplne, takže v ponuke chýbali,
+     a spolu s nimi aj každý, kto post v profile vyplnený nemá. Radenie je
+     stabilné, takže poradie v rámci skupiny ostáva. */
+  const fits = p => al.includes(p.position);
+  const byFit = list => list.slice().sort((a, b) => (fits(b) ? 1 : 0) - (fits(a) ? 1 : 0));
+  const cand = byFit(_lPool);
 
   const used = new Set(Object.values(_lD).map(p => p.playerId));
   const list = document.getElementById('lineup-picker-list');
@@ -5254,18 +5266,17 @@ function lineupSlotClick(slot) {
   cand.forEach(p => {
     const u = used.has(p.id) ? 'opacity:.4;pointer-events:none;' : '';
     const nm = _lDisplayName(p);
-    rows.push('<div onclick="assignPlayer(\'' + p.id + '\')" style="padding:.4rem .6rem;border:1px solid var(--line);border-radius:6px;cursor:pointer;background:var(--charcoal);' + u + '"><span style="font-family:\'Anton\';color:var(--maroon);margin-right:.3rem;">' + (p.number || '\u2014') + '</span><span style="font-family:\'Oswald\';font-size:.82rem;color:var(--cream-bright);">' + nm + '</span></div>');
+    rows.push('<div onclick="assignPlayer(\'' + p.id + '\')" style="padding:.4rem .6rem;border:1px solid ' + (fits(p) ? 'var(--rust)' : 'var(--line)') + ';border-radius:6px;cursor:pointer;background:var(--charcoal);' + u + '"><span style="font-family:\'Anton\';color:var(--maroon);margin-right:.3rem;">' + (p.number || '\u2014') + '</span><span style="font-family:\'Oswald\';font-size:.82rem;color:var(--cream-bright);">' + nm + '</span>' + lPosTag(p) + '</div>');
   });
 
   // Admin: aj neprihláseného hráča — výberom sa reálne prihlási (RSVP=áno)
   if (isAdminUI() && _lNotRsvp.length) {
-    let notCand = _lNotRsvp.filter(p => al.includes(p.position));
-    if (!notCand.length) notCand = _lNotRsvp.slice();
+    const notCand = byFit(_lNotRsvp);
     rows.push('<div style="grid-column:1/-1;margin-top:.6rem;padding-top:.5rem;border-top:1px solid var(--line);font-family:\'Oswald\';font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--bone);opacity:.75;">Neprihlásení — pridaním ich prihlásiš</div>');
     notCand.forEach(p => {
       const u = used.has(p.id) ? 'opacity:.4;pointer-events:none;' : '';
       const nm = _lDisplayName(p);
-      rows.push('<div onclick="assignUnregisteredPlayer(\'' + p.id + '\')" style="padding:.4rem .6rem;border:1px dashed var(--line);border-radius:6px;cursor:pointer;background:var(--charcoal);' + u + '"><span style="font-family:\'Anton\';color:var(--bone);margin-right:.3rem;">' + (p.number || '—') + '</span><span style="font-family:\'Oswald\';font-size:.82rem;color:var(--bone);">' + nm + '</span></div>');
+      rows.push('<div onclick="assignUnregisteredPlayer(\'' + p.id + '\')" style="padding:.4rem .6rem;border:1px dashed ' + (fits(p) ? 'var(--rust)' : 'var(--line)') + ';border-radius:6px;cursor:pointer;background:var(--charcoal);' + u + '"><span style="font-family:\'Anton\';color:var(--bone);margin-right:.3rem;">' + (p.number || '—') + '</span><span style="font-family:\'Oswald\';font-size:.82rem;color:var(--bone);">' + nm + '</span>' + lPosTag(p) + '</div>');
     });
   }
 
