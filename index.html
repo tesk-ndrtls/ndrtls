@@ -1554,7 +1554,7 @@ body.md-open #admin-preview-banner{display:none !important;}
     <!-- Season selector -->
     <div style="margin-bottom:1.2rem;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;">
       <label style="font-family:'Oswald';font-weight:600;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--bone);">Sezóna:</label>
-      <select id="fin-season-select" onchange="loadFinance()"
+      <select id="fin-season-select" onchange="renderFinSeason()"
         style="background:var(--charcoal);border:1px solid var(--line);border-radius:6px;
         padding:.4rem .8rem;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;">
       </select>
@@ -1852,7 +1852,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.40.1</div>
+  <div id="version-badge">v3.40.2</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -5757,8 +5757,9 @@ async function loadSeasons() {
   const { data } = await sb.from('seasons').select('*').order('year_start', {ascending: false});
   allSeasons = data || [];
 
-  // Populate all season selects
-  ['fin-season-select','adm-season-select'].forEach(selId => {
+  // Pozor: `fin-season-select` si plní loadFinance() z proxy — tu ho nesmieme
+  // prepísať, inak sa pri otvorení sekcie na chvíľu ukáže iná sezóna.
+  ['adm-season-select'].forEach(selId => {
     const sel = document.getElementById(selId);
     if (!sel) return;
     sel.innerHTML = allSeasons.map(s =>
@@ -5779,6 +5780,10 @@ async function loadFinance() {
 
   if (subtitle) subtitle.textContent = 'Načítavam…';
   if (gTbody) gTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:1.5rem"><span class="spinner"></span></td></tr>';
+  // Prázdny selektor počas načítania — inak by svietila sezóna z predošlého
+  // otvorenia a po dobehnutí by pred očami preskočila na inú.
+  const selEl = document.getElementById('fin-season-select');
+  if (selEl && !_finData) selEl.innerHTML = '<option value="">…</option>';
 
   // Získaj access token prihláseného používateľa
   let token = null;
