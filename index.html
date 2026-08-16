@@ -738,13 +738,18 @@ a:hover{color:var(--cream-bright);}
 .cal-legend{display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:1.4rem;}
 .cal-legend span{font-family:'Oswald'; font-weight:700; font-size:.6rem; letter-spacing:.14em;
   text-transform:uppercase; padding:.22rem .6rem; border-radius:4px;}
-.cal-export{width:100%; font-family:'Oswald'; font-weight:700; font-size:.74rem;
-  letter-spacing:.12em; text-transform:uppercase; padding:.65rem; border-radius:6px;
+.cal-sub-title{font-family:'Oswald'; font-weight:700; font-size:.7rem; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--rust-light); margin-bottom:.5rem;}
+.cal-sub-btns{display:flex; gap:.5rem; margin-bottom:.5rem;}
+.cal-export{flex:1; display:block; text-align:center; text-decoration:none;
+  font-family:'Oswald'; font-weight:700; font-size:.74rem; letter-spacing:.1em;
+  text-transform:uppercase; padding:.7rem .5rem; border-radius:6px;
   background:var(--charcoal); color:var(--cream-bright); border:1px solid var(--rust);
-  cursor:pointer; margin-bottom:.5rem;}
+  cursor:pointer;}
 .cal-export:hover{background:var(--maroon); border-color:var(--maroon);}
-.cal-export-hint{font-size:.82rem; color:var(--bone); opacity:.75; line-height:1.35;
+.cal-export-hint{font-size:.82rem; color:var(--bone); opacity:.8; line-height:1.4;
   margin-bottom:1.1rem;}
+.cal-export-hint a{color:var(--rust-light);}
 .cal-switch{display:flex; gap:.4rem; margin-bottom:1rem;}
 .cal-switch button{flex:1; font-family:'Oswald'; font-weight:700; font-size:.72rem; letter-spacing:.12em;
   text-transform:uppercase; padding:.55rem .8rem; border-radius:6px; cursor:pointer;
@@ -1335,9 +1340,15 @@ body.md-open #admin-preview-banner{display:none !important;}
       <button id="cal-btn-season" onclick="calSetView('season')">▤ Sezóna</button>
     </div>
     <div class="cal-legend" id="cal-legend"></div>
-    <button class="cal-export" onclick="calExportIcs()">📅 Pridať sezónu do kalendára</button>
-    <div class="cal-export-hint">Otvorí sa ponuka zdieľania — vyber Kalendár. Na počítači sa
-      stiahne súbor <b>.ics</b>, ktorý vieš v Google Kalendári importovať cez Nastavenia → Import.</div>
+    <div class="cal-sub-title">Zápasy do tvojho kalendára</div>
+    <div class="cal-sub-btns">
+      <a class="cal-export" href="webcal://ndrtls.com/zapasy.ics">🍎 iPhone / iPad</a>
+      <a class="cal-export" target="_blank" rel="noopener"
+         href="https://calendar.google.com/calendar/render?cid=webcal%3A%2F%2Fndrtls.com%2Fzapasy.ics">📅 Google</a>
+    </div>
+    <div class="cal-export-hint">Jedno ťuknutie a kalendár si zápasy predplatí — sám sa aktualizuje,
+      keď sa rozpis zmení. Len ligové zápasy, bez tréningov a partičiek.
+      <a href="#" onclick="calExportIcs();return false;">Stiahnuť súbor .ics</a></div>
     <div id="cal-admin"></div>
     <div id="cal-list"><div class="empty-state"><div class="es-icon">🗓️</div><p>Načítavam…</p></div></div>
   </div>
@@ -1862,7 +1873,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.41.0</div>
+  <div id="version-badge">v3.42.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -7021,14 +7032,18 @@ function icsFold(line) {
   return out + cur;
 }
 
+/* Do kalendára dávame len ligové zápasy — tréningy a partičky sa menia a
+   v súkromnom kalendári by len zavadzali. */
+const calMatchItems = () => _calItems.filter(i => i.kind === 'liga' || i.kind === 'zapas');
+
 function calBuildIcs() {
   const now = icsStamp(new Date());
   const L = ['BEGIN:VCALENDAR', 'VERSION:2.0',
     'PRODID:-//Bratislava Neanderthals//ndrtls.com//SK',
     'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
-    'X-WR-CALNAME:Neanderthals ' + RAHL_SEASON_LABEL];
+    'X-WR-CALNAME:Neanderthals — zápasy ' + RAHL_SEASON_LABEL];
 
-  _calItems.forEach((i, n) => {
+  calMatchItems().forEach((i, n) => {
     const mins = ICS_DUR_MIN[i.kind] || 120;
     const end = new Date(i.when.getTime() + mins * 60000);
     // Stabilné UID: opakovaný import ten istý zápas prepíše, nezdvojí.
@@ -7048,7 +7063,7 @@ function calBuildIcs() {
 }
 
 async function calExportIcs() {
-  if (!_calItems.length) { toast('Kalendár je prázdny.', 'error'); return; }
+  if (!calMatchItems().length) { toast('Žiadne zápasy na export.', 'error'); return; }
   const name = 'neanderthals-' + RAHL_SEASON_LABEL.replace(/\D+/g, '-').replace(/^-|-$/g, '') + '.ics';
   const ics = calBuildIcs();
 
