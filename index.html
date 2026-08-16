@@ -738,6 +738,13 @@ a:hover{color:var(--cream-bright);}
 .cal-legend{display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:1.4rem;}
 .cal-legend span{font-family:'Oswald'; font-weight:700; font-size:.6rem; letter-spacing:.14em;
   text-transform:uppercase; padding:.22rem .6rem; border-radius:4px;}
+.cal-export{width:100%; font-family:'Oswald'; font-weight:700; font-size:.74rem;
+  letter-spacing:.12em; text-transform:uppercase; padding:.65rem; border-radius:6px;
+  background:var(--charcoal); color:var(--cream-bright); border:1px solid var(--rust);
+  cursor:pointer; margin-bottom:.5rem;}
+.cal-export:hover{background:var(--maroon); border-color:var(--maroon);}
+.cal-export-hint{font-size:.82rem; color:var(--bone); opacity:.75; line-height:1.35;
+  margin-bottom:1.1rem;}
 .cal-switch{display:flex; gap:.4rem; margin-bottom:1rem;}
 .cal-switch button{flex:1; font-family:'Oswald'; font-weight:700; font-size:.72rem; letter-spacing:.12em;
   text-transform:uppercase; padding:.55rem .8rem; border-radius:6px; cursor:pointer;
@@ -1328,6 +1335,9 @@ body.md-open #admin-preview-banner{display:none !important;}
       <button id="cal-btn-season" onclick="calSetView('season')">▤ Sezóna</button>
     </div>
     <div class="cal-legend" id="cal-legend"></div>
+    <button class="cal-export" onclick="calExportIcs()">📅 Pridať sezónu do kalendára</button>
+    <div class="cal-export-hint">Otvorí sa ponuka zdieľania — vyber Kalendár. Na počítači sa
+      stiahne súbor <b>.ics</b>, ktorý vieš v Google Kalendári importovať cez Nastavenia → Import.</div>
     <div id="cal-admin"></div>
     <div id="cal-list"><div class="empty-state"><div class="es-icon">🗓️</div><p>Načítavam…</p></div></div>
   </div>
@@ -1852,7 +1862,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.40.2</div>
+  <div id="version-badge">v3.41.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2890,6 +2900,7 @@ function renderRosterTable() {
    naše zápasy; v 4. a 13. kole máme voľno, preto tie čísla chýbajú.
    Čas je lokálny (bez "Z"), rovnako ako ho zadáva formulár udalostí. */
 const RAHL_VENUE = 'Hala B';
+const RAHL_SEASON_LABEL = '2026/27';
 const RAHL_SCHEDULE = [
   { round: 1,  date:'2026-09-05T12:15', home:'Uličníci',          away:'Neanderthals' },
   { round: 2,  date:'2026-09-12T09:45', home:'Neanderthals',      away:'AHC Pezinok Ducks' },
@@ -6982,6 +6993,83 @@ function closeGallery() {
   }
   tick();
 })();
+
+
+/* ── EXPORT DO KALENDÁRA (.ics) ──
+   Google Kalendár nemá spôsob, ako mu jedným klikom podstrčiť 16 udalostí —
+   `render?action=TEMPLATE` vie vždy len jednu. Univerzálne je preto .ics, ktoré
+   zoberie Google, Apple aj Outlook. Na telefóne ho pošleme cez systémové
+   zdieľanie (odtiaľ ide rovno do Kalendára), inde sa stiahne ako súbor. */
+const ICS_DUR_MIN = { liga: 90, zapas: 90 };      // ostatné 120 min
+
+function icsEsc(t) {
+  return String(t || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;')
+    .replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+}
+const icsStamp = d => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+
+/* ICS dovolí najviac 75 oktetov na riadok. Slovenčina je v UTF-8 viacbajtová,
+   takže lámeme podľa bajtov, nie znakov — inak by dlhý názov súbor rozbil. */
+function icsFold(line) {
+  const enc = new TextEncoder();
+  let out = '', cur = '', bytes = 0;
+  for (const ch of line) {
+    const n = enc.encode(ch).length;
+    if (bytes + n > 73) { out += cur + '\r\n '; cur = ''; bytes = 1; }
+    cur += ch; bytes += n;
+  }
+  return out + cur;
+}
+
+function calBuildIcs() {
+  const now = icsStamp(new Date());
+  const L = ['BEGIN:VCALENDAR', 'VERSION:2.0',
+    'PRODID:-//Bratislava Neanderthals//ndrtls.com//SK',
+    'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+    'X-WR-CALNAME:Neanderthals ' + RAHL_SEASON_LABEL];
+
+  _calItems.forEach((i, n) => {
+    const mins = ICS_DUR_MIN[i.kind] || 120;
+    const end = new Date(i.when.getTime() + mins * 60000);
+    // Stabilné UID: opakovaný import ten istý zápas prepíše, nezdvojí.
+    const uid = (i.id ? 'ev-' + i.id : 'liga-' + (i.round || n)) + '@ndrtls.com';
+    const desc = [i.round ? i.round + '. kolo · RAHL1' : '',
+                  i.matchup ? (i.matchup.home ? 'Hráme doma' : 'Hráme vonku') : '']
+                 .filter(Boolean).join(' · ');
+    L.push('BEGIN:VEVENT', 'UID:' + uid, 'DTSTAMP:' + now,
+      'DTSTART:' + icsStamp(i.when), 'DTEND:' + icsStamp(end),
+      icsFold('SUMMARY:' + icsEsc(i.title)));
+    if (i.venue) L.push(icsFold('LOCATION:' + icsEsc(i.venue)));
+    if (desc)    L.push(icsFold('DESCRIPTION:' + icsEsc(desc)));
+    L.push('END:VEVENT');
+  });
+  L.push('END:VCALENDAR');
+  return L.join('\r\n') + '\r\n';
+}
+
+async function calExportIcs() {
+  if (!_calItems.length) { toast('Kalendár je prázdny.', 'error'); return; }
+  const name = 'neanderthals-' + RAHL_SEASON_LABEL.replace(/\D+/g, '-').replace(/^-|-$/g, '') + '.ics';
+  const ics = calBuildIcs();
+
+  try {
+    const file = new File([ics], name, { type: 'text/calendar' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'Neanderthals — sezóna ' + RAHL_SEASON_LABEL });
+      return;
+    }
+  } catch(e) {
+    if (e && e.name === 'AbortError') return;   // používateľ zdieľanie zrušil
+    console.warn('Zdieľanie zlyhalo, skúšam stiahnutie:', e);
+  }
+
+  const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }));
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  toast('Súbor stiahnutý — otvor ho v kalendári ✓', 'success');
+}
 
 /* ── ZAMKNUTIE SCROLLU POD OTVORENOU VRSTVOU ──
    Pozadie držíme na mieste tým, že zahodíme touchmove/wheel mimo scrollovateľného
