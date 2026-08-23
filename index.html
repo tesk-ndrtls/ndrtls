@@ -1873,7 +1873,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.42.0</div>
+  <div id="version-badge">v3.43.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2402,11 +2402,32 @@ const AUTH_LINK = (() => {
   } catch(e) { console.error('[auth-link] parse failed:', e); return null; }
 })();
 
+/* Odkaz z pozvánky/obnovy hesla musí skončiť na nastavení hesla, nie v appke.
+   Príznak sa nastaví hneď pri štarte — _onLoginInner() beží súbežne (ťahá profil
+   a číslo dresu) a bez neho stihol na konci presmerovať na Oznamy a onboarding
+   z obrazovky zmizol. */
+let _pendingOnboarding = (() => {
+  try {
+    const h = new URLSearchParams((location.hash || '').replace(/^#/, ''));
+    const q = new URLSearchParams((location.search || '').replace(/^\?/, ''));
+    const t = h.get('type') || q.get('type');
+    const isLink = !!(h.get('access_token') || q.get('code') || h.get('token_hash')
+                   || q.get('token_hash') || t);
+    if (!isLink) return null;
+    return t === 'recovery' ? 'recovery' : 'invite';
+  } catch(e) { return null; }
+})();
+
 const sb = createClient('https://vchxjbdrromujmzujduo.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjaHhqYmRycm9tdWptenVqZHVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NjAyNDAsImV4cCI6MjA5NjQzNjI0MH0.xGT8sxDD2bDogwCZGYAJ-sGWROt1c7e1M9f9_qrm2WA', {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true
+    /* Odkaz z pozvánky si spracujeme sami (nižšie v init()). Keď to robil aj
+       klient sám, obaja siahali na ten istý jednorazový token: klient ho
+       spotreboval na pozadí, náš getSession() sa spýtal skôr, než to dobehlo,
+       a druhé uplatnenie potom zlyhalo — používateľ videl „pozvánka už nie je
+       platná“, hoci bola v poriadku. */
+    detectSessionInUrl: false
   }
 });
 
@@ -2468,6 +2489,7 @@ async function init() {
   // Handle invite / recovery / magic links (all Supabase formats)
   if (AUTH_LINK) {
     let session = null;
+    let lastAuthErr = AUTH_LINK.error || null;
 
     // 1. detectSessionInUrl may have already established it
     try {
@@ -2480,7 +2502,7 @@ async function init() {
     if (!session && AUTH_LINK.code) {
       try {
         const { data, error } = await sb.auth.exchangeCodeForSession(AUTH_LINK.code);
-        if (error) console.error('[auth-link] exchangeCodeForSession:', error.message);
+        if (error) { console.error('[auth-link] exchangeCodeForSession:', error.message); lastAuthErr = error.message; }
         session = data?.session || null;
       } catch(e) { console.error('[auth-link] exchange threw:', e); }
     }
@@ -2492,21 +2514,25 @@ async function init() {
           access_token: AUTH_LINK.access_token,
           refresh_token: AUTH_LINK.refresh_token
         });
-        if (error) console.error('[auth-link] setSession:', error.message);
+        if (error) { console.error('[auth-link] setSession:', error.message); lastAuthErr = error.message; }
         session = data?.session || null;
       } catch(e) { console.error('[auth-link] setSession threw:', e); }
     }
 
     // 4. Verify flow: redeem token_hash via verifyOtp
     if (!session && AUTH_LINK.token_hash) {
-      try {
-        const { data, error } = await sb.auth.verifyOtp({
-          token_hash: AUTH_LINK.token_hash,
-          type: AUTH_LINK.type || 'invite'
-        });
-        if (error) console.error('[auth-link] verifyOtp:', error.message);
-        session = data?.session || null;
-      } catch(e) { console.error('[auth-link] verifyOtp threw:', e); }
+      // Typ v odkaze občas chýba alebo nesedí s tým, ako bol e-mail vytvorený.
+      // Neúspešné overenie token nespotrebuje, takže ostatné typy vieme doskúšať.
+      const types = [AUTH_LINK.type, 'invite', 'signup', 'recovery', 'magiclink', 'email']
+        .filter((t, i, a) => t && a.indexOf(t) === i);
+      for (const t of types) {
+        try {
+          const { data, error } = await sb.auth.verifyOtp({ token_hash: AUTH_LINK.token_hash, type: t });
+          if (error) { console.warn('[auth-link] verifyOtp(' + t + '):', error.message); lastAuthErr = error.message; continue; }
+          session = data?.session || null;
+          if (session) break;
+        } catch(e) { console.error('[auth-link] verifyOtp threw:', e); lastAuthErr = String(e.message || e); }
+      }
     }
 
     window.history.replaceState({}, document.title, window.location.pathname);
@@ -2521,12 +2547,16 @@ async function init() {
       return;
     }
 
-    console.error('[auth-link] no session could be established — showing login.');
+    console.error('[auth-link] no session could be established — showing login.', lastAuthErr);
+    _pendingOnboarding = null;
     hideSplash();
     showSection('login');
     const errEl = document.getElementById('login-err');
     if (errEl) {
-      errEl.textContent = 'Pozvánka vypršala alebo už bola použitá. Požiadaj admina o nový link.';
+      // Skutočný dôvod pripíšeme — bez neho sa nedá rozlíšiť vypršaný odkaz od
+      // zle nastaveného presmerovania v Supabase.
+      errEl.textContent = 'Pozvánku sa nepodarilo otvoriť. Požiadaj admina o nový link.'
+        + (lastAuthErr ? ' (' + lastAuthErr + ')' : '');
       errEl.style.display = 'block';
     }
     return;
@@ -2631,6 +2661,10 @@ async function _onLoginInner(user) {
 
   hideSplash();
   setEl('sec-login', el => { el.classList.remove('active'); el.style.display = 'none'; });
+
+  // Prišli sme z pozvánky — nech dobehne ktorákoľvek vetva ako posledná,
+  // vždy skončíme na nastavení hesla.
+  if (_pendingOnboarding) { showOnboarding(_pendingOnboarding); return; }
 
   let restoreSection = 'news';
   const saved = lsGet('ndrtls-section');
@@ -5548,6 +5582,9 @@ async function saveOnboarding() {
   if (msg) { msg.textContent = 'Hotovo ✓'; msg.style.color = '#6dbf6d'; msg.style.display = 'block'; }
   if (btn) { btn.disabled = false; btn.textContent = 'Uložiť a pokračovať'; }
 
+  // Heslo je nastavené — príznak zhasíname, inak by ďalšie prihlásenie
+  // v tej istej návšteve poslalo používateľa späť na onboarding.
+  _pendingOnboarding = null;
   toast('Účet nastavený ✓', 'success');
   setTimeout(() => showSection('news'), 600);
 }
