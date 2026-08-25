@@ -1873,7 +1873,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.43.0</div>
+  <div id="version-badge">v3.44.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2116,6 +2116,8 @@ body.md-open #admin-preview-banner{display:none !important;}
       <div class="form-group">
         <label>Číslo dresu</label>
         <input type="text" id="pm-edit-number" placeholder="napr. 91">
+        <div id="pm-num-hint" style="display:none;font-size:.82rem;color:var(--rust-light);
+          margin-top:.35rem;line-height:1.35;"></div>
       </div>
       <div class="form-group">
         <label>Pozícia</label>
@@ -2893,11 +2895,57 @@ async function loadRosterFromDB() {
     if (error) { tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:1rem;color:#bf6d6d;">Chyba načítania: '+error.message+'</td></tr>'; return; }
     if (!data?.length) { tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:1rem;color:var(--bone);">Žiadni hráči.</td></tr>'; return; }
     rosterData=data;
+    await rosterApplyAppNumbers();
     renderRosterTable();
   } catch(e) {
     if (tbody) tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:1rem;color:#bf6d6d;">Chyba: '+e.message+'</td></tr>';
   }
 }
+/* ── ČÍSLA DRESOV Z APLIKÁCIE ──
+   Súpiska aj štatistiky sú z ligovej stránky, ale čísla dresov tam bývajú staré
+   (Martin Rokosz mal v lige 14, v tíme 18). Zdroj pravdy je profil v aplikácii,
+   tak ho na zobrazenie použijeme, keď sa hráč dá jednoznačne spárovať.
+
+   Párujeme podľa celého mena — nie podľa priezviska. Na súpiske sú dvaja
+   Vondráčekovia, takže priezvisko samé by priradilo cudzie číslo. Mená
+   porovnávame bez diakritiky a bez ohľadu na poradie slov; keď na kľúč sedí
+   viac profilov, radšej nepriradíme nič a ostane číslo z ligy. */
+const rosterNameKey = s => String(s || '')
+  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase().replace(/[^a-z0-9 ]/g, ' ')
+  .split(/\s+/).filter(Boolean).sort().join(' ');
+
+async function rosterApplyAppNumbers() {
+  // Čistý štart — pri opätovnom načítaní nesmie ostať priradenie z minula.
+  rosterData.forEach(pl => { delete pl.app_number; });
+  let profs = [];
+  try {
+    // Neprihlásenému návštevníkovi RLS profily nepustí — vtedy ostanú čísla z ligy.
+    const { data } = await sb.from('profiles').select('id, full_name, nickname, number');
+    profs = filterIgnored(data);
+  } catch(e) { console.warn('[roster] profily sa nenačítali:', e); return; }
+  if (!profs.length) return;
+
+  const idx = new Map();
+  profs.forEach(pr => {
+    const k = rosterNameKey(pr.full_name);
+    if (!k) return;
+    if (!idx.has(k)) idx.set(k, []);
+    idx.get(k).push(pr);
+  });
+
+  rosterData.forEach(pl => {
+    const hit = idx.get(rosterNameKey(pl.name));
+    if (!hit || hit.length !== 1) return;          // nejednoznačné — nechaj ligové
+    const n = hit[0].number;
+    if (n == null || n === '') return;             // profil číslo nemá
+    pl.app_number = String(n);
+  });
+}
+/* Číslo na zobrazenie: z profilu, inak z ligy. */
+const rosterNumber = p => (p.app_number != null && p.app_number !== '')
+  ? p.app_number : (p.number || '—');
+
 /* Malý avatar do súpisky. Číslo ide do kruhu v rohu rovnako ako na karte hráča.
    Avatar má 34 px a bunka menší zvislý padding, takže riadok ostane rovnako
    vysoký ako predtým — výšku určuje text mena, nie obrázok. */
@@ -2914,7 +2962,7 @@ function rosterAvatar(p) {
     <div style="position:absolute;right:-5px;bottom:-5px;min-width:18px;height:18px;padding:0 3px;
       border-radius:999px;background:var(--maroon);border:1px solid var(--rust);
       box-shadow:0 1px 4px rgba(0,0,0,.5);display:grid;place-items:center;
-      font-family:'Anton';font-size:.6rem;color:var(--cream-bright);">${p.number || '—'}</div>
+      font-family:'Anton';font-size:.6rem;color:var(--cream-bright);">${rosterNumber(p)}</div>
   </div>`;
 }
 
@@ -5077,7 +5125,7 @@ function openPlayerCard(playerId) {
   const pl=p.position==='B'?'Brankár':p.position==='O'?'Obranca':'Útočník';
   _pmName = p.name;
   pmApplyPhotos(pmPhotoList(p), p.name.slice(0,2).toUpperCase());
-  document.getElementById('pm-num-badge').textContent=p.number||'—';
+  document.getElementById('pm-num-badge').textContent=rosterNumber(p);
   document.getElementById('pm-name').textContent=p.name;
   document.getElementById('pm-pos-badge').innerHTML=`<span class="pos-badge ${pc}">${p.position||'?'} — ${pl}</span>`;
   document.getElementById('pm-gp').textContent=p.gp||0;
@@ -5096,6 +5144,16 @@ function openPlayerCard(playerId) {
 function enablePlayerEdit() {
   const id=parseInt(document.getElementById('pm-edit-id').value), p=rosterData.find(x=>x.id===id); if (!p) return;
   document.getElementById('pm-edit-number').value=p.number||'';
+  // Toto pole upravuje číslo zo súpisky z ligy. Keď má hráč v profile iné,
+  // povedzme to rovno — inak by admin videl na karte 18 a v poli 14.
+  const hint = document.getElementById('pm-num-hint');
+  if (hint) {
+    const show = p.app_number && String(p.app_number) !== String(p.number || '');
+    hint.style.display = show ? 'block' : 'none';
+    hint.textContent = show
+      ? 'Pozor: toto je číslo z ligovej súpisky. V profile má hráč ' + p.app_number
+        + ' a to sa aj zobrazuje v aplikácii.' : '';
+  }
   document.getElementById('pm-edit-pos').value=p.position||'Ú';
   document.getElementById('pm-edit-note').value=p.note||'';
   _pmEditPhotos = pmPhotoList(p).slice();
