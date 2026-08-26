@@ -513,6 +513,11 @@ header{
 .md-box-toolbar{display:flex; flex-wrap:wrap; gap:.5rem; margin:.4rem 0 1.2rem;}
 
 /* ── ADMIN: interná poznámka k prihláške ── */
+.app-status{font-family:'Oswald'; font-weight:700; font-size:.7rem; letter-spacing:.12em;
+  text-transform:uppercase; padding:.35rem .8rem; border-radius:5px;
+  border:1px solid var(--line); cursor:pointer; transition:.15s;}
+.app-status:hover{filter:brightness(1.25);}
+.app-status:disabled{opacity:.6; cursor:default;}
 .app-note{border-top:1px solid var(--line); border-bottom:1px solid var(--line);
   padding:.7rem 0; margin:.2rem 0;}
 .app-note-lbl{display:block; font-family:'Oswald'; font-weight:700; font-size:.72rem;
@@ -787,6 +792,19 @@ a:hover{color:var(--cream-bright);}
 /* Prehľad sezóny: mini-mesiace vedľa seba, aby sa dalo plánovať bez listovania.
    Bunky sú len farebné štvorčeky s dňom — na text tu miesto nie je. */
 .cal-season{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:1rem;}
+/* Na väčšom displeji bola mriežka zbytočne roztiahnutá a mini-mesiace naopak
+   drobné — obom dáme rozumnú šírku. */
+@media(min-width:760px){
+  .cal-grid, .cal-nav{max-width:520px; margin-left:auto; margin-right:auto;}
+  .cal-cell{aspect-ratio:.86;}
+  .cal-cell .num{font-size:.95rem;}
+  .cal-chip{font-size:.6rem;}
+  .cal-ctime{font-size:.56rem;}
+  .cal-season{grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:1.4rem;}
+  .cal-mini h4{font-size:.78rem;}
+  .cal-mini-dow{font-size:.6rem;}
+  .cal-mc{font-size:.82rem; border-radius:4px;}
+}
 .cal-mini h4{font-family:'Oswald'; font-weight:700; font-size:.66rem; letter-spacing:.14em;
   text-transform:uppercase; color:var(--rust-light); margin-bottom:.35rem; cursor:pointer;}
 .cal-mini h4:hover{color:var(--cream-bright);}
@@ -1207,6 +1225,13 @@ body.md-open #admin-preview-banner{display:none !important;}
 #sec-training .session.active { display: block; }
 #sec-training .tab { display: inline-flex !important; }
 
+/* Na notebooku pôsobili okná zbytočne úzko — na väčšom displeji im dovolíme
+   viac šírky aj väčšie písmo textu. */
+@media(min-width:900px){
+  .modal{max-width:640px; padding:2.4rem;}
+  .md-modal{max-width:860px;}
+  #nd-body{font-size:1.08rem;}
+}
 </style>
 </head>
 <body>
@@ -1340,7 +1365,9 @@ body.md-open #admin-preview-banner{display:none !important;}
       <button id="cal-btn-season" onclick="calSetView('season')">▤ Sezóna</button>
     </div>
     <div class="cal-legend" id="cal-legend"></div>
-    <div class="cal-sub-title">Zápasy do tvojho kalendára</div>
+    <div id="cal-admin"></div>
+    <div id="cal-list"><div class="empty-state"><div class="es-icon">🗓️</div><p>Načítavam…</p></div></div>
+    <div class="cal-sub-title" style="margin-top:2rem;">Zápasy do tvojho kalendára</div>
     <div class="cal-sub-btns">
       <a class="cal-export" href="webcal://ndrtls.com/zapasy.ics">🍎 iPhone / iPad</a>
       <a class="cal-export" target="_blank" rel="noopener"
@@ -1349,8 +1376,7 @@ body.md-open #admin-preview-banner{display:none !important;}
     <div class="cal-export-hint">Jedno ťuknutie a kalendár si zápasy predplatí — sám sa aktualizuje,
       keď sa rozpis zmení. Len ligové zápasy, bez tréningov a partičiek.
       <a href="#" onclick="calExportIcs();return false;">Stiahnuť súbor .ics</a></div>
-    <div id="cal-admin"></div>
-    <div id="cal-list"><div class="empty-state"><div class="es-icon">🗓️</div><p>Načítavam…</p></div></div>
+
   </div>
 </div>
 
@@ -1873,7 +1899,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.44.0</div>
+  <div id="version-badge">v3.45.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -3189,7 +3215,7 @@ function calRsvpHtml(i) {
   const cnt = _calCounts[i.id] || 0;
   return `<div class="cal-rsvp">
     <button class="btn-rsvp yes${st==='yes'?' active':''}" onclick="calSetRsvp(event,${i.id},'yes')">Idem</button>
-    <button class="btn-rsvp no${st==='no'?' active':''}" onclick="calSetRsvp(event,${i.id},'no')">Neidem</button>
+    <button class="btn-rsvp no${st==='no'?' active':''}" onclick="calSetRsvp(event,${i.id},'no')">Nejdem</button>
     <span class="cal-count">👥 ${cnt}${i.max ? ' / ' + i.max : ''}</span>
   </div>`;
 }
@@ -3448,13 +3474,25 @@ function calGridHtml() {
   html += '</div>';
 
   // Pod mriežkou detail vybraného dňa; bez výberu program celého mesiaca.
-  const inMonth = _calItems.filter(i => i.when.getFullYear() === y && i.when.getMonth() === m);
+  // Bez vybraného dňa ukážeme program mesiaca — a rovnako ako v zozname z neho
+  // vynecháme, čo už bolo. Konkrétny deň zobrazíme vždy celý, aj keď je v minulosti.
+  const nowT = Date.now();
+  const inMonth = _calItems.filter(i => i.when.getFullYear() === y && i.when.getMonth() === m
+    && (_calShowPast || i.when.getTime() >= nowT));
   const shown = _calSelDay ? (byDay[_calSelDay] || []) : inMonth;
+  const hiddenPast = _calSelDay ? 0
+    : _calItems.filter(i => i.when.getFullYear() === y && i.when.getMonth() === m
+        && i.when.getTime() < nowT).length;
   const selDate = _calSelDay ? calDayFromKey(_calSelDay) : null;
   const head = selDate
     ? selDate.getDate() + '. ' + CAL_MONTHS[selDate.getMonth()]
     : 'Program mesiaca';
   html += `<div class="cal-day-head">${head}</div>`;
+  if (hiddenPast && !_calShowPast) {
+    html += `<button class="cal-showpast" onclick="calTogglePast()">▼ Zobraziť predošlé (${hiddenPast})</button>`;
+  } else if (hiddenPast === 0 && _calShowPast && !_calSelDay) {
+    // nič — v tomto mesiaci nie je čo skrývať
+  }
   html += shown.length
     ? shown.map(i => calItemHtml(i)).join('')
     : `<div class="empty-state" style="padding:1.6rem 1rem;"><p>${selDate
@@ -3867,6 +3905,61 @@ function playVideo(containerId, ytId) {
 }
 
 /* ── ADMIN: PRIHLÁŠKY ─────────────────────────── */
+/* ── STAV PRIHLÁŠKY ──
+   Klikaním sa cyklí medzi štyrmi stavmi. „Profi“ je vlastná kategória, nie
+   odmietnutie: taký hráč nespĺňa štatút amatéra a ligu hrať nemôže, ale na
+   partičky a turnaje ho voláme — preto oranžová medzi zelenou a červenou. */
+const APP_STATUS = {
+  '':      { label:'Neposúdené',  bg:'rgba(205,191,159,.10)', fg:'var(--bone)',   bd:'var(--line)',
+             title:'Klikni a označ, ako prihláška dopadla' },
+  'ano':   { label:'Berieme',     bg:'rgba(127,176,105,.18)', fg:'#8fc07a', bd:'#7fb069',
+             title:'Osvedčil sa, ide do tímu' },
+  'profi': { label:'Profi — bez ligy', bg:'rgba(217,164,65,.18)', fg:'#d9a441', bd:'#d9a441',
+             title:'Hral profi hokej (juniorka a vyššie) — nespĺňa štatút amatéra. Partičky a turnaje áno, ligu nie.' },
+  'nie':   { label:'Neberieme',   bg:'rgba(181,48,58,.22)', fg:'#d1616b', bd:'#b5303a',
+             title:'Nebudeme ho angažovať' }
+};
+const APP_STATUS_ORDER = ['', 'ano', 'profi', 'nie'];
+const appStatus = v => APP_STATUS[v] || APP_STATUS[''];
+
+function appStatusHtml(c) {
+  const st = appStatus(c.status);
+  return `<button class="app-status" id="app-status-${c.id}" title="${st.title}"
+    onclick="cycleContactStatus(${c.id})"
+    style="background:${st.bg};color:${st.fg};border-color:${st.bd};">${st.label}</button>`;
+}
+
+async function cycleContactStatus(id) {
+  const btn = document.getElementById('app-status-' + id);
+  if (!btn || btn.disabled) return;
+  const rec = _adminContacts.find(c => String(c.id) === String(id));
+  if (!rec) return;
+  const cur = rec.status || '';
+  const next = APP_STATUS_ORDER[(APP_STATUS_ORDER.indexOf(cur) + 1) % APP_STATUS_ORDER.length];
+
+  // Optimisticky prepni, po chybe vrátime späť.
+  const paint = v => { const st = appStatus(v);
+    btn.textContent = st.label; btn.title = st.title;
+    btn.style.background = st.bg; btn.style.color = st.fg; btn.style.borderColor = st.bd; };
+  paint(next); btn.disabled = true;
+
+  const { error } = await sb.from('contact_requests')
+    .update({ status: next || null }).eq('id', id);
+  btn.disabled = false;
+
+  if (error) {
+    paint(cur);
+    const chybaStlpca = /column|schema cache|status/i.test(error.message || '');
+    toast(chybaStlpca
+      ? 'Chýba stĺpec status v tabuľke contact_requests — pošli mi to a dám ti SQL.'
+      : 'Chyba: ' + error.message, 'error');
+    return;
+  }
+  rec.status = next;
+}
+
+let _adminContacts = [];
+
 async function loadAdminContacts() {
   const box = document.getElementById('admin-contacts-list');
   if (!box) return;
@@ -3889,6 +3982,7 @@ async function loadAdminContacts() {
     const hh = String(dt.getHours()).padStart(2,'0'), mm = String(dt.getMinutes()).padStart(2,'0');
     return `${dt.getDate()}. ${months[dt.getMonth()]} ${dt.getFullYear()} ${hh}:${mm}`;
   };
+  _adminContacts = data;
   box.innerHTML = data.map(c => {
     const d = c.created_at ? new Date(c.created_at) : null;
     const dateStr = d ? `${d.getDate()}. ${months[d.getMonth()]} ${d.getFullYear()}` : '';
@@ -3904,6 +3998,7 @@ async function loadAdminContacts() {
         <span style="font-family:'Oswald';font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--rust-light);">${posStr}</span>
         <span style="margin-left:auto;font-family:'Oswald';font-size:.75rem;color:var(--bone);">${dateStr}</span>
       </div>
+      <div>${appStatusHtml(c)}</div>
       <div style="font-family:'Barlow Condensed';font-size:.95rem;color:var(--bone);">
         <a href="mailto:${c.email}" style="color:var(--rust-light);">${(c.email||'').replace(/</g,'&lt;')}</a>
       </div>
