@@ -891,9 +891,19 @@ body.md-open #admin-preview-banner{display:none !important;}
 .player-slot{position:relative;background:rgba(107,31,42,.6);border:2px solid rgba(107,31,42,.9);border-radius:7px;padding:.28rem .3rem;min-width:58px;max-width:88px;text-align:center;cursor:pointer;transition:.2s;}
 .player-slot:hover{border-color:var(--rust-light);}
 .player-slot.filled{border-color:var(--rust);background:rgba(74,20,29,.7);}
+/* Formácie odlíšime svetlosťou tej istej klubovej červenej — brankár bol
+   predtým modrý a splýval s ľadovou plochou. Na poradí záleží: .empty musí
+   prísť až za týmito pravidlami, aby voľné miesto ostalo neutrálne. */
+.player-slot[data-line^="f"]{background:rgba(160,66,34,.62);border-color:rgba(181,83,44,.95);}
+.player-slot[data-line^="f"].filled{background:rgba(138,58,30,.8);border-color:#c9673a;}
+.player-slot[data-line^="f"] .slot-pos{color:#e8a87c;}
+.player-slot[data-line^="d"]{background:rgba(107,31,42,.62);border-color:rgba(148,45,58,.95);}
+.player-slot[data-line^="d"].filled{background:rgba(107,31,42,.85);border-color:#b5303a;}
+.player-slot[data-line^="d"] .slot-pos{color:#d99a9f;}
 .player-slot.dragging{opacity:.85;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.55);transition:none !important;cursor:grabbing;}
 .player-slot.drag-over{outline:2px solid var(--rust-light);outline-offset:2px;}
-.player-slot.empty{border-color:rgba(233,220,195,.2);background:rgba(38,34,32,.4);}
+.player-slot.empty{border-color:rgba(233,220,195,.22);background:rgba(38,34,32,.45);box-shadow:none;}
+.player-slot.empty .slot-pos{color:rgba(233,220,195,.45) !important;}
 .player-slot .slot-pos{font-family:'Oswald';font-weight:700;font-size:.52rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rust-light);margin-bottom:.1rem;}
 .player-slot .slot-num{font-family:'Anton';font-size:.95rem;color:var(--cream-bright);line-height:1;}
 .player-slot .slot-name{font-family:'Oswald';font-size:.57rem;color:var(--bone);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:74px;margin:0 auto;}
@@ -912,7 +922,11 @@ body.md-open #admin-preview-banner{display:none !important;}
 .line-label{font-family:'Oswald';font-weight:700;font-size:.55rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(233,220,195,.5);text-align:center;margin:.1rem 0;}
 .line-row{display:flex;justify-content:center;gap:.5rem;margin:.14rem 0;flex-wrap:nowrap;}
 .goalkeeper-slot{display:flex;justify-content:center;margin:.2rem 0;}
-.goalkeeper-slot .player-slot{min-width:72px;background:rgba(20,60,100,.7);border-color:rgba(74,144,217,.6);}
+.goalkeeper-slot .player-slot{min-width:76px;background:rgba(58,14,22,.9);border-color:var(--cream-bright);
+  box-shadow:0 0 0 1px rgba(74,20,29,.9), 0 2px 8px rgba(0,0,0,.45);}
+.goalkeeper-slot .player-slot.filled{background:rgba(74,20,29,.94);border-color:var(--cream-bright);}
+.goalkeeper-slot .player-slot .slot-pos{color:var(--cream-bright);}
+.goalkeeper-slot .player-slot.empty{border-color:rgba(233,220,195,.22);background:rgba(38,34,32,.45);box-shadow:none;}
 /* ── INTERNÉ INFO: TAKTICKÁ PRÍRUČKA ── */
 .tk{--tk-blue:#2f5d7c; --tk-ok:#6dbf6d; max-width:940px; margin:0 auto;}
 .tk-hero{text-align:center; padding:.5rem 0 2rem; border-bottom:2px solid var(--maroon);}
@@ -1712,6 +1726,14 @@ body.md-open #admin-preview-banner{display:none !important;}
           </select>
         </div>
         <div class="form-group">
+          <label>Držanie hokejky</label>
+          <select id="profile-hand" style="width:100%;background:var(--charcoal);border:1px solid var(--line);border-radius:8px;padding:.8rem;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;">
+            <option value="">Neuvedené</option>
+            <option value="L">Ľavák</option>
+            <option value="R">Pravák</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label>Číslo dresu <span style="font-weight:400;text-transform:none;letter-spacing:0;opacity:.7;">(nepovinné)</span></label>
           <input type="number" id="profile-number" placeholder="napr. 96" min="0" max="99">
         </div>
@@ -1899,7 +1921,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.45.0</div>
+  <div id="version-badge">v3.46.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2210,6 +2232,16 @@ body.md-open #admin-preview-banner{display:none !important;}
       <div class="form-group">
         <label>Číslo dresu</label>
         <input type="number" id="ue-num" placeholder="napr. 96" min="0" max="99">
+      </div>
+      <div class="form-group">
+        <label>Držanie hokejky</label>
+        <select id="ue-hand" style="width:100%;background:var(--ink);
+          border:1px solid var(--line);border-radius:6px;padding:.75rem .9rem;
+          color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;">
+          <option value="">Neuvedené</option>
+          <option value="L">Ľavák</option>
+          <option value="R">Pravák</option>
+        </select>
       </div>
     </div>
     <div id="ue-msg" style="display:none;margin:.4rem 0 .8rem;font-family:'Oswald';font-size:.85rem;"></div>
@@ -2943,11 +2975,11 @@ const rosterNameKey = s => String(s || '')
 
 async function rosterApplyAppNumbers() {
   // Čistý štart — pri opätovnom načítaní nesmie ostať priradenie z minula.
-  rosterData.forEach(pl => { delete pl.app_number; });
+  rosterData.forEach(pl => { delete pl.app_number; delete pl.app_hand; });
   let profs = [];
   try {
     // Neprihlásenému návštevníkovi RLS profily nepustí — vtedy ostanú čísla z ligy.
-    const { data } = await sb.from('profiles').select('id, full_name, nickname, number');
+    const { data } = await sb.from('profiles').select('id, full_name, nickname, number, hand');
     profs = filterIgnored(data);
   } catch(e) { console.warn('[roster] profily sa nenačítali:', e); return; }
   if (!profs.length) return;
@@ -2963,6 +2995,7 @@ async function rosterApplyAppNumbers() {
   rosterData.forEach(pl => {
     const hit = idx.get(rosterNameKey(pl.name));
     if (!hit || hit.length !== 1) return;          // nejednoznačné — nechaj ligové
+    if (hit[0].hand) pl.app_hand = hit[0].hand;
     const n = hit[0].number;
     if (n == null || n === '') return;             // profil číslo nemá
     pl.app_number = String(n);
@@ -3693,6 +3726,7 @@ async function loadAdminUsers() {
         '" data-nick="' + encodeURIComponent(p.nickname || '') +
         '" data-pos="' + encodeURIComponent(p.position || '') +
         '" data-num="' + encodeURIComponent(p.number != null ? p.number : '') +
+        '" data-hand="' + encodeURIComponent(p.hand || '') +
         '" style="color:var(--cream);" title="Upraviť hráča">✎ Upraviť</button>';
 
       const posLabel = ({'Ú':'Útočník','O':'Obranca','B':'Brankár','H':'Obojživelník'})[p.position] || '—';
@@ -3729,11 +3763,13 @@ function adminEditNameFromBtn(btn) {
   const nick = decodeURIComponent(btn.dataset.nick || '');
   const pos  = decodeURIComponent(btn.dataset.pos || '') || 'Ú';
   const num  = decodeURIComponent(btn.dataset.num || '');
+  const hand = decodeURIComponent(btn.dataset.hand || '');
   document.getElementById('ue-id').value = uid;
   document.getElementById('ue-name').value = cur;
   document.getElementById('ue-nick').value = nick;
   document.getElementById('ue-pos').value = ['Ú','O','B'].includes(pos) ? pos : 'Ú';
   document.getElementById('ue-num').value = num;
+  document.getElementById('ue-hand').value = ['L','R'].includes(hand) ? hand : '';
   const msg = document.getElementById('ue-msg'); if (msg) msg.style.display = 'none';
   document.getElementById('modal-user-edit').classList.add('show');
 }
@@ -3744,19 +3780,21 @@ async function saveUserEdit() {
   const nick   = document.getElementById('ue-nick').value.trim();
   const posV   = document.getElementById('ue-pos').value || 'Ú';
   const numRaw = document.getElementById('ue-num').value.trim();
+  const handV  = document.getElementById('ue-hand')?.value || '';
   const msg    = document.getElementById('ue-msg');
   const showMsg = (t,ok) => { if (msg) { msg.textContent = t; msg.style.color = ok ? '#6dbf6d' : '#bf6d6d'; msg.style.display = 'block'; } };
 
   if (!name) { showMsg('Meno nemôže byť prázdne.', false); return; }
   const numV = numRaw ? parseInt(numRaw) : null;
 
-  const payload = { full_name: name, nickname: nick || null, position: posV, number: (numV!=null && !isNaN(numV)) ? numV : null };
+  const payload = { full_name: name, nickname: nick || null, position: posV,
+    number: (numV!=null && !isNaN(numV)) ? numV : null, hand: handV || null };
   const { error } = await sb.from('profiles').update(payload).eq('id', userId);
   if (error) { showMsg('Chyba: ' + error.message, false); return; }
 
   // Sync vlastný badge, ak admin upravil sám seba
   if (userId === currentUser?.id) {
-    if (currentProfile) { currentProfile.full_name = name; currentProfile.nickname = payload.nickname; currentProfile.position = posV; currentProfile.number = payload.number; }
+    if (currentProfile) { currentProfile.full_name = name; currentProfile.nickname = payload.nickname; currentProfile.position = posV; currentProfile.number = payload.number; currentProfile.hand = payload.hand; }
     const un = document.getElementById('user-name');
     if (un) un.textContent = payload.nickname || name;
   }
@@ -5222,7 +5260,9 @@ function openPlayerCard(playerId) {
   pmApplyPhotos(pmPhotoList(p), p.name.slice(0,2).toUpperCase());
   document.getElementById('pm-num-badge').textContent=rosterNumber(p);
   document.getElementById('pm-name').textContent=p.name;
-  document.getElementById('pm-pos-badge').innerHTML=`<span class="pos-badge ${pc}">${p.position||'?'} — ${pl}</span>`;
+  const handTxt = p.app_hand === 'L' ? 'Ľavák' : p.app_hand === 'R' ? 'Pravák' : '';
+  document.getElementById('pm-pos-badge').innerHTML=`<span class="pos-badge ${pc}">${p.position||'?'} — ${pl}</span>`
+    + (handTxt ? `<span class="pos-badge" style="margin-left:.3rem;">${handTxt}</span>` : '');
   document.getElementById('pm-gp').textContent=p.gp||0;
   document.getElementById('pm-goals').textContent=p.goals||0;
   document.getElementById('pm-assists').textContent=p.assists||0;
@@ -5721,7 +5761,7 @@ async function saveOnboarding() {
       .update({ full_name: name, nickname: nick || null, position: posV, number: numV ? parseInt(numV) : null })
       .eq('id', currentUser.id);
     if (error) console.warn('Profile save failed:', error.message);
-    if (currentProfile) { currentProfile.full_name = name; currentProfile.nickname = nick || null; currentProfile.position = posV; currentProfile.number = numV ? parseInt(numV) : null; }
+    if (currentProfile) { currentProfile.full_name = name; currentProfile.nickname = nick || null; currentProfile.position = posV; currentProfile.number = numV ? parseInt(numV) : null; currentProfile.hand = handV || null; }
   } catch(e) { console.warn('Profile save threw:', e); }
 
   // 3. Refresh the header badge
@@ -5753,6 +5793,8 @@ async function loadProfile() {
     if (posEl) posEl.value = currentProfile.position || 'Ú';
     const numEl = document.getElementById('profile-number');
     if (numEl) numEl.value = (currentProfile.number != null) ? currentProfile.number : '';
+    const handEl = document.getElementById('profile-hand');
+    if (handEl) handEl.value = currentProfile.hand || '';
   }
 }
 async function saveProfileName() {
@@ -5763,7 +5805,9 @@ async function saveProfileName() {
   const msg  = document.getElementById('profile-name-msg');
   if (!name) { msg.textContent='Zadaj meno.'; msg.style.color='#bf6d6d'; msg.style.display='block'; return; }
 
-  const payload = { full_name: name, nickname: nick || null, position: posV, number: numV ? parseInt(numV) : null };
+  const handV = document.getElementById('profile-hand')?.value || '';
+  const payload = { full_name: name, nickname: nick || null, position: posV,
+    number: numV ? parseInt(numV) : null, hand: handV || null };
   const { error } = await sb.from('profiles').update(payload).eq('id', currentUser.id);
 
   if (error) {
@@ -5889,8 +5933,8 @@ async function loadEvents() {
             onclick="setRsvp(${ev.id}, 'yes', this)">✓ Idem</button>
           <button class="btn-rsvp no ${myStatus==='no'?'active':''}"
             onclick="setRsvp(${ev.id}, 'no', this)">✗ Nejdem</button>
-          <button class="btn-sm" onclick="openLineup(${ev.id})"
-            style="color:var(--bone);">Zostava</button>
+          ${ev.type === 'zapas' ? `<button class="btn-sm" onclick="openLineup(${ev.id})"
+            style="color:var(--bone);">Zostava</button>` : ''}
           ${adminEdit}
         </div>
       </div>
