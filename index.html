@@ -1928,7 +1928,7 @@ td.rahl-season.first{border-top:0;padding-top:.5rem;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.49.0</div>
+  <div id="version-badge">v3.49.1</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -4413,8 +4413,10 @@ let _mdCurrent = null; // { data, details } aktuálne otvoreného zápasu (pre v
 let _mdBoxEditing = new Set(); // indexy tímov (v data.boxscore) práve editovaných adminom
 let _mdReturnY = 0; // scroll pozícia stránky, na ktorú sa vrátime po zatvorení detailu
 
-/* eventYear je nepovinný — staršia match-detail-proxy.php ho ignoruje, novšia
-   ho potrebuje, lebo event_id sa medzi sezónami opakuje. */
+/* eventYear je ročník, v ktorom sa sezóna začala — na szalh je súčasťou adresy
+   udalosti (/event/2025/490). match-detail-proxy.php ho číta z parametra
+   `season`; bez neho by použil svoju predvolenú hodnotu a pri zhodnom event_id
+   by otvoril zápas z nesprávnej sezóny. */
 async function openMatchDetail(eventId, eventYear){
   const page = document.getElementById('modal-match-detail');
   const body = document.getElementById('md-body');
@@ -4432,7 +4434,7 @@ async function openMatchDetail(eventId, eventYear){
     // Paralelne: szalh proxy + admin override z Supabase + aktívne profily
     const [proxyRes, detailsRes, profIdx] = await Promise.all([
       fetch(MATCH_DETAIL_PROXY + '?id=' + encodeURIComponent(eventId)
-        + (eventYear ? '&year=' + encodeURIComponent(eventYear) : '')),
+        + (eventYear ? '&season=' + encodeURIComponent(eventYear) : '')),
       sb.from('match_details').select('*').eq('event_id', eventId).maybeSingle(),
       mdGetActiveProfiles()
     ]);
