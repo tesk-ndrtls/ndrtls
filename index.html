@@ -1928,7 +1928,7 @@ td.rahl-season.first{border-top:0;padding-top:.5rem;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.48.0</div>
+  <div id="version-badge">v3.49.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -4190,8 +4190,10 @@ const RAHL_ARCHIVE = [
   ['2025-09-06','Wild Hogs','2:10','P',404],
 ].map(([iso, opponent, score, result, event_id]) => {
   const [y, mo, d] = iso.split('-');
+  // Ročník udalosti na szalh je ten, v ktorom sa sezóna začala — zápas z februára
+  // 2026 má odkaz /event/2025/NNN.
   return { date: d + '.' + mo + '.' + y, date_iso: iso, opponent, score, result,
-           finished: true, event_id };
+           finished: true, event_id, event_year: 2025 };
 });
 
 /* Sezóna, do ktorej dátum patrí — ročník sa začína na jeseň. */
@@ -4206,7 +4208,11 @@ function rahlMergeMatches(fromProxy) {
   const all = (fromProxy || []).concat(RAHL_ARCHIVE);
   const seen = new Set();
   return all.filter(m => {
-    const key = m.event_id != null ? 'e' + m.event_id : (m.date_iso || m.date) + '|' + m.opponent;
+    // Kľúč musí obsahovať aj ročník — samotné event_id sa medzi sezónami
+    // opakuje a nový zápas by sa tváril ako duplikát starého.
+    const key = m.event_id != null
+      ? 'e' + (m.event_year || '') + '-' + m.event_id
+      : (m.date_iso || m.date) + '|' + m.opponent;
     if (seen.has(key)) return false;
     seen.add(key); return true;
   }).sort((a, b) => String(b.date_iso || '').localeCompare(String(a.date_iso || '')));
@@ -4260,12 +4266,20 @@ async function loadRAHL() {
           ? parseInt(parts[0]) + '. ' + months[parseInt(parts[1])-1]
           : d;
         const rok = (m.date_iso || '').slice(0, 4);
-        const resClass = m.result === 'V' ? 'result-w' : m.result === 'P' ? 'result-l' : 'result-u';
-        const resLabel = m.result === 'V' ? 'V' : m.result === 'P' ? 'P' : 'R';
+        // Neodohraný zápas nemá výsledok — bez tejto vetvy sa tváril ako
+        // remíza 0:0, čo po štarte novej sezóny uvidíš pri každom budúcom kole.
+        const hraSa = m.finished === false;
+        const resClass = hraSa ? 'result-u'
+          : m.result === 'V' ? 'result-w' : m.result === 'P' ? 'result-l' : 'result-u';
+        const resLabel = hraSa ? '—'
+          : m.result === 'V' ? 'V' : m.result === 'P' ? 'P' : 'R';
+        const skore = hraSa ? '—' : (m.score || '—');
         // Resolve szalh event id (proxy may expose it under different keys)
         const eid = m.event_id || m.szalh_id || m.eventId || m.id || null;
+        const eyear = m.event_year || null;
         const clickAttrs = eid
-          ? ' data-eid="' + eid + '" onclick="openMatchDetail(' + eid + ')"'
+          ? ' data-eid="' + eid + '"' + (eyear ? ' data-eyear="' + eyear + '"' : '')
+            + ' onclick="openMatchDetail(' + eid + (eyear ? ',' + eyear : '') + ')"'
           : '';
         // Hrubá čiara medzi ročníkmi — nech je vidieť, kde končí odohraná
         // sezóna a kde sa začína pridávať nová.
@@ -4280,7 +4294,7 @@ async function loadRAHL() {
         return head + '<tr' + clickAttrs + '>' +
           '<td style="color:var(--bone)">' + dateStr + (rok ? ' <span style="opacity:.45;font-size:.85em">' + rok + '</span>' : '') + '</td>' +
           '<td style="color:var(--cream-bright)">' + m.opponent + '</td>' +
-          '<td style="font-family:Oswald;font-weight:700">' + m.score + '</td>' +
+          '<td style="font-family:Oswald;font-weight:700">' + skore + '</td>' +
           '<td class="' + resClass + '">' + resLabel + '</td>' +
           '</tr>';
       }).join('');
@@ -4399,7 +4413,9 @@ let _mdCurrent = null; // { data, details } aktuálne otvoreného zápasu (pre v
 let _mdBoxEditing = new Set(); // indexy tímov (v data.boxscore) práve editovaných adminom
 let _mdReturnY = 0; // scroll pozícia stránky, na ktorú sa vrátime po zatvorení detailu
 
-async function openMatchDetail(eventId){
+/* eventYear je nepovinný — staršia match-detail-proxy.php ho ignoruje, novšia
+   ho potrebuje, lebo event_id sa medzi sezónami opakuje. */
+async function openMatchDetail(eventId, eventYear){
   const page = document.getElementById('modal-match-detail');
   const body = document.getElementById('md-body');
   const titleEl = document.getElementById('md-title');
@@ -4415,7 +4431,8 @@ async function openMatchDetail(eventId){
   try {
     // Paralelne: szalh proxy + admin override z Supabase + aktívne profily
     const [proxyRes, detailsRes, profIdx] = await Promise.all([
-      fetch(MATCH_DETAIL_PROXY + '?id=' + encodeURIComponent(eventId)),
+      fetch(MATCH_DETAIL_PROXY + '?id=' + encodeURIComponent(eventId)
+        + (eventYear ? '&year=' + encodeURIComponent(eventYear) : '')),
       sb.from('match_details').select('*').eq('event_id', eventId).maybeSingle(),
       mdGetActiveProfiles()
     ]);
