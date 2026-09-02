@@ -1921,7 +1921,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.47.0</div>
+  <div id="version-badge">v3.47.1</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -4141,10 +4141,21 @@ async function submitContact() {
    posielame, no ak ho ignoruje, sezónu treba prepnúť tam. */
 const SZALH = { year: 2026, label: '2026/27', league: 'RAHL1' };
 const szalhUrl = () => 'https://szalh.sk/league/' + SZALH.year + '/' + SZALH.league;
-/* Popisku nechávame riadiť proxy, keď sezónu hlási — nech hlavička nikdy
-   netvrdí niečo iné, než je v tabuľke pod ňou. */
+/* Popisku nechávame riadiť dáta, nie konštantu — hlavička nesmie tvrdiť novú
+   sezónu nad tabuľkou zo starej. Proxy sezónu zatiaľ nehlási, tak ju odvodíme
+   z dátumu posledného zápasu: ročník sa začína na jeseň, takže mesiac 7 a viac
+   patrí sezóne rok/rok+1, inak rok-1/rok. */
 let _rahlSeasonLabel = null;
 const szalhLabel = () => _rahlSeasonLabel || SZALH.label;
+
+function rahlSeasonFromMatches(matches) {
+  const dates = (matches || []).map(m => m.date_iso).filter(Boolean).sort();
+  const last = dates[dates.length - 1];
+  if (!last) return null;
+  const [y, mo] = last.split('-').map(Number);
+  const start = mo >= 7 ? y : y - 1;
+  return start + '/' + String((start + 1) % 100).padStart(2, '0');
+}
 
 async function loadRAHL() {
   try {
@@ -4155,7 +4166,8 @@ async function loadRAHL() {
     const data = await res.json();
 
     document.getElementById('rahl-loading').style.display = 'none';
-    if (data.season) { _rahlSeasonLabel = String(data.season); applyStatic(); }
+    _rahlSeasonLabel = data.season ? String(data.season) : rahlSeasonFromMatches(data.matches);
+    applyStatic();
 
     // Standings
     const tbody = document.getElementById('rahl-standings-tbody');
