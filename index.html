@@ -1349,7 +1349,7 @@ body.md-open #admin-preview-banner{display:none !important;}
     <div class="sec-head"><h2 data-i="rosterH">A-tím · Súpiska</h2><p data-i="rosterP">Bratislava Neanderthals · RAHL1</p></div>
     <div style="background:var(--charcoal);border:1px solid var(--line);border-left:3px solid var(--rust);border-radius:8px;padding:.7rem .9rem;margin-bottom:1.2rem;display:flex;gap:.6rem;align-items:flex-start;">
       <span style="font-size:1rem;line-height:1.2;flex-shrink:0;">ℹ️</span>
-      <span data-i="rosterInfo" style="font-family:'Barlow Condensed';font-size:.92rem;color:var(--bone);line-height:1.35;">Súpiska a štatistiky sú zo sezóny <strong style="color:var(--cream);">2025/26</strong> a načítavajú sa priamo z ligovej stránky <a href="https://szalh.sk/league/2025/RAHL1" target="_blank" style="color:var(--rust-light);">szalh.sk ↗</a>. Slúžia len informatívne.</span>
+      <span data-i="rosterInfo" style="font-family:'Barlow Condensed';font-size:.92rem;color:var(--bone);line-height:1.35;">Súpiska a štatistiky sú zo sezóny <strong style="color:var(--cream);">{SEASON}</strong> a načítavajú sa priamo z ligovej stránky <a href="{URL}" target="_blank" style="color:var(--rust-light);">szalh.sk ↗</a>. Slúžia len informatívne.</span>
     </div>
     <div style="overflow-x:auto;">
       <table class="player-table">
@@ -1397,9 +1397,9 @@ body.md-open #admin-preview-banner{display:none !important;}
 <!-- ── RAHL ── -->
 <div class="page-section" id="sec-rahl">
   <div class="sec-wrap">
-    <div class="sec-head"><h2 data-i="rahlH">Liga RAHL1</h2><p data-i="rahlP">Ružinovská amatérska hokejová liga 1 · Sezóna 2025/26 · <a href="https://szalh.sk/league/2025/RAHL1" target="_blank">szalh.sk ↗</a></p></div>
+    <div class="sec-head"><h2 data-i="rahlH">Liga RAHL1</h2><p data-i="rahlP">Ružinovská amatérska hokejová liga 1 · Sezóna {SEASON} · <a href="{URL}" target="_blank">szalh.sk ↗</a></p></div>
     <div id="rahl-loading" style="text-align:center;padding:3rem;color:var(--bone);"><span class="spinner"></span> <span data-i="rahlLoading" style="margin-left:.6rem;">Načítavam zo szalh.sk…</span></div>
-    <div id="rahl-error" style="display:none;text-align:center;padding:2rem;color:var(--bone);"><p><span data-i="rahlErrorText">Dáta nie sú dostupné.</span> <a href="https://szalh.sk/league/2025/RAHL1" target="_blank">szalh.sk ↗</a></p></div>
+    <div id="rahl-error" style="display:none;text-align:center;padding:2rem;color:var(--bone);"><p><span data-i="rahlErrorText">Dáta nie sú dostupné.</span> <a id="rahl-error-link" href="https://szalh.sk" target="_blank">szalh.sk ↗</a></p></div>
     <div id="rahl-content" style="display:none;">
       <h3 data-i="rahlStandingsH" style="font-family:'Oswald';font-weight:700;text-transform:uppercase;color:var(--rust-light);font-size:.8rem;letter-spacing:.2em;margin-bottom:.8rem;">Tabuľka</h3>
       <div style="overflow-x:auto;margin-bottom:2rem;">
@@ -1921,7 +1921,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.46.0</div>
+  <div id="version-badge">v3.47.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -4135,13 +4135,27 @@ async function submitContact() {
 }
 
 /* ── RAHL ─────────────────────────────────────── */
+/* Sezóna a súťaž na jednom mieste — predtým boli natvrdo na ôsmich miestach
+   vrátane oboch jazykových slovníkov. Samotné dáta ale ťahá PHP proxy na
+   WebSupporte (rahl-proxy.php), ktorá je mimo tohto repa: parameter jej
+   posielame, no ak ho ignoruje, sezónu treba prepnúť tam. */
+const SZALH = { year: 2026, label: '2026/27', league: 'RAHL1' };
+const szalhUrl = () => 'https://szalh.sk/league/' + SZALH.year + '/' + SZALH.league;
+/* Popisku nechávame riadiť proxy, keď sezónu hlási — nech hlavička nikdy
+   netvrdí niečo iné, než je v tabuľke pod ňou. */
+let _rahlSeasonLabel = null;
+const szalhLabel = () => _rahlSeasonLabel || SZALH.label;
+
 async function loadRAHL() {
   try {
-    const res = await fetch('https://trenuj.ndrtls.com/rahl-proxy.php');
+    const res = await fetch('https://trenuj.ndrtls.com/rahl-proxy.php'
+      + '?season=' + encodeURIComponent(SZALH.year)
+      + '&league=' + encodeURIComponent(SZALH.league));
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
 
     document.getElementById('rahl-loading').style.display = 'none';
+    if (data.season) { _rahlSeasonLabel = String(data.season); applyStatic(); }
 
     // Standings
     const tbody = document.getElementById('rahl-standings-tbody');
@@ -6558,7 +6572,7 @@ const UI_MAIN={
     splashTagline:'Hokejový klub · Bratislava',
     rosterH:'A-tím · Súpiska', rosterP:'Bratislava Neanderthals · RAHL1',
     thNum:'#', thName:'Meno', thPos:'Post', thNote:'Poznámka', thGames:'Z', thPoints:'B',
-    rosterInfo:'Súpiska a štatistiky sú zo sezóny <strong style="color:var(--cream);">2025/26</strong> a načítavajú sa priamo z ligovej stránky <a href="https://szalh.sk/league/2025/RAHL1" target="_blank" style="color:var(--rust-light);">szalh.sk ↗</a>. Slúžia len informatívne.',
+    rosterInfo:'Súpiska a štatistiky sú zo sezóny <strong style="color:var(--cream);">{SEASON}</strong> a načítavajú sa priamo z ligovej stránky <a href="{URL}" target="_blank" style="color:var(--rust-light);">szalh.sk ↗</a>. Slúžia len informatívne.',
     rosterLegend:'B = Brankár · O = Obranca · Ú = Útočník · <a href="https://szalh.sk" target="_blank">szalh.sk ↗</a>',
     mediaH:'Médiá', mediaP:'Videá, fotky a náš Instagram.',
     mediaFooter:'Máš fotky alebo video? Pošli na <a href="mailto:konty@ndrtls.com">konty@ndrtls.com</a>',
@@ -6568,7 +6582,7 @@ const UI_MAIN={
     headerLoginBtn:'🔑 Prihlásiť sa', headerLogoutBtn:'Odhlásiť',
     newsH:'Oznamy & Novinky', newsP:'Všetko dôležité o tíme na jednom mieste.',
     rahlH:'Liga RAHL1',
-    rahlP:'Ružinovská amatérska hokejová liga 1 · Sezóna 2025/26 · <a href="https://szalh.sk/league/2025/RAHL1" target="_blank">szalh.sk ↗</a>',
+    rahlP:'Ružinovská amatérska hokejová liga 1 · Sezóna {SEASON} · <a href="{URL}" target="_blank">szalh.sk ↗</a>',
     rahlLoading:'Načítavam zo szalh.sk…', rahlErrorText:'Dáta nie sú dostupné.',
     rahlStandingsH:'Tabuľka', rahlResultsH:'Neanderthals — výsledky',
     rahlThTeam:'Tím', rahlThGp:'Z', rahlThW:'V', rahlThL:'P', rahlThOt:'R', rahlThPts:'Body',
@@ -6585,7 +6599,7 @@ const UI_MAIN={
     splashTagline:'Hockey Club · Bratislava',
     rosterH:'Roster', rosterP:'Bratislava Neanderthals · RAHL1',
     thNum:'#', thName:'Name', thPos:'Pos', thNote:'Note', thGames:'GP', thPoints:'PTS',
-    rosterInfo:'Roster and stats are from the <strong style="color:var(--cream);">2025/26</strong> season and load directly from the league site <a href="https://szalh.sk/league/2025/RAHL1" target="_blank" style="color:var(--rust-light);">szalh.sk ↗</a>. For information only.',
+    rosterInfo:'Roster and stats are from the <strong style="color:var(--cream);">{SEASON}</strong> season and load directly from the league site <a href="{URL}" target="_blank" style="color:var(--rust-light);">szalh.sk ↗</a>. For information only.',
     rosterLegend:'B = Goalie · O = Defense · Ú = Forward · <a href="https://szalh.sk" target="_blank">szalh.sk ↗</a>',
     mediaH:'Media', mediaP:'Videos, photos and our Instagram.',
     mediaFooter:'Got photos or video? Send them to <a href="mailto:konty@ndrtls.com">konty@ndrtls.com</a>',
@@ -6595,7 +6609,7 @@ const UI_MAIN={
     headerLoginBtn:'🔑 Log in', headerLogoutBtn:'Log out',
     newsH:'News & Updates', newsP:'Everything important about the team in one place.',
     rahlH:'RAHL1 League',
-    rahlP:'Ružinov Amateur Hockey League 1 · 2025/26 Season · <a href="https://szalh.sk/league/2025/RAHL1" target="_blank">szalh.sk ↗</a>',
+    rahlP:'Ružinov Amateur Hockey League 1 · {SEASON} Season · <a href="{URL}" target="_blank">szalh.sk ↗</a>',
     rahlLoading:'Loading from szalh.sk…', rahlErrorText:'Data not available.',
     rahlStandingsH:'Standings', rahlResultsH:'Neanderthals — Results',
     rahlThTeam:'Team', rahlThGp:'GP', rahlThW:'W', rahlThL:'L', rahlThOt:'OT', rahlThPts:'Pts',
@@ -6963,6 +6977,7 @@ applyStatic(); buildCards(); buildTabs();
 
 function applyStatic() {
   document.documentElement.lang=LANG;
+  const el0 = document.getElementById('rahl-error-link'); if (el0) el0.href = szalhUrl();
   const set=(sel,val,html=false)=>{ const el=document.querySelector(sel); if(el && val!=null) { if(html) el.innerHTML=val; else el.textContent=val; } };
 
   // Nav, header a verejné stránky (news/roster/rahl/media/kontakt) — jeden slovník, jeden generický prechod.
@@ -6970,7 +6985,9 @@ function applyStatic() {
   document.querySelectorAll('[data-i]').forEach(el => {
     const key = el.dataset.i;
     if (m[key] == null) return;
-    if (UI_MAIN_HTML[key]) el.innerHTML = m[key]; else el.textContent = m[key];
+    const val = String(m[key])
+      .replace(/\{SEASON\}/g, szalhLabel()).replace(/\{URL\}/g, szalhUrl());
+    if (UI_MAIN_HTML[key]) el.innerHTML = val; else el.textContent = val;
   });
 
   // Tréningová stránka (vlastný slovník UI, kľúče sa neprekrývajú s UI_MAIN)
