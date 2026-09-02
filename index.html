@@ -994,6 +994,13 @@ body.md-open #admin-preview-banner{display:none !important;}
   letter-spacing:.1em; font-size:1.05rem;}
 .tk-foot p{color:var(--bone); font-size:.92rem; margin:.5rem 0 0;}
 
+/* Predel medzi sezónami vo výsledkoch. Prvá hlavička je bez hornej čiary,
+   ďalšie ju majú výraznú — tam sa ročník naozaj láme. */
+.rahl-season-row:hover td{background:none !important;}
+td.rahl-season{font-family:'Oswald';font-weight:700;font-size:.7rem;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--rust-light);text-align:left;
+  padding:1.1rem .6rem .45rem;border-top:3px solid var(--maroon);background:rgba(107,31,42,.12);}
+td.rahl-season.first{border-top:0;padding-top:.5rem;}
 .news-card{background:var(--charcoal);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:1rem;transition:.2s;}
 .news-card:hover{border-color:rgba(107,31,42,.4);}
 .news-card-img{width:100%;aspect-ratio:16/9;object-fit:cover;}
@@ -1921,7 +1928,7 @@ body.md-open #admin-preview-banner{display:none !important;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.47.1</div>
+  <div id="version-badge">v3.48.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -4157,6 +4164,54 @@ function rahlSeasonFromMatches(matches) {
   return start + '/' + String((start + 1) % 100).padStart(2, '0');
 }
 
+/* ── ARCHÍV ZÁPASOV 2025/26 ──
+   Keď sa proxy prepne na nový ročník, staré zápasy z jej odpovede zmiznú.
+   Odohraná sezóna sa už nezmení, tak ju držíme tu — spájame ju s tým, čo proxy
+   práve vracia, a duplicity odfiltrujeme podľa event_id. Kým proxy vracia ešte
+   starú sezónu, spojenie nič nepridá. */
+const RAHL_ARCHIVE = [
+  ['2026-02-07','Black Jokers','4:8','P',490],
+  ['2026-01-31','AHC Pezinok Ducks','4:4','R',483],
+  ['2026-01-24','Wild Thing Karaoke','3:1','V',476],
+  ['2026-01-17','Mad Vipers','6:5','V',475],
+  ['2025-12-13','Uličníci','1:5','P',470],
+  ['2025-12-06','HK Petržalka','3:9','P',464],
+  ['2025-11-29','White Sharks Bratislava','0:5','P',458],
+  ['2025-11-22','AHS','2:4','P',452],
+  ['2025-11-15','Wild Hogs','4:2','V',448],
+  ['2025-11-08','Black Jokers','2:5','P',445],
+  ['2025-10-25','AHC Pezinok Ducks','3:2','V',439],
+  ['2025-10-18','Wild Thing Karaoke','2:4','P',432],
+  ['2025-10-11','Mad Vipers','1:6','P',428],
+  ['2025-10-04','Uličníci','2:3','P',423],
+  ['2025-09-27','HK Petržalka','0:8','P',416],
+  ['2025-09-20','White Sharks Bratislava','2:3','P',415],
+  ['2025-09-13','AHS','5:3','V',410],
+  ['2025-09-06','Wild Hogs','2:10','P',404],
+].map(([iso, opponent, score, result, event_id]) => {
+  const [y, mo, d] = iso.split('-');
+  return { date: d + '.' + mo + '.' + y, date_iso: iso, opponent, score, result,
+           finished: true, event_id };
+});
+
+/* Sezóna, do ktorej dátum patrí — ročník sa začína na jeseň. */
+function rahlSeasonOf(iso) {
+  if (!iso) return null;
+  const [y, mo] = iso.split('-').map(Number);
+  const start = mo >= 7 ? y : y - 1;
+  return start + '/' + String((start + 1) % 100).padStart(2, '0');
+}
+
+function rahlMergeMatches(fromProxy) {
+  const all = (fromProxy || []).concat(RAHL_ARCHIVE);
+  const seen = new Set();
+  return all.filter(m => {
+    const key = m.event_id != null ? 'e' + m.event_id : (m.date_iso || m.date) + '|' + m.opponent;
+    if (seen.has(key)) return false;
+    seen.add(key); return true;
+  }).sort((a, b) => String(b.date_iso || '').localeCompare(String(a.date_iso || '')));
+}
+
 async function loadRAHL() {
   try {
     const res = await fetch('https://trenuj.ndrtls.com/rahl-proxy.php'
@@ -4194,14 +4249,17 @@ async function loadRAHL() {
 
     // NEA Results
     const rtbody = document.getElementById('rahl-results-tbody');
-    if (data.matches && data.matches.length) {
+    const allMatches = rahlMergeMatches(data.matches);
+    if (allMatches.length) {
       const months = ['jan','feb','mar','apr','máj','jún','júl','aug','sep','okt','nov','dec'];
-      rtbody.innerHTML = data.matches.map(m => {
+      let lastSeason = null;
+      rtbody.innerHTML = allMatches.map(m => {
         const d = m.date ? m.date.split(' ')[0] : '';
         const parts = d.split('.');
         const dateStr = parts.length === 3
           ? parseInt(parts[0]) + '. ' + months[parseInt(parts[1])-1]
           : d;
+        const rok = (m.date_iso || '').slice(0, 4);
         const resClass = m.result === 'V' ? 'result-w' : m.result === 'P' ? 'result-l' : 'result-u';
         const resLabel = m.result === 'V' ? 'V' : m.result === 'P' ? 'P' : 'R';
         // Resolve szalh event id (proxy may expose it under different keys)
@@ -4209,8 +4267,18 @@ async function loadRAHL() {
         const clickAttrs = eid
           ? ' data-eid="' + eid + '" onclick="openMatchDetail(' + eid + ')"'
           : '';
-        return '<tr' + clickAttrs + '>' +
-          '<td style="color:var(--bone)">' + dateStr + '</td>' +
+        // Hrubá čiara medzi ročníkmi — nech je vidieť, kde končí odohraná
+        // sezóna a kde sa začína pridávať nová.
+        const season = rahlSeasonOf(m.date_iso);
+        let head = '';
+        if (season && season !== lastSeason) {
+          const first = lastSeason === null;
+          lastSeason = season;
+          head = '<tr class="rahl-season-row"><td colspan="4" class="rahl-season'
+            + (first ? ' first' : '') + '">Sezóna ' + season + '</td></tr>';
+        }
+        return head + '<tr' + clickAttrs + '>' +
+          '<td style="color:var(--bone)">' + dateStr + (rok ? ' <span style="opacity:.45;font-size:.85em">' + rok + '</span>' : '') + '</td>' +
           '<td style="color:var(--cream-bright)">' + m.opponent + '</td>' +
           '<td style="font-family:Oswald;font-weight:700">' + m.score + '</td>' +
           '<td class="' + resClass + '">' + resLabel + '</td>' +
