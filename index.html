@@ -513,6 +513,15 @@ header{
 .md-box-toolbar{display:flex; flex-wrap:wrap; gap:.5rem; margin:.4rem 0 1.2rem;}
 
 /* ── ADMIN: interná poznámka k prihláške ── */
+/* Výber spoluhráčov — štítky, ktoré sa klikaním prepínajú. Zoznam býva dlhý,
+   tak sa zalamuje a v prípade potreby scrolluje. */
+.mates-box{display:flex;flex-wrap:wrap;gap:.4rem;max-height:200px;overflow-y:auto;
+  padding:.6rem;background:rgba(21,17,15,.5);border:1px solid var(--line);border-radius:8px;}
+.mate-chip{font-family:'Oswald';font-weight:600;font-size:.78rem;letter-spacing:.04em;
+  padding:.35rem .7rem;border-radius:999px;cursor:pointer;transition:.15s;
+  background:var(--charcoal);color:var(--bone);border:1px solid var(--line);}
+.mate-chip:hover{border-color:var(--rust);}
+.mate-chip.on{background:var(--maroon);color:var(--cream-bright);border-color:var(--rust);}
 .app-status{font-family:'Oswald'; font-weight:700; font-size:.7rem; letter-spacing:.12em;
   text-transform:uppercase; padding:.35rem .8rem; border-radius:5px;
   border:1px solid var(--line); cursor:pointer; transition:.15s;}
@@ -1733,6 +1742,21 @@ td.rahl-season.first{border-top:0;padding-top:.5rem;}
           </select>
         </div>
         <div class="form-group">
+          <label>Preferovaná pozícia</label>
+          <select id="profile-prefpos" style="width:100%;background:var(--charcoal);border:1px solid var(--line);border-radius:8px;padding:.8rem;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;">
+            <option value="">Neuvedené</option>
+            <option value="C">Center</option>
+            <option value="LW">Ľavé krídlo</option>
+            <option value="RW">Pravé krídlo</option>
+            <option value="LD">Ľavý obranca</option>
+            <option value="RD">Pravý obranca</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Preferovaní spoluhráči <span style="font-weight:400;text-transform:none;letter-spacing:0;opacity:.7;">(môžeš označiť viacerých)</span></label>
+          <div id="profile-mates" class="mates-box"><span style="color:var(--bone);opacity:.6;font-size:.9rem;">Načítavam…</span></div>
+        </div>
+        <div class="form-group">
           <label>Držanie hokejky</label>
           <select id="profile-hand" style="width:100%;background:var(--charcoal);border:1px solid var(--line);border-radius:8px;padding:.8rem;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;">
             <option value="">Neuvedené</option>
@@ -1928,7 +1952,7 @@ td.rahl-season.first{border-top:0;padding-top:.5rem;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.49.1</div>
+  <div id="version-badge">v3.50.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -5529,7 +5553,7 @@ async function openLineup(eid, et) {
       _lHasRsvp = true;
       if (ids.length) {
         const { data:profsRaw } = await sb.from('profiles')
-          .select('id, full_name, nickname, position, number').in('id', ids);
+          .select('id, full_name, nickname, position, number, pref_pos, pref_mates').in('id', ids);
         _lPool = filterIgnored(profsRaw);
       }
     } catch(e) { console.warn('[lineup] RSVP/profiles load failed', e); }
@@ -5540,7 +5564,7 @@ async function openLineup(eid, et) {
     if (isA) {
       try {
         const { data:allProfsRaw } = await sb.from('profiles')
-          .select('id, full_name, nickname, position, number');
+          .select('id, full_name, nickname, position, number, pref_pos, pref_mates');
         const rsvpIds = new Set(_lPool.map(p=>p.id));
         _lNotRsvp = filterIgnored(allProfsRaw).filter(p=>!rsvpIds.has(p.id));
       } catch(e) { console.warn('[lineup] not-rsvp load failed', e); }
@@ -5764,6 +5788,52 @@ function lineupDragCancel(e){
 
 function enableLineupEdit() { _lEd=true; document.getElementById('lineup-edit-btn').style.display='none'; document.getElementById('lineup-save-btn').style.display='inline-block'; document.getElementById('lineup-auto-btn').style.display='inline-block'; document.getElementById('lineup-rink').classList.add('editing'); document.querySelectorAll('.player-slot').forEach(s=>{ s.style.cursor='pointer'; s.style.outline='1px dashed rgba(138,58,30,.4)'; s.style.touchAction='none'; }); }
 async function saveLineup() { _lEd=false; document.getElementById('lineup-edit-btn').style.display='inline-block'; document.getElementById('lineup-save-btn').style.display='none'; document.getElementById('lineup-auto-btn').style.display='none'; document.getElementById('lineup-picker').style.display='none'; document.getElementById('lineup-rink').classList.remove('editing'); document.querySelectorAll('.player-slot').forEach(s=>{ s.style.cursor=''; s.style.outline=''; s.style.touchAction=''; }); const { error }=await sb.from('game_results').upsert({event_id:_lEId,season_id:2,notes:JSON.stringify(_lD)},{onConflict:'event_id'}); if (error) { toast('Chyba: '+error.message,'error'); return; } toast('Zostava uložená ✓','success'); }
+/* ── AUTOMATICKÁ ZOSTAVA ──
+   Okrem postu (B/O/Ú/H) berieme do úvahy dve veci z profilu:
+     pref_pos   — konkrétna pozícia (C/LW/RW/LD/RD)
+     pref_mates — s kým chce hráč hrať
+   Formácie skladáme greedy: začneme prvým nezaradeným a dopĺňame toho, kto má
+   k už zaradeným najvyššiu väzbu (obojstranná preferencia váži viac než
+   jednostranná). Nie je to optimalizácia na globálne maximum — pri desiatich
+   hráčoch by to bolo zbytočné a výsledok by sa horšie vysvetľoval. */
+const _mates = p => Array.isArray(p && p.pref_mates) ? p.pref_mates : [];
+function _bond(a, b) {
+  const ab = _mates(a).includes(b.id), ba = _mates(b).includes(a.id);
+  return (ab && ba) ? 2 : (ab || ba) ? 1 : 0;
+}
+
+/* Poskladá skupiny danej veľkosti tak, aby v nich sedeli preferovaní spoluhráči. */
+function _groupByPreference(list, size) {
+  const left = list.slice();
+  const groups = [];
+  while (left.length) {
+    const group = [left.shift()];
+    while (group.length < size && left.length) {
+      let best = 0, bestScore = -1;
+      left.forEach((cand, i) => {
+        const score = group.reduce((sum, m) => sum + _bond(cand, m), 0);
+        if (score > bestScore) { bestScore = score; best = i; }
+      });
+      group.push(left.splice(best, 1)[0]);
+    }
+    groups.push(group);
+  }
+  return groups;
+}
+
+/* Rozdelí hráčov v skupine na konkrétne pozície podľa pref_pos; kto preferenciu
+   nemá alebo je jeho miesto obsadené, doplní sa na zvyšné. */
+function _assignSlots(members, slots) {
+  const out = {};
+  const left = members.slice();
+  slots.forEach(slot => {
+    const i = left.findIndex(p => p.pref_pos === slot);
+    if (i >= 0) out[slot] = left.splice(i, 1)[0];
+  });
+  slots.forEach(slot => { if (!out[slot] && left.length) out[slot] = left.shift(); });
+  return out;
+}
+
 function autoLineup() {
   // LEN prihlásení registrovaní používatelia. Ak sa nikto neprihlásil → prázdna zostava.
   const pool = _lPool.slice();
@@ -5773,12 +5843,15 @@ function autoLineup() {
   const hybrids = pool.filter(p=>p.position==='H');        // Ú/O — vedia vzadu aj vpredu
   const noPos = pool.filter(p=>!['B','O','\u00da','H'].includes(p.position)); // bez postu → k útočníkom
 
-  // Rozdeľ hybridov tam, kde treba: najprv doplň obranu (potreba 4), zvyšok k útoku
+  // Rozdeľ hybridov tam, kde treba: najprv doplň obranu (potreba 4), zvyšok k útoku.
+  // Hybrid s obrannou preferenciou ide dozadu prednostne.
   const D = pureD.slice();
   const F = pureF.concat(noPos);
+  const hyb = hybrids.slice().sort((a, b) =>
+    (['LD','RD'].includes(b.pref_pos) ? 1 : 0) - (['LD','RD'].includes(a.pref_pos) ? 1 : 0));
   let hi = 0;
-  while (D.length < 4 && hi < hybrids.length) { D.push(hybrids[hi++]); }
-  for (; hi < hybrids.length; hi++) { F.push(hybrids[hi]); }
+  while (D.length < 4 && hi < hyb.length) { D.push(hyb[hi++]); }
+  for (; hi < hyb.length; hi++) { F.push(hyb[hi]); }
 
   _lD = {};
   if (!pool.length) {
@@ -5789,11 +5862,23 @@ function autoLineup() {
   }
   const put = (key,p)=>{ _lD[key]={playerId:p.id,name:_lDisplayName(p),number:p.number||'\u2014'}; };
   if (g[0]) put('goalie_G', g[0]);
-  [['d1','LD'],['d1','RD'],['d2','LD'],['d2','RD']].forEach(([l,p],i)=>{ if (D[i]) put(l+'_'+p, D[i]); });
-  [['f1','LW'],['f1','C'],['f1','RW'],['f2','LW'],['f2','C'],['f2','RW'],['f3','LW'],['f3','C'],['f3','RW']].forEach(([l,p],i)=>{ if (F[i]) put(l+'_'+p, F[i]); });
+
+  // Obrana: dvojice podľa preferencií, v dvojici ľavý/pravý podľa pref_pos.
+  _groupByPreference(D, 2).slice(0, 2).forEach((pair, i) => {
+    const slots = _assignSlots(pair, ['LD','RD']);
+    Object.keys(slots).forEach(sl => put('d' + (i+1) + '_' + sl, slots[sl]));
+  });
+
+  // Útok: trojice podľa preferencií, v trojici krídla a center podľa pref_pos.
+  _groupByPreference(F, 3).slice(0, 3).forEach((line, i) => {
+    const slots = _assignSlots(line, ['LW','C','RW']);
+    Object.keys(slots).forEach(sl => put('f' + (i+1) + '_' + sl, slots[sl]));
+  });
   renderLineup();
   if (!_lEd) enableLineupEdit();
-  toast('Zostava navrhnutá \u26a1 (z prihlásených)','success'); }
+  const sPref = pool.filter(p => p.pref_pos || _mates(p).length).length;
+  toast('Zostava navrhnutá \u26a1 (z prihlásených'
+    + (sPref ? ', ' + sPref + '\u00d7 podľa preferencií' : '') + ')','success'); }
 
 /* ── ADMIN RSVP ───────────────────────────────── */
 async function showAdminRsvpPanel(eventId) {
@@ -5874,7 +5959,7 @@ async function saveOnboarding() {
       .update({ full_name: name, nickname: nick || null, position: posV, number: numV ? parseInt(numV) : null })
       .eq('id', currentUser.id);
     if (error) console.warn('Profile save failed:', error.message);
-    if (currentProfile) { currentProfile.full_name = name; currentProfile.nickname = nick || null; currentProfile.position = posV; currentProfile.number = numV ? parseInt(numV) : null; currentProfile.hand = handV || null; }
+    if (currentProfile) { currentProfile.full_name = name; currentProfile.nickname = nick || null; currentProfile.position = posV; currentProfile.number = numV ? parseInt(numV) : null; currentProfile.hand = handV || null; currentProfile.pref_pos = prefV || null; currentProfile.pref_mates = _prefMates.slice(); }
   } catch(e) { console.warn('Profile save threw:', e); }
 
   // 3. Refresh the header badge
@@ -5895,6 +5980,34 @@ async function saveOnboarding() {
   setTimeout(() => showSection('news'), 600);
 }
 
+let _prefMates = [];
+
+/* Zoznam spoluhráčov na výber. Ťaháme registrované profily, seba vynechávame. */
+async function renderMateChips() {
+  const box = document.getElementById('profile-mates');
+  if (!box) return;
+  let profs = [];
+  try {
+    const { data } = await sb.from('profiles').select('id, full_name, nickname');
+    profs = filterIgnored(data).filter(p => p.id !== currentUser?.id);
+  } catch(e) { console.warn('[profil] spoluhráči sa nenačítali:', e); }
+  if (!profs.length) {
+    box.innerHTML = '<span style="color:var(--bone);opacity:.6;font-size:.9rem;">Zatiaľ nikto ďalší.</span>';
+    return;
+  }
+  profs.sort((a, b) => _lDisplayName(a).localeCompare(_lDisplayName(b), 'sk'));
+  box.innerHTML = profs.map(p =>
+    `<span class="mate-chip${_prefMates.includes(p.id) ? ' on' : ''}" data-id="${p.id}"
+      onclick="toggleMate(this)">${mdEsc(_lDisplayName(p))}</span>`).join('');
+}
+
+function toggleMate(el) {
+  const id = el.dataset.id;
+  const i = _prefMates.indexOf(id);
+  if (i >= 0) _prefMates.splice(i, 1); else _prefMates.push(id);
+  el.classList.toggle('on');
+}
+
 async function loadProfile() {
   if (!currentUser) return;
   document.getElementById('profile-email').value = currentUser.email || '';
@@ -5908,6 +6021,10 @@ async function loadProfile() {
     if (numEl) numEl.value = (currentProfile.number != null) ? currentProfile.number : '';
     const handEl = document.getElementById('profile-hand');
     if (handEl) handEl.value = currentProfile.hand || '';
+    const ppEl = document.getElementById('profile-prefpos');
+    if (ppEl) ppEl.value = currentProfile.pref_pos || '';
+    _prefMates = Array.isArray(currentProfile.pref_mates) ? currentProfile.pref_mates.slice() : [];
+    await renderMateChips();
   }
 }
 async function saveProfileName() {
@@ -5919,8 +6036,10 @@ async function saveProfileName() {
   if (!name) { msg.textContent='Zadaj meno.'; msg.style.color='#bf6d6d'; msg.style.display='block'; return; }
 
   const handV = document.getElementById('profile-hand')?.value || '';
+  const prefV = document.getElementById('profile-prefpos')?.value || '';
   const payload = { full_name: name, nickname: nick || null, position: posV,
-    number: numV ? parseInt(numV) : null, hand: handV || null };
+    number: numV ? parseInt(numV) : null, hand: handV || null,
+    pref_pos: prefV || null, pref_mates: _prefMates };
   const { error } = await sb.from('profiles').update(payload).eq('id', currentUser.id);
 
   if (error) {
