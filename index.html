@@ -1968,7 +1968,7 @@ td.rahl-season.first{border-top:0;padding-top:.5rem;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.51.0</div>
+  <div id="version-badge">v3.52.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2256,6 +2256,10 @@ td.rahl-season.first{border-top:0;padding-top:.5rem;}
         font-size:1.4rem;cursor:pointer;line-height:1;">✕</button>
     </div>
     <input type="hidden" id="ue-id">
+
+    <div id="ue-view"></div>
+
+    <div id="ue-edit" style="display:none;">
     <div class="form-group">
       <label>Meno a priezvisko</label>
       <input type="text" id="ue-name" placeholder="napr. Lukáš Vondráček">
@@ -2290,11 +2294,30 @@ td.rahl-season.first{border-top:0;padding-top:.5rem;}
           <option value="R">Pravák</option>
         </select>
       </div>
+      <div class="form-group">
+        <label>Preferovaná pozícia</label>
+        <select id="ue-prefpos" style="width:100%;background:var(--ink);
+          border:1px solid var(--line);border-radius:6px;padding:.75rem .9rem;
+          color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;">
+          <option value="">Neuvedené</option>
+          <option value="C">Center</option>
+          <option value="LW">Ľavé krídlo</option>
+          <option value="RW">Pravé krídlo</option>
+          <option value="LD">Ľavý obranca</option>
+          <option value="RD">Pravý obranca</option>
+        </select>
+      </div>
     </div>
+    <div class="form-group">
+      <label>Preferovaní parťáci <span style="font-weight:400;text-transform:none;letter-spacing:0;opacity:.7;">(s kým mu sadne útok/obrana)</span></label>
+      <div id="ue-mates" class="mates-box"><span style="color:var(--bone);opacity:.6;font-size:.9rem;">Načítavam…</span></div>
+    </div>
+    </div>
+
     <div id="ue-msg" style="display:none;margin:.4rem 0 .8rem;font-family:'Oswald';font-size:.85rem;"></div>
     <div class="modal-actions">
-      <button class="btn-admin save" onclick="saveUserEdit()">✓ Uložiť</button>
-      <button class="btn-admin cancel" onclick="closeModal('modal-user-edit')">Zrušiť</button>
+      <button class="btn-admin save" id="ue-btn" onclick="onUserEditBtn()">✎ Upraviť hráča</button>
+      <button class="btn-admin cancel" id="ue-cancel" onclick="userEditCancel()">Zavrieť</button>
     </div>
   </div>
 </div>
@@ -3705,6 +3728,7 @@ async function loadAdminUsers() {
     }
     // Profily patriace iným aplikáciám / vyňatí používatelia — nezapočítavame ich.
     profiles = filterIgnored(profiles);
+    _adminUsers = profiles || [];   // modal Upraviť hráča si odtiaľto berie celý riadok
     if (!profiles?.length) {
       list.innerHTML = '<div class="empty-state"><div class="es-icon">👥</div><p>Žiadni používatelia.</p></div>';
       if (stats) stats.innerHTML = '';
@@ -3769,11 +3793,6 @@ async function loadAdminUsers() {
         : '<button class="btn-sm" onclick="adminSetRole(\'' + p.id + '\',\'admin\')" style="color:var(--rust-light);" title="Nastaviť ako admina">↑ Admin</button>';
 
       const editBtn = '<button class="btn-sm" onclick="adminEditNameFromBtn(this)" data-uid="' + p.id +
-        '" data-name="' + encodeURIComponent(p.full_name || '') +
-        '" data-nick="' + encodeURIComponent(p.nickname || '') +
-        '" data-pos="' + encodeURIComponent(p.position || '') +
-        '" data-num="' + encodeURIComponent(p.number != null ? p.number : '') +
-        '" data-hand="' + encodeURIComponent(p.hand || '') +
         '" style="color:var(--cream);" title="Upraviť hráča">✎ Upraviť</button>';
 
       const posLabel = ({'Ú':'Útočník','O':'Obranca','B':'Brankár','H':'Obojživelník'})[p.position] || '—';
@@ -3804,21 +3823,91 @@ async function loadAdminUsers() {
   }
 }
 
+let _adminUsers = [];   // posledný načítaný zoznam profilov v admin sekcii
+let _ueMates    = [];   // označení parťáci práve upravovaného hráča
+
+/* Modal Upraviť hráča má rovnaké dva kroky ako Môj profil: najprv prehľad,
+   editovať sa dá až po kliknutí na tlačidlo. */
 function adminEditNameFromBtn(btn) {
-  const uid  = btn.dataset.uid;
-  const cur  = decodeURIComponent(btn.dataset.name || '');
-  const nick = decodeURIComponent(btn.dataset.nick || '');
-  const pos  = decodeURIComponent(btn.dataset.pos || '') || 'Ú';
-  const num  = decodeURIComponent(btn.dataset.num || '');
-  const hand = decodeURIComponent(btn.dataset.hand || '');
+  const uid = btn.dataset.uid;
+  const p   = _adminUsers.find(u => u.id === uid) || {};
+  const pos = p.position || 'Ú';
   document.getElementById('ue-id').value = uid;
-  document.getElementById('ue-name').value = cur;
-  document.getElementById('ue-nick').value = nick;
-  document.getElementById('ue-pos').value = ['Ú','O','B'].includes(pos) ? pos : 'Ú';
-  document.getElementById('ue-num').value = num;
-  document.getElementById('ue-hand').value = ['L','R'].includes(hand) ? hand : '';
-  const msg = document.getElementById('ue-msg'); if (msg) msg.style.display = 'none';
+  document.getElementById('ue-name').value = p.full_name || '';
+  document.getElementById('ue-nick').value = p.nickname || '';
+  document.getElementById('ue-pos').value = ['Ú','O','H','B'].includes(pos) ? pos : 'Ú';
+  document.getElementById('ue-num').value = (p.number != null) ? p.number : '';
+  document.getElementById('ue-hand').value = ['L','R'].includes(p.hand) ? p.hand : '';
+  document.getElementById('ue-prefpos').value = PF_PREF[p.pref_pos] ? p.pref_pos : '';
+  _ueMates = Array.isArray(p.pref_mates) ? p.pref_mates.slice() : [];
+  renderUeChips(uid);
+  renderUserEditView(p);
+  setUserEditMode(false);
   document.getElementById('modal-user-edit').classList.add('show');
+}
+
+function renderUeChips(uid) {
+  const box = document.getElementById('ue-mates');
+  if (!box) return;
+  const pool = _adminUsers.filter(u => u.id !== uid)
+    .sort((a, b) => _lDisplayName(a).localeCompare(_lDisplayName(b), 'sk'));
+  box.innerHTML = pool.length
+    ? pool.map(p => `<span class="mate-chip${_ueMates.includes(p.id) ? ' on' : ''}" data-id="${p.id}"
+        onclick="toggleUeMate(this)">${mdEsc(_lDisplayName(p))}</span>`).join('')
+    : '<span style="color:var(--bone);opacity:.6;font-size:.9rem;">Zatiaľ nikto ďalší.</span>';
+}
+
+function toggleUeMate(el) {
+  const id = el.dataset.id;
+  const i = _ueMates.indexOf(id);
+  if (i >= 0) _ueMates.splice(i, 1); else _ueMates.push(id);
+  el.classList.toggle('on');
+}
+
+function renderUserEditView(p) {
+  const box = document.getElementById('ue-view');
+  if (!box) return;
+  const cell = v => v
+    ? `<span class="pf-v">${mdEsc(String(v))}</span>`
+    : '<span class="pf-v missing">Nevyplnené</span>';
+  const mates = (Array.isArray(p.pref_mates) ? p.pref_mates : [])
+    .map(id => _adminUsers.find(m => m.id === id)).filter(Boolean).map(_lDisplayName);
+  const rows = [
+    ['Meno',                cell(p.full_name)],
+    ['Prezývka',            cell(p.nickname)],
+    ['Post',                cell(PF_POS[p.position])],
+    ['Číslo dresu',         cell(p.number != null && p.number !== '' ? '#' + p.number : '')],
+    ['Držanie hokejky',     cell(PF_HAND[p.hand])],
+    ['Preferovaná pozícia', cell(PF_PREF[p.pref_pos])],
+    ['Parťáci',             cell(mates.join(', '))],
+  ];
+  box.innerHTML = rows.map(([k, v]) =>
+    `<div class="pf-row"><span class="pf-k">${k}</span>${v}</div>`).join('');
+}
+
+function setUserEditMode(on) {
+  const v = document.getElementById('ue-view'), e = document.getElementById('ue-edit');
+  if (v) v.style.display = on ? 'none' : 'block';
+  if (e) e.style.display = on ? 'block' : 'none';
+  const btn = document.getElementById('ue-btn');
+  if (btn) btn.textContent = on ? '✓ Uložiť hráča' : '✎ Upraviť hráča';
+  const cancel = document.getElementById('ue-cancel');
+  if (cancel) cancel.textContent = on ? 'Zrušiť' : 'Zavrieť';
+  const msg = document.getElementById('ue-msg');
+  if (msg) msg.style.display = 'none';
+}
+
+function onUserEditBtn() {
+  const editing = document.getElementById('ue-edit')?.style.display !== 'none';
+  if (editing) saveUserEdit(); else setUserEditMode(true);
+}
+
+/* V edite sa vraciame na prehľad (a zahodíme rozrobené zmeny), v prehľade zavrieme modal. */
+function userEditCancel() {
+  const editing = document.getElementById('ue-edit')?.style.display !== 'none';
+  if (!editing) { closeModal('modal-user-edit'); return; }
+  const btn = { dataset: { uid: document.getElementById('ue-id').value } };
+  adminEditNameFromBtn(btn);
 }
 
 async function saveUserEdit() {
@@ -3834,18 +3923,24 @@ async function saveUserEdit() {
   if (!name) { showMsg('Meno nemôže byť prázdne.', false); return; }
   const numV = numRaw ? parseInt(numRaw) : null;
 
+  const prefV  = document.getElementById('ue-prefpos')?.value || '';
   const payload = { full_name: name, nickname: nick || null, position: posV,
-    number: (numV!=null && !isNaN(numV)) ? numV : null, hand: handV || null };
+    number: (numV!=null && !isNaN(numV)) ? numV : null, hand: handV || null,
+    pref_pos: prefV || null, pref_mates: _ueMates };
   const { error } = await sb.from('profiles').update(payload).eq('id', userId);
   if (error) { showMsg('Chyba: ' + error.message, false); return; }
 
   // Sync vlastný badge, ak admin upravil sám seba
   if (userId === currentUser?.id) {
-    if (currentProfile) { currentProfile.full_name = name; currentProfile.nickname = payload.nickname; currentProfile.position = posV; currentProfile.number = payload.number; currentProfile.hand = payload.hand; }
+    if (currentProfile) Object.assign(currentProfile, payload);
     const un = document.getElementById('user-name');
     if (un) un.textContent = payload.nickname || name;
   }
-  closeModal('modal-user-edit');
+  // Lokálna kópia, aby prehľad hneď ukázal nový stav aj pred dotiahnutím zoznamu
+  const cached = _adminUsers.find(u => u.id === userId);
+  if (cached) Object.assign(cached, payload);
+  renderUserEditView(cached || payload);
+  setUserEditMode(false);
   toast('Hráč uložený ✓', 'success');
   loadAdminUsers();
 }
