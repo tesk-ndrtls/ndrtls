@@ -522,6 +522,16 @@ header{
   background:var(--charcoal);color:var(--bone);border:1px solid var(--line);}
 .mate-chip:hover{border-color:var(--rust);}
 .mate-chip.on{background:var(--maroon);color:var(--cream-bright);border-color:var(--rust);}
+/* Profil — prehľad pred editom. Hráč najprv vidí, čo má nastavené, a čo mu
+   chýba (červenou); editovať sa dá až po kliknutí na Upraviť profil. */
+.pf-row{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;
+  padding:.55rem 0;border-bottom:1px solid var(--line);}
+.pf-row:last-child{border-bottom:none;}
+.pf-k{font-family:'Oswald';font-weight:600;font-size:.72rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--bone);opacity:.75;flex:0 0 auto;}
+.pf-v{font-family:'Barlow Condensed';font-size:1rem;color:var(--cream-bright);
+  text-align:right;line-height:1.3;}
+.pf-v.missing{color:#d9736b;font-style:italic;}
 .app-status{font-family:'Oswald'; font-weight:700; font-size:.7rem; letter-spacing:.12em;
   text-transform:uppercase; padding:.35rem .8rem; border-radius:5px;
   border:1px solid var(--line); cursor:pointer; transition:.15s;}
@@ -1724,6 +1734,10 @@ td.rahl-season.first{border-top:0;padding-top:.5rem;}
       <div style="background:var(--charcoal);border:1px solid var(--line);border-radius:12px;padding:1.4rem;margin-bottom:1rem;">
         <h4 style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.15em;
           text-transform:uppercase;color:var(--rust-light);margin-bottom:1rem;">Zobrazované meno</h4>
+
+        <div id="profile-view"></div>
+
+        <div id="profile-edit" style="display:none;">
         <div class="form-group">
           <label>Meno a priezvisko <span style="font-weight:400;text-transform:none;letter-spacing:0;opacity:.7;">(pre prepojenie so súpiskou)</span></label>
           <input type="text" id="profile-name" placeholder="napr. Michal Imrich">
@@ -1753,7 +1767,7 @@ td.rahl-season.first{border-top:0;padding-top:.5rem;}
           </select>
         </div>
         <div class="form-group">
-          <label>Preferovaní spoluhráči <span style="font-weight:400;text-transform:none;letter-spacing:0;opacity:.7;">(môžeš označiť viacerých)</span></label>
+          <label>Preferovaní parťáci <span style="font-weight:400;text-transform:none;letter-spacing:0;opacity:.7;">(s kým ti sadne útok/obrana — môžeš označiť viacerých)</span></label>
           <div id="profile-mates" class="mates-box"><span style="color:var(--bone);opacity:.6;font-size:.9rem;">Načítavam…</span></div>
         </div>
         <div class="form-group">
@@ -1773,17 +1787,19 @@ td.rahl-season.first{border-top:0;padding-top:.5rem;}
           <input type="email" id="profile-email" disabled
             style="opacity:.5;cursor:not-allowed;">
         </div>
-        <button class="btn-primary" onclick="saveProfileName()" style="margin-top:.4rem;">
-          Uložiť meno
+        </div>
+
+        <button class="btn-primary" id="btn-profile" onclick="onProfileBtn()" style="margin-top:1rem;">
+          Upraviť profil
+        </button>
+        <button id="btn-profile-cancel" onclick="cancelProfileEdit()"
+          style="display:none;width:100%;margin-top:.6rem;background:transparent;
+          color:var(--bone);border:1px solid var(--line);border-radius:8px;
+          padding:.7rem;font-family:'Oswald';font-weight:600;font-size:.85rem;
+          letter-spacing:.1em;text-transform:uppercase;cursor:pointer;">
+          Zrušiť
         </button>
         <div id="profile-name-msg" style="display:none;margin-top:.6rem;font-family:'Oswald';font-size:.85rem;"></div>
-        <button id="btn-go-to-app" onclick="showSection('events')"
-          style="display:none;width:100%;margin-top:.6rem;background:var(--charcoal);
-          color:var(--cream-bright);border:1px solid var(--rust);border-radius:8px;
-          padding:.8rem;font-family:'Anton';font-size:1rem;letter-spacing:.06em;
-          text-transform:uppercase;cursor:pointer;">
-          Pokračovať do zóny →
-        </button>
       </div>
 
       <div style="background:var(--charcoal);border:1px solid var(--line);border-radius:12px;padding:1.4rem;">
@@ -1952,7 +1968,7 @@ td.rahl-season.first{border-top:0;padding-top:.5rem;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.50.0</div>
+  <div id="version-badge">v3.51.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -5981,25 +5997,77 @@ async function saveOnboarding() {
 }
 
 let _prefMates = [];
+let _matePool  = [];   // registrované profily bez seba — pre chipy aj pre prehľad
 
-/* Zoznam spoluhráčov na výber. Ťaháme registrované profily, seba vynechávame. */
-async function renderMateChips() {
-  const box = document.getElementById('profile-mates');
-  if (!box) return;
-  let profs = [];
+const PF_POS  = { 'Ú':'Útočník', 'O':'Obranca', 'H':'Obojživelník (Ú/O)', 'B':'Brankár' };
+const PF_PREF = { C:'Center', LW:'Ľavé krídlo', RW:'Pravé krídlo', LD:'Ľavý obranca', RD:'Pravý obranca' };
+const PF_HAND = { L:'Ľavák', R:'Pravák' };
+
+/* Zoznam parťákov na výber. Ťaháme registrované profily, seba vynechávame. */
+async function loadMatePool() {
   try {
     const { data } = await sb.from('profiles').select('id, full_name, nickname');
-    profs = filterIgnored(data).filter(p => p.id !== currentUser?.id);
-  } catch(e) { console.warn('[profil] spoluhráči sa nenačítali:', e); }
-  if (!profs.length) {
+    _matePool = filterIgnored(data).filter(p => p.id !== currentUser?.id)
+      .sort((a, b) => _lDisplayName(a).localeCompare(_lDisplayName(b), 'sk'));
+  } catch(e) { console.warn('[profil] parťáci sa nenačítali:', e); }
+}
+
+function renderMateChips() {
+  const box = document.getElementById('profile-mates');
+  if (!box) return;
+  if (!_matePool.length) {
     box.innerHTML = '<span style="color:var(--bone);opacity:.6;font-size:.9rem;">Zatiaľ nikto ďalší.</span>';
     return;
   }
-  profs.sort((a, b) => _lDisplayName(a).localeCompare(_lDisplayName(b), 'sk'));
-  box.innerHTML = profs.map(p =>
+  box.innerHTML = _matePool.map(p =>
     `<span class="mate-chip${_prefMates.includes(p.id) ? ' on' : ''}" data-id="${p.id}"
       onclick="toggleMate(this)">${mdEsc(_lDisplayName(p))}</span>`).join('');
 }
+
+/* Prehľad profilu — medzikrok pred editom, aby si hráč nepreklikol nastavenia
+   omylom. Čo nie je vyplnené, svieti na červeno. */
+function renderProfileView() {
+  const box = document.getElementById('profile-view');
+  if (!box) return;
+  const p = currentProfile || {};
+  const cell = v => v
+    ? `<span class="pf-v">${mdEsc(String(v))}</span>`
+    : '<span class="pf-v missing">Nevyplnené</span>';
+  const mates = (Array.isArray(p.pref_mates) ? p.pref_mates : [])
+    .map(id => _matePool.find(m => m.id === id)).filter(Boolean).map(_lDisplayName);
+  const rows = [
+    ['Meno',                cell(p.full_name)],
+    ['Prezývka',            cell(p.nickname)],
+    ['Post',                cell(PF_POS[p.position])],
+    ['Preferovaná pozícia', cell(PF_PREF[p.pref_pos])],
+    ['Parťáci',             cell(mates.join(', '))],
+    ['Držanie hokejky',     cell(PF_HAND[p.hand])],
+    ['Číslo dresu',         cell(p.number != null && p.number !== '' ? '#' + p.number : '')],
+    ['E-mail',              cell(currentUser?.email)],
+  ];
+  box.innerHTML = rows.map(([k, v]) =>
+    `<div class="pf-row"><span class="pf-k">${k}</span>${v}</div>`).join('');
+}
+
+function setProfileEdit(on) {
+  const v = document.getElementById('profile-view'), e = document.getElementById('profile-edit');
+  if (v) v.style.display = on ? 'none' : 'block';
+  if (e) e.style.display = on ? 'block' : 'none';
+  const btn = document.getElementById('btn-profile');
+  if (btn) btn.textContent = on ? 'Uložiť profil' : 'Upraviť profil';
+  const cancel = document.getElementById('btn-profile-cancel');
+  if (cancel) cancel.style.display = on ? 'block' : 'none';
+  const msg = document.getElementById('profile-name-msg');
+  if (msg) msg.style.display = 'none';
+}
+
+/* Jedno tlačidlo pre obe fázy: v prehľade otvára edit, v edite ukladá. */
+function onProfileBtn() {
+  const editing = document.getElementById('profile-edit')?.style.display !== 'none';
+  if (editing) saveProfileName(); else setProfileEdit(true);
+}
+
+function cancelProfileEdit() { loadProfile(); }
 
 function toggleMate(el) {
   const id = el.dataset.id;
@@ -6024,8 +6092,12 @@ async function loadProfile() {
     const ppEl = document.getElementById('profile-prefpos');
     if (ppEl) ppEl.value = currentProfile.pref_pos || '';
     _prefMates = Array.isArray(currentProfile.pref_mates) ? currentProfile.pref_mates.slice() : [];
-    await renderMateChips();
+    await loadMatePool();
+    renderMateChips();
   }
+  renderProfileView();
+  // Nováčik ešte nemá meno — toho pustíme rovno do editu, ostatní vidia prehľad.
+  setProfileEdit(!currentProfile?.full_name);
 }
 async function saveProfileName() {
   const name = document.getElementById('profile-name').value.trim();
@@ -6045,19 +6117,20 @@ async function saveProfileName() {
   if (error) {
     msg.textContent = 'Chyba: ' + error.message;
     msg.style.color = '#bf6d6d';
-  } else {
-    msg.textContent = 'Uložené ✓';
-    msg.style.color = '#6dbf6d';
-    if (currentProfile) { currentProfile.full_name = name; currentProfile.nickname = nick || null; currentProfile.position = posV; currentProfile.number = numV ? parseInt(numV) : null; }
-    // Display name = nickname if set, otherwise full name
-    const displayName = nick || name;
-    document.getElementById('user-name').textContent = displayName;
-    // Avatar = číslo dresu z profilu, inak iniciály
-    document.getElementById('user-avatar').textContent =
-      (numV || (currentProfile && currentProfile.number)) || displayName.split(' ').map(p=>p[0]||'').join('').slice(0,2).toUpperCase();
+    msg.style.display = 'block';
+    return;
   }
-  msg.style.display = 'block';
-  const goBtn = document.getElementById('btn-go-to-app'); if (goBtn) goBtn.style.display='block';
+
+  if (currentProfile) Object.assign(currentProfile, payload);
+  // Display name = nickname if set, otherwise full name
+  const displayName = nick || name;
+  document.getElementById('user-name').textContent = displayName;
+  // Avatar = číslo dresu z profilu, inak iniciály
+  document.getElementById('user-avatar').textContent =
+    (numV || (currentProfile && currentProfile.number)) || displayName.split(' ').map(p=>p[0]||'').join('').slice(0,2).toUpperCase();
+  renderProfileView();
+  setProfileEdit(false);
+  toast('Profil uložený ✓', 'success');
 }
 async function saveProfilePassword() {
   const np=document.getElementById('profile-pass-new').value, cp=document.getElementById('profile-pass-confirm').value, msg=document.getElementById('profile-pass-msg');
