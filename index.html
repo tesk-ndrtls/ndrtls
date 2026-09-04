@@ -1968,7 +1968,7 @@ td.rahl-season.first{border-top:0;padding-top:.5rem;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.53.0</div>
+  <div id="version-badge">v3.54.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2005,6 +2005,8 @@ td.rahl-season.first{border-top:0;padding-top:.5rem;}
           style="display:none;font-size:.72rem;">✓ Uložiť</button>
         <button id="lineup-auto-btn" class="btn-admin cancel" onclick="autoLineup()"
           style="display:none;font-size:.72rem;">⚡ Auto</button>
+        <button id="lineup-text-btn" class="btn-admin cancel" onclick="openLineupText()"
+          style="font-size:.72rem;" title="Súpiska ako text na poslanie správcom ligy">📋 Text</button>
         <button onclick="closeModal('modal-lineup')"
           style="background:none;border:0;color:var(--bone);font-size:1.4rem;cursor:pointer;">✕</button>
       </div>
@@ -2139,6 +2141,30 @@ td.rahl-season.first{border-top:0;padding-top:.5rem;}
       </button>
     </div>
 
+  </div>
+</div>
+
+<!-- ══ SÚPISKA AKO TEXT (na poslanie správcom ligy) ══ -->
+<div class="modal-overlay" id="modal-lineup-text">
+  <div class="modal">
+    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+      <h3 style="margin:0;font-size:1.3rem;">Súpiska ako text</h3>
+      <button onclick="closeModal('modal-lineup-text')"
+        style="margin-left:auto;background:none;border:0;color:var(--bone);
+        font-size:1.4rem;cursor:pointer;line-height:1;">✕</button>
+    </div>
+    <p style="color:var(--bone);font-size:.88rem;margin-bottom:.8rem;">
+      Skopíruj a pošli správcom ligy.
+    </p>
+    <textarea id="lineup-text-area" readonly rows="16"
+      style="width:100%;background:var(--ink);border:1px solid var(--line);border-radius:6px;
+      padding:.75rem .9rem;color:var(--cream);font-family:ui-monospace,'SFMono-Regular',Menlo,monospace;
+      font-size:.85rem;line-height:1.45;resize:vertical;white-space:pre;overflow-wrap:normal;
+      overflow-x:auto;"></textarea>
+    <div class="modal-actions">
+      <button class="btn-admin save" onclick="copyLineupText()">📋 Kopírovať</button>
+      <button class="btn-admin cancel" onclick="closeModal('modal-lineup-text')">Zavrieť</button>
+    </div>
   </div>
 </div>
 
@@ -5658,7 +5684,7 @@ async function savePlayerCard() {
 /* ── LINEUP ───────────────────────────────────── */
 /* Pracujeme VÝHRADNE s registrovanými používateľmi (profiles), ktorí sú prihlásení
    (RSVP=yes). Súpiska z RAHL (players) sa tu nepoužíva — je len informatívna. */
-let _lEId=null,_lEd=false,_lD={},_lAS=null,_lPool=[],_lHasRsvp=false,_lNotRsvp=[];
+let _lEId=null,_lEd=false,_lD={},_lAS=null,_lPool=[],_lHasRsvp=false,_lNotRsvp=[],_lEv=null;
 
 // Zobrazované meno: prezývka, inak celé meno
 function _lDisplayName(p) {
@@ -5668,6 +5694,7 @@ function _lDisplayName(p) {
 async function openLineup(eid, et) {
   try {
     _lEId=eid; _lEd=false;
+    _lEv = window['_ev_'+eid] || null;   // dátum, čas a miesto do textovej súpisky
     let title = '';
     if (et) { try { title = decodeURIComponent(et); } catch(e) { title = et; } }
     if (!title) title = (window['_ev_'+eid] && window['_ev_'+eid].title) || 'Zostava';
@@ -5968,6 +5995,100 @@ function _assignSlots(members, slots) {
   });
   slots.forEach(slot => { if (!out[slot] && left.length) out[slot] = left.shift(); });
   return out;
+}
+
+/* ── SÚPISKA AKO TEXT ────────────────────────────
+   Deň pred zápasom sa posiela správcom ligy. Zámerne celé mená, nie prezývky —
+   do zápisu o stretnutí patrí meno, pod ktorým je hráč registrovaný. */
+const LT_F = ['f1','f2','f3'], LT_D = ['d1','d2'];
+
+function _ltName(entry) {
+  const p = _lPool.find(x => String(x.id) === String(entry.playerId));
+  return (p && (p.full_name || '').trim()) || entry.name || '';
+}
+function _ltNum(o) {
+  const n = (o && o.number != null) ? String(o.number).trim() : '';
+  return (n && n !== '—') ? n : '';
+}
+function _ltRow(o, name) {
+  const n = _ltNum(o);
+  return (n || '–').padStart(2, ' ') + '  ' + name;
+}
+/* Bez čísla na koniec — v zápise o stretnutí sa aj tak musí doplniť ručne. */
+function _ltSort(rows) {
+  return rows.slice().sort((a, b) => {
+    const na = _ltNum(a.o), nb = _ltNum(b.o);
+    if (!na !== !nb) return na ? -1 : 1;
+    return (parseInt(na, 10) || 0) - (parseInt(nb, 10) || 0);
+  });
+}
+function _ltBlock(nadpis, rows) {
+  if (!rows.length) return '';
+  return nadpis + '\n' + _ltSort(rows).map(r => _ltRow(r.o, r.name)).join('\n') + '\n\n';
+}
+
+function lineupText() {
+  const ev = _lEv || {};
+  const rawTitle = ev.title
+    || (document.getElementById('lineup-modal-title')?.textContent || '').replace(/^🏒\s*/, '');
+  const m = (typeof calMatchupFromTitle === 'function') ? calMatchupFromTitle(rawTitle) : null;
+  const head = m ? (CAL_US + ' – ' + m.opponent + (m.home ? ' (doma)' : ' (vonku)')) : (rawTitle || CAL_US);
+
+  const d = ev.date ? new Date(ev.date) : null;
+  const kedy = (d && !isNaN(d)) ? (d.getDate() + '. ' + (d.getMonth() + 1) + '. ' + d.getFullYear()
+    + ', ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0')) : '';
+  const kde = (ev.location || '').trim();
+
+  const pick = keys => keys.map(k => _lD[k]).filter(Boolean).map(o => ({ o, name: _ltName(o) }));
+  const g = pick(['goalie_G']);
+  const dRows = pick(LT_D.flatMap(l => [l + '_LD', l + '_RD']));
+  const fRows = pick(LT_F.flatMap(l => [l + '_LW', l + '_C', l + '_RW']));
+
+  // Prihlásení, ktorí v zostave miesto nedostali — nech na nich nikto nezabudne.
+  const used = new Set(Object.values(_lD).map(x => String(x.playerId)));
+  const rest = _lPool.filter(p => !used.has(String(p.id)))
+    .map(p => ({ o: p, name: (p.full_name || '').trim() || _lDisplayName(p) }));
+
+  let out = head + '\n';
+  if (kedy) out += kedy + (kde ? ' · ' + kde : '') + '\n';
+  else if (kde) out += kde + '\n';
+  out += '\n';
+
+  out += _ltBlock('BRANKÁR', g);
+  out += _ltBlock('OBRANCOVIA', dRows);
+  out += _ltBlock('ÚTOČNÍCI', fRows);
+
+  const spolu = g.length + dRows.length + fRows.length;
+  out += 'Spolu: ' + spolu + ' ' + (spolu === 1 ? 'hráč' : (spolu >= 2 && spolu <= 4 ? 'hráči' : 'hráčov'))
+    + ' (' + g.length + ' B, ' + dRows.length + ' O, ' + fRows.length + ' Ú)\n';
+
+  if (rest.length) out += '\n' + _ltBlock('PRIHLÁSENÍ MIMO ZOSTAVY', rest).trimEnd() + '\n';
+  return out;
+}
+
+function openLineupText() {
+  const ta = document.getElementById('lineup-text-area');
+  if (ta) ta.value = lineupText();
+  document.getElementById('modal-lineup-text').classList.add('show');
+}
+
+async function copyLineupText() {
+  const ta = document.getElementById('lineup-text-area');
+  if (!ta) return;
+  const txt = ta.value;
+  try {
+    await navigator.clipboard.writeText(txt);
+    toast('Skopírované ✓', 'success');
+    return;
+  } catch(e) { /* padáme na staršiu cestu nižšie */ }
+  // Safari v PWA a staršie prehliadače: označíme text a skúsime execCommand.
+  // readonly treba na chvíľu zložiť, inak sa výber na iOS nenastaví.
+  ta.removeAttribute('readonly');
+  ta.focus(); ta.setSelectionRange(0, txt.length);
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch(e2) {}
+  ta.setAttribute('readonly', '');
+  toast(ok ? 'Skopírované ✓' : 'Text je označený — skopíruj ho ručne', ok ? 'success' : 'error');
 }
 
 function autoLineup() {
