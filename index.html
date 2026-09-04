@@ -1968,7 +1968,7 @@ td.rahl-season.first{border-top:0;padding-top:.5rem;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.52.0</div>
+  <div id="version-badge">v3.53.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2344,6 +2344,14 @@ td.rahl-season.first{border-top:0;padding-top:.5rem;}
     <input type="hidden" id="news-edit-id">
     <div class="form-group"><label>Nadpis</label><input type="text" id="news-title" placeholder="Nadpis príspevku"></div>
     <div class="form-group"><label>Dátum udalosti</label><input type="date" id="news-date"></div>
+    <div class="form-group">
+      <label>Viditeľnosť</label>
+      <label style="display:flex;align-items:center;gap:.6rem;cursor:pointer;font-weight:400;
+        text-transform:none;letter-spacing:0;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;">
+        <input type="checkbox" id="news-internal" style="width:1.1rem;height:1.1rem;accent-color:var(--rust);flex:0 0 auto;">
+        <span>Interný oznam — uvidia ho len prihlásení hráči</span>
+      </label>
+    </div>
     <div class="form-group"><label>Text</label><textarea id="news-body" rows="4" style="width:100%;background:var(--ink);border:1px solid var(--line);border-radius:6px;padding:.75rem .9rem;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;resize:vertical;min-height:80px;"></textarea></div>
     <div class="form-group">
       <label>Foto</label>
@@ -2731,6 +2739,9 @@ async function onLogin(user) {
   currentUser = user;
   try {
   await _onLoginInner(user);
+  // Prihlásením pribudnú interné oznamy — cache z odhláseného stavu je neúplná.
+  _newsCache = null;
+  loadPublicNews();
   } finally {
     _loginInProgress = false;
   }
@@ -2816,6 +2827,9 @@ function onLogout() {
   _internalLoaded = false;
   const _idocs = document.getElementById('internal-docs');
   if (_idocs) _idocs.innerHTML = '';
+  // To isté pre interné oznamy — po odhlásení sa načítajú znova, už bez nich.
+  _newsCache = null;
+  loadPublicNews();
   const setEl = (id, fn) => { const el = document.getElementById(id); if (el) fn(el); };
   setEl('user-badge',       el => el.style.display = 'none');
   setEl('login-header-btn', el => el.style.display = 'flex');
@@ -3626,6 +3640,10 @@ function ytThumbFallback(img, ytId) {
 // Malé červené YouTube logo v rohu — len signalizuje, že oznam má video (prehrá sa až v detaile).
 const NEWS_YT_BADGE = '<div style="position:absolute;top:.5rem;right:.5rem;z-index:2;filter:drop-shadow(0 1px 4px rgba(0,0,0,.6));">'
   + '<svg width="34" height="24" viewBox="0 0 68 48"><path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="#ff0000"/><path d="M45 24L27 14v20" fill="#fff"/></svg></div>';
+// Odznak pri dátume — hráč hneď vidí, že tento oznam sa von nedostal.
+const NEWS_INTERNAL_BADGE = ' <span style="font-family:\'Oswald\';font-weight:600;font-size:.6rem;'
+  + 'letter-spacing:.12em;text-transform:uppercase;padding:.12rem .4rem;border-radius:4px;'
+  + 'background:rgba(107,31,42,.45);color:var(--cream-bright);vertical-align:middle;">🔒 Interné</span>';
 /* Dátum, podľa ktorého sa oznam radí — ten istý, aký je na karte vidieť.
    Radiť len podľa event_date nestačí: oznam bez neho by spadol pod staré
    oznamy, ktoré ho majú vyplnený, aj keby bol pridaný dnes. */
@@ -3653,7 +3671,9 @@ async function loadPublicNews() {
 function renderPublicNews() {
   const list=document.getElementById('pub-news-list');
   if (!list || !_newsCache) return;
-  const data = _newsCache;
+  // Interné oznamy stráži RLS v Supabase — odhlásenému ich databáza ani nepošle.
+  // Toto je len druhá poistka, aby sa nič nezobrazilo pri prepnutí na odhlásený stav.
+  const data = currentUser ? _newsCache : _newsCache.filter(n => !n.is_internal);
   if (!data.length) { list.innerHTML='<div class="empty-state"><div class="es-icon">📋</div><p>Zatiaľ žiadne príspevky.</p></div>'; return; }
   const months=['jan','feb','mar','apr','máj','jún','júl','aug','sep','okt','nov','dec'];
   list.innerHTML=data.map(n=>{
@@ -3681,7 +3701,8 @@ function renderPublicNews() {
         + NEWS_YT_BADGE
         + `</div>`;
     }
-    return `<div class="news-card" onclick="openNewsDetail(${n.id})" style="cursor:pointer;">${media}<div class="news-card-body"><div class="news-card-date">${dateStr}</div><h3>${title}</h3><p>${body.replace(/\n/g,'<br>')}</p></div></div>`;
+    const intBadge = n.is_internal ? NEWS_INTERNAL_BADGE : '';
+    return `<div class="news-card" onclick="openNewsDetail(${n.id})" style="cursor:pointer;">${media}<div class="news-card-body"><div class="news-card-date">${dateStr}${intBadge}</div><h3>${title}</h3><p>${body.replace(/\n/g,'<br>')}</p></div></div>`;
   }).join('');
 }
 
@@ -3965,8 +3986,9 @@ async function loadAdminNews() {
   list.innerHTML=data.map(n=>{
     const d=new Date(n.event_date || n.created_at);
     const badge=n.youtube_url?' · <span style="color:var(--rust-light)">YouTube</span>':n.image_url?' · <span style="color:var(--rust-light)">Foto</span>':'';
+    const intBadge=n.is_internal?NEWS_INTERNAL_BADGE:'';
     return `<div class="event-card" style="margin-bottom:.8rem;">
-      <div class="ev-info"><h4>${n.title}</h4><p style="color:var(--bone);font-size:.9rem;">${d.getDate()}. ${months[d.getMonth()]}${badge}</p></div>
+      <div class="ev-info"><h4>${n.title}</h4><p style="color:var(--bone);font-size:.9rem;">${d.getDate()}. ${months[d.getMonth()]}${badge}${intBadge}</p></div>
       <div class="ev-actions"><button class="btn-admin edit" onclick="openNewsModal(${n.id})">✏ Upraviť</button></div>
     </div>`;
   }).join('');
@@ -4045,10 +4067,12 @@ function openNewsModal(id) {
     sb.from('news').select('*').eq('id',id).single().then(({ data:n })=>{
       if (n) { document.getElementById('news-title').value=n.title||''; document.getElementById('news-body').value=n.body||''; document.getElementById('news-img').value=n.image_url||''; document.getElementById('news-yt').value=n.youtube_url||'';
         document.getElementById('news-title-en').value=n.title_en||''; document.getElementById('news-body-en').value=n.body_en||'';
-        const dEl=document.getElementById('news-date'); if(dEl) dEl.value=n.event_date||''; }
+        const dEl=document.getElementById('news-date'); if(dEl) dEl.value=n.event_date||'';
+        const iEl=document.getElementById('news-internal'); if(iEl) iEl.checked=!!n.is_internal; }
     });
   } else {
     ['news-title','news-body','news-img','news-yt','news-date','news-title-en','news-body-en'].forEach(i=>{const el=document.getElementById(i); if(el) el.value='';});
+    const iEl=document.getElementById('news-internal'); if(iEl) iEl.checked=false;
     const p=document.getElementById('news-img-preview'); if(p){ p.style.display='none'; p.innerHTML=''; }
   }
   document.getElementById('modal-news').classList.add('show');
@@ -4063,7 +4087,8 @@ async function saveNews() {
   const titleEn=document.getElementById('news-title-en').value.trim()||null;
   const bodyEn=document.getElementById('news-body-en').value.trim()||null;
   if (!title) { toast('Zadaj nadpis.','error'); return; }
-  const payload={title,body,image_url:img,youtube_url:yt,event_date:evDate,title_en:titleEn,body_en:bodyEn};
+  const internal=!!document.getElementById('news-internal')?.checked;
+  const payload={title,body,image_url:img,youtube_url:yt,event_date:evDate,title_en:titleEn,body_en:bodyEn,is_internal:internal};
   const { error }=id?await sb.from('news').update(payload).eq('id',parseInt(id)):await sb.from('news').insert(payload);
   if (error) { toast('Chyba: '+error.message,'error'); return; }
   closeModal('modal-news'); toast(id?'Oznam upravený ✓':'Oznam pridaný ✓','success');
