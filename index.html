@@ -923,6 +923,8 @@ body.md-open #admin-preview-banner{display:none !important;}
 .player-slot.drag-over{outline:2px solid var(--rust-light);outline-offset:2px;}
 .player-slot.empty{border-color:rgba(233,220,195,.22);background:rgba(38,34,32,.45);box-shadow:none;}
 .player-slot.empty .slot-pos{color:rgba(233,220,195,.45) !important;}
+/* Mimo režimu úprav sa dá kliknúť len na obsadený slot (otvorí kartu hráča). */
+#lineup-rink:not(.editing) .player-slot.empty{cursor:default;}
 .player-slot .slot-pos{font-family:'Oswald';font-weight:700;font-size:.52rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rust-light);margin-bottom:.1rem;}
 .player-slot .slot-num{font-family:'Anton';font-size:.95rem;color:var(--cream-bright);line-height:1;}
 .player-slot .slot-name{font-family:'Oswald';font-size:.57rem;color:var(--bone);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:74px;margin:0 auto;}
@@ -1968,7 +1970,7 @@ td.rahl-season.first{border-top:0;padding-top:.5rem;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.54.0</div>
+  <div id="version-badge">v3.55.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -5784,9 +5786,32 @@ function lPosTag(p) {
     + 'color:var(--bone);opacity:.65;margin-top:.15rem;">' + t + '</span>';
 }
 
+/* Klik na obsadený slot mimo režimu úprav otvorí kartu hráča — tú istú, čo je
+   v sekcii Súpiska. Karta stojí na ligovej súpiske (`players`), zostava na
+   profiloch, a tie dve tabuľky spolu nie sú prepojené — párujeme ich podľa
+   celého mena rovnako ako čísla dresov. Kto na ligovej súpiske nie je (nový
+   hráč, brankár na výpomoc), kartu nemá a povieme to rovno. */
+async function openLineupPlayerCard(key) {
+  const entry = _lD[key];
+  if (!entry) return;
+  const prof = _lPool.find(x => String(x.id) === String(entry.playerId));
+  const meno = ((prof && prof.full_name) || entry.name || '').trim();
+  if (!meno) return;
+  if (!rosterData.length) await loadRosterFromDB();
+  const k = rosterNameKey(meno);
+  const hits = rosterData.filter(p => rosterNameKey(p.name) === k);
+  if (hits.length !== 1) {
+    toast(hits.length
+      ? 'Meno sedí na viacerých hráčov súpisky — kartu neviem určiť'
+      : meno + ' nie je na ligovej súpiske', 'error');
+    return;
+  }
+  openPlayerCard(hits[0].id);
+}
+
 function lineupSlotClick(slot) {
   if (_lJustDragged) { _lJustDragged = false; return; } // klik hneď po drage — ignoruj
-  if (!_lEd) return;
+  if (!_lEd) { openLineupPlayerCard(slot.dataset.line + '_' + slot.dataset.pos); return; }
   _lAS = slot;
   document.getElementById('lineup-picker-label').textContent =
     slot.dataset.line.toUpperCase() + ' \u00b7 ' + slot.dataset.pos;
