@@ -1970,7 +1970,7 @@ td.rahl-season.first{border-top:0;padding-top:.5rem;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.55.0</div>
+  <div id="version-badge">v3.56.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2158,6 +2158,9 @@ td.rahl-season.first{border-top:0;padding-top:.5rem;}
     <p style="color:var(--bone);font-size:.88rem;margin-bottom:.8rem;">
       Skopíruj a pošli správcom ligy.
     </p>
+    <div id="lineup-text-warn" style="display:none;margin-bottom:.8rem;padding:.6rem .8rem;
+      border:1px solid rgba(191,109,109,.5);border-radius:6px;background:rgba(107,31,42,.25);
+      font-family:'Oswald';font-size:.8rem;line-height:1.5;color:#e0a9a4;"></div>
     <textarea id="lineup-text-area" readonly rows="16"
       style="width:100%;background:var(--ink);border:1px solid var(--line);border-radius:6px;
       padding:.75rem .9rem;color:var(--cream);font-family:ui-monospace,'SFMono-Regular',Menlo,monospace;
@@ -6025,31 +6028,23 @@ function _assignSlots(members, slots) {
 /* ── SÚPISKA AKO TEXT ────────────────────────────
    Deň pred zápasom sa posiela správcom ligy. Zámerne celé mená, nie prezývky —
    do zápisu o stretnutí patrí meno, pod ktorým je hráč registrovaný. */
-const LT_F = ['f1','f2','f3'], LT_D = ['d1','d2'];
+const LT_MON_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+/* Poradie korčuliarov je poradie v zostave, nie podľa čísla — tak, ako sedia
+   na ľade. Brankár ide zvlášť na koniec. */
+const LT_ORDER = ['f1_LW','f1_C','f1_RW','f2_LW','f2_C','f2_RW','f3_LW','f3_C','f3_RW',
+                  'd1_LD','d1_RD','d2_LD','d2_RD'];
+
+/* Ligový systém beží bez diakritiky, tak ju zhodíme rovno pri generovaní —
+   inak by to správca musel prepisovať ručne. */
+const _ltAscii = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
 function _ltName(entry) {
   const p = _lPool.find(x => String(x.id) === String(entry.playerId));
-  return (p && (p.full_name || '').trim()) || entry.name || '';
+  return _ltAscii((p && (p.full_name || '').trim()) || entry.name || '');
 }
 function _ltNum(o) {
   const n = (o && o.number != null) ? String(o.number).trim() : '';
   return (n && n !== '—') ? n : '';
-}
-function _ltRow(o, name) {
-  const n = _ltNum(o);
-  return (n || '–').padStart(2, ' ') + '  ' + name;
-}
-/* Bez čísla na koniec — v zápise o stretnutí sa aj tak musí doplniť ručne. */
-function _ltSort(rows) {
-  return rows.slice().sort((a, b) => {
-    const na = _ltNum(a.o), nb = _ltNum(b.o);
-    if (!na !== !nb) return na ? -1 : 1;
-    return (parseInt(na, 10) || 0) - (parseInt(nb, 10) || 0);
-  });
-}
-function _ltBlock(nadpis, rows) {
-  if (!rows.length) return '';
-  return nadpis + '\n' + _ltSort(rows).map(r => _ltRow(r.o, r.name)).join('\n') + '\n\n';
 }
 
 function lineupText() {
@@ -6057,43 +6052,53 @@ function lineupText() {
   const rawTitle = ev.title
     || (document.getElementById('lineup-modal-title')?.textContent || '').replace(/^🏒\s*/, '');
   const m = (typeof calMatchupFromTitle === 'function') ? calMatchupFromTitle(rawTitle) : null;
-  const head = m ? (CAL_US + ' – ' + m.opponent + (m.home ? ' (doma)' : ' (vonku)')) : (rawTitle || CAL_US);
-
+  const kolo = (typeof calRoundOf === 'function') ? calRoundOf(ev.notes) : null;
   const d = ev.date ? new Date(ev.date) : null;
-  const kedy = (d && !isNaN(d)) ? (d.getDate() + '. ' + (d.getMonth() + 1) + '. ' + d.getFullYear()
-    + ', ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0')) : '';
-  const kde = (ev.location || '').trim();
 
-  const pick = keys => keys.map(k => _lD[k]).filter(Boolean).map(o => ({ o, name: _ltName(o) }));
-  const g = pick(['goalie_G']);
-  const dRows = pick(LT_D.flatMap(l => [l + '_LD', l + '_RD']));
-  const fRows = pick(LT_F.flatMap(l => [l + '_LW', l + '_C', l + '_RW']));
+  const head = [];
+  if (kolo) head.push(kolo + '. Kolo RAHL');
+  if (d && !isNaN(d)) head.push(d.getDate() + '. ' + LT_MON_EN[d.getMonth()]
+    + ' @ ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'));
+  head.push(m ? ('NEA vs ' + m.opponent) : _ltAscii(rawTitle));
 
-  // Prihlásení, ktorí v zostave miesto nedostali — nech na nich nikto nezabudne.
-  const used = new Set(Object.values(_lD).map(x => String(x.playerId)));
-  const rest = _lPool.filter(p => !used.has(String(p.id)))
-    .map(p => ({ o: p, name: (p.full_name || '').trim() || _lDisplayName(p) }));
+  let out = head.join(' - ') + '\n\n';
 
-  let out = head + '\n';
-  if (kedy) out += kedy + (kde ? ' · ' + kde : '') + '\n';
-  else if (kde) out += kde + '\n';
-  out += '\n';
+  let i = 0;
+  LT_ORDER.forEach(k => {
+    const o = _lD[k];
+    if (!o) return;
+    i++;
+    out += i + '. ' + _ltName(o) + ' #' + (_ltNum(o) || '?') + '\n';
+  });
 
-  out += _ltBlock('BRANKÁR', g);
-  out += _ltBlock('OBRANCOVIA', dRows);
-  out += _ltBlock('ÚTOČNÍCI', fRows);
-
-  const spolu = g.length + dRows.length + fRows.length;
-  out += 'Spolu: ' + spolu + ' ' + (spolu === 1 ? 'hráč' : (spolu >= 2 && spolu <= 4 ? 'hráči' : 'hráčov'))
-    + ' (' + g.length + ' B, ' + dRows.length + ' O, ' + fRows.length + ' Ú)\n';
-
-  if (rest.length) out += '\n' + _ltBlock('PRIHLÁSENÍ MIMO ZOSTAVY', rest).trimEnd() + '\n';
+  const g = _lD['goalie_G'];
+  if (g) out += 'Brana: ' + _ltName(g) + '\n';
   return out;
+}
+
+/* Do textu ide len zostava. Čo do nej nesadlo, pripomenieme nad textareou —
+   v správe pre ligu to nemá čo robiť, ale zabudnúť na to sa tiež nemá. */
+function lineupTextWarnings() {
+  const w = [];
+  const used = new Set(Object.values(_lD).map(x => String(x.playerId)));
+  const rest = _lPool.filter(p => !used.has(String(p.id)));
+  if (rest.length) w.push('Mimo zostavy ostali prihlásení: '
+    + rest.map(p => (p.full_name || '').trim() || _lDisplayName(p)).join(', '));
+  const bezCisla = Object.values(_lD).filter(o => !_ltNum(o)).map(o => _ltName(o));
+  if (bezCisla.length) w.push('Bez čísla dresu: ' + bezCisla.join(', '));
+  if (!_lD['goalie_G']) w.push('V zostave chýba brankár.');
+  return w;
 }
 
 function openLineupText() {
   const ta = document.getElementById('lineup-text-area');
   if (ta) ta.value = lineupText();
+  const warn = document.getElementById('lineup-text-warn');
+  if (warn) {
+    const w = lineupTextWarnings();
+    warn.innerHTML = w.map(t => mdEsc(t)).join('<br>');
+    warn.style.display = w.length ? 'block' : 'none';
+  }
   document.getElementById('modal-lineup-text').classList.add('show');
 }
 
