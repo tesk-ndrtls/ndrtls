@@ -1379,7 +1379,7 @@ td.rahl-season.first{border-top:0;padding-top:.5rem;}
     <div class="sec-head"><h2 data-i="rosterH">A-tím · Súpiska</h2><p data-i="rosterP">Bratislava Neanderthals · RAHL1</p></div>
     <div style="background:var(--charcoal);border:1px solid var(--line);border-left:3px solid var(--rust);border-radius:8px;padding:.7rem .9rem;margin-bottom:1.2rem;display:flex;gap:.6rem;align-items:flex-start;">
       <span style="font-size:1rem;line-height:1.2;flex-shrink:0;">ℹ️</span>
-      <span data-i="rosterInfo" style="font-family:'Barlow Condensed';font-size:.92rem;color:var(--bone);line-height:1.35;">Súpiska a štatistiky sú zo sezóny <strong style="color:var(--cream);">{SEASON}</strong> a načítavajú sa priamo z ligovej stránky <a href="{URL}" target="_blank" style="color:var(--rust-light);">szalh.sk ↗</a>. Slúžia len informatívne.</span>
+      <span data-i="rosterInfo" style="font-family:'Barlow Condensed';font-size:.92rem;color:var(--bone);line-height:1.35;">Súpiska a štatistiky sú prevzaté z ligovej stránky <a href="{TEAMURL}" target="_blank" style="color:var(--rust-light);">szalh.sk ↗</a> a dopĺňajú sa ručne, takže nemusia byť úplne aktuálne. Slúžia len informatívne.</span>
     </div>
     <div style="overflow-x:auto;">
       <table class="player-table">
@@ -1972,7 +1972,7 @@ td.rahl-season.first{border-top:0;padding-top:.5rem;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.57.0</div>
+  <div id="version-badge">v3.57.1</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -4359,6 +4359,8 @@ async function submitContact() {
    posielame, no ak ho ignoruje, sezónu treba prepnúť tam. */
 const SZALH = { year: 2026, label: '2026/27', league: 'RAHL1' };
 const szalhUrl = () => 'https://szalh.sk/league/' + SZALH.year + '/' + SZALH.league;
+/* Stránka nášho tímu v lige — tam sú súpiska a individuálne štatistiky. */
+const szalhTeamUrl = () => 'https://szalh.sk/teamleader/' + SZALH.year + '/' + SZALH.league + '/NEA';
 /* Popisku nechávame riadiť dáta, nie konštantu — hlavička nesmie tvrdiť novú
    sezónu nad tabuľkou zo starej. Proxy sezónu zatiaľ nehlási, tak ju odvodíme
    z dátumu posledného zápasu: ročník sa začína na jeseň, takže mesiac 7 a viac
@@ -7202,7 +7204,7 @@ const UI_MAIN={
     splashTagline:'Hokejový klub · Bratislava',
     rosterH:'A-tím · Súpiska', rosterP:'Bratislava Neanderthals · RAHL1',
     thNum:'#', thName:'Meno', thPos:'Post', thNote:'Poznámka', thGames:'Z', thPoints:'B',
-    rosterInfo:'Súpiska a štatistiky sú zo sezóny <strong style="color:var(--cream);">{SEASON}</strong> a načítavajú sa priamo z ligovej stránky <a href="{URL}" target="_blank" style="color:var(--rust-light);">szalh.sk ↗</a>. Slúžia len informatívne.',
+    rosterInfo:'Súpiska a štatistiky sú prevzaté z ligovej stránky <a href="{TEAMURL}" target="_blank" style="color:var(--rust-light);">szalh.sk ↗</a> a dopĺňajú sa ručne, takže nemusia byť úplne aktuálne. Slúžia len informatívne.',
     rosterLegend:'B = Brankár · O = Obranca · Ú = Útočník · <a href="https://szalh.sk" target="_blank">szalh.sk ↗</a>',
     mediaH:'Médiá', mediaP:'Videá, fotky a náš Instagram.',
     mediaFooter:'Máš fotky alebo video? Pošli na <a href="mailto:konty@ndrtls.com">konty@ndrtls.com</a>',
@@ -7229,7 +7231,7 @@ const UI_MAIN={
     splashTagline:'Hockey Club · Bratislava',
     rosterH:'Roster', rosterP:'Bratislava Neanderthals · RAHL1',
     thNum:'#', thName:'Name', thPos:'Pos', thNote:'Note', thGames:'GP', thPoints:'PTS',
-    rosterInfo:'Roster and stats are from the <strong style="color:var(--cream);">{SEASON}</strong> season and load directly from the league site <a href="{URL}" target="_blank" style="color:var(--rust-light);">szalh.sk ↗</a>. For information only.',
+    rosterInfo:'Roster and stats are taken from the league site <a href="{TEAMURL}" target="_blank" style="color:var(--rust-light);">szalh.sk ↗</a> and updated by hand, so they may lag behind. For information only.',
     rosterLegend:'B = Goalie · O = Defense · Ú = Forward · <a href="https://szalh.sk" target="_blank">szalh.sk ↗</a>',
     mediaH:'Media', mediaP:'Videos, photos and our Instagram.',
     mediaFooter:'Got photos or video? Send them to <a href="mailto:konty@ndrtls.com">konty@ndrtls.com</a>',
@@ -7616,7 +7618,7 @@ function applyStatic() {
     const key = el.dataset.i;
     if (m[key] == null) return;
     const val = String(m[key])
-      .replace(/\{SEASON\}/g, szalhLabel()).replace(/\{URL\}/g, szalhUrl());
+      .replace(/\{SEASON\}/g, szalhLabel()).replace(/\{TEAMURL\}/g, szalhTeamUrl()).replace(/\{URL\}/g, szalhUrl());
     if (UI_MAIN_HTML[key]) el.innerHTML = val; else el.textContent = val;
   });
 
