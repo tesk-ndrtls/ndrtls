@@ -925,6 +925,8 @@ body.md-open #admin-preview-banner{display:none !important;}
 .player-slot.empty .slot-pos{color:rgba(233,220,195,.45) !important;}
 /* Mimo režimu úprav sa dá kliknúť len na obsadený slot (otvorí kartu hráča). */
 #lineup-rink:not(.editing) .player-slot.empty{cursor:default;}
+/* Hosť nemá v appke účet — prerušovaný okraj to prezradí na prvý pohľad. */
+.player-slot.guest{border-style:dashed;}
 .player-slot .slot-pos{font-family:'Oswald';font-weight:700;font-size:.52rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rust-light);margin-bottom:.1rem;}
 .player-slot .slot-num{font-family:'Anton';font-size:.95rem;color:var(--cream-bright);line-height:1;}
 .player-slot .slot-name{font-family:'Oswald';font-size:.57rem;color:var(--bone);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:74px;margin:0 auto;}
@@ -1970,7 +1972,7 @@ td.rahl-season.first{border-top:0;padding-top:.5rem;}
   <img src="logo.png" alt="Neanderthals" style="height:44px;width:auto;opacity:.5;margin-bottom:.6rem;">
   <div style="font-family:'Oswald';font-weight:700;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);">Neanderthals</div>
   <div data-i="splashTagline" style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone);opacity:.4;margin-top:.3rem;">Hokejový klub · Bratislava</div>
-  <div id="version-badge">v3.56.0</div>
+  <div id="version-badge">v3.57.0</div>
 </footer>
 </div><!-- /main-site -->
 
@@ -2136,6 +2138,24 @@ td.rahl-season.first{border-top:0;padding-top:.5rem;}
       </div>
       <div id="lineup-picker-list"
         style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;max-height:200px;overflow-y:auto;">
+      </div>
+      <!-- Hosť — hráč, ktorý v appke účet nemá (výpomoc, brankár na jeden zápas) -->
+      <div id="lineup-guest" style="display:none;margin-top:.6rem;padding:.6rem;
+        border:1px dashed var(--rust);border-radius:8px;background:rgba(21,17,15,.5);">
+        <div style="font-family:'Oswald';font-weight:700;font-size:.68rem;letter-spacing:.1em;
+          text-transform:uppercase;color:var(--rust-light);margin-bottom:.5rem;">
+          Hosť na pozíciu <span id="lineup-guest-label"></span>
+        </div>
+        <div style="display:grid;grid-template-columns:76px 1fr;gap:.4rem;">
+          <input type="number" id="lineup-guest-num" placeholder="č." min="0" max="99"
+            style="width:100%;background:var(--ink);border:1px solid var(--line);border-radius:6px;
+            padding:.6rem .5rem;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;">
+          <input type="text" id="lineup-guest-name" placeholder="Meno a priezvisko"
+            style="width:100%;background:var(--ink);border:1px solid var(--line);border-radius:6px;
+            padding:.6rem .7rem;color:var(--cream);font-family:'Barlow Condensed';font-size:1rem;">
+        </div>
+        <button class="btn-admin save" style="width:100%;margin-top:.5rem;"
+          onclick="assignGuest()">+ Pridať hosťa</button>
       </div>
       <button class="btn-admin cancel" style="margin-top:.6rem;width:100%;"
         onclick="document.getElementById('lineup-picker').style.display='none'">
@@ -5752,10 +5772,12 @@ function renderLineup() {
       slot.classList.remove('empty'); slot.classList.add('filled');
       slot.querySelector('.slot-num').textContent=p.number||'—';
       slot.querySelector('.slot-name').textContent=p.name||p.number||'';
+      slot.classList.toggle('guest', !!p.guest);
       if (!slot.querySelector('.slot-del')) slot.appendChild(mdMakeSlotDel(slot));
     }
     else {
       slot.classList.remove('filled'); slot.classList.add('empty');
+      slot.classList.remove('guest');
       slot.querySelector('.slot-num').textContent='+';
       slot.querySelector('.slot-name').textContent='voľné';
       slot.querySelector('.slot-del')?.remove();
@@ -5797,6 +5819,7 @@ function lPosTag(p) {
 async function openLineupPlayerCard(key) {
   const entry = _lD[key];
   if (!entry) return;
+  if (entry.guest) { toast((entry.name || 'Hosť') + ' je hosť — kartu nemá', 'info'); return; }
   const prof = _lPool.find(x => String(x.id) === String(entry.playerId));
   const meno = ((prof && prof.full_name) || entry.name || '').trim();
   if (!meno) return;
@@ -5835,6 +5858,9 @@ function lineupSlotClick(slot) {
 
   const rows = [];
   rows.push('<div onclick="assignPlayer(null)" style="padding:.4rem .6rem;border:1px solid var(--line);border-radius:6px;cursor:pointer;font-family:\'Oswald\';font-size:.8rem;color:var(--bone);grid-column:1/-1;text-align:center;background:var(--charcoal);">\u2715 Odstr\u00e1ni\u0165</div>');
+  if (isAdminUI()) {
+    rows.push('<div onclick="showGuestForm()" style="padding:.4rem .6rem;border:1px dashed var(--rust);border-radius:6px;cursor:pointer;font-family:\'Oswald\';font-size:.8rem;color:var(--rust-light);grid-column:1/-1;text-align:center;background:var(--charcoal);">\u2795 Hos\u0165 (mimo appky)</div>');
+  }
 
   if (!cand.length) {
     rows.push('<div style="grid-column:1/-1;text-align:center;padding:.6rem;color:var(--bone);font-family:\'Oswald\';font-size:.78rem;">\u017diadny prihl\u00e1sen\u00fd hr\u00e1\u010d.</div>');
@@ -5858,7 +5884,35 @@ function lineupSlotClick(slot) {
   }
 
   list.innerHTML = rows.join('');
+  document.getElementById('lineup-guest').style.display = 'none';
   document.getElementById('lineup-picker').style.display = 'block';
+}
+
+/* ── HOSŤ ──
+   Hráč, ktorý v appke účet nemá — výpomoc z iného tímu, brankár na jeden zápas.
+   Nevzniká mu profil ani RSVP, žije len v uloženej zostave (`game_results.notes`),
+   preto má namiesto playerId príznak `guest`. */
+function showGuestForm() {
+  if (!_lAS || !isAdminUI()) return;
+  document.getElementById('lineup-guest-label').textContent = _lAS.dataset.pos;
+  document.getElementById('lineup-guest-num').value = '';
+  document.getElementById('lineup-guest-name').value = '';
+  document.getElementById('lineup-guest').style.display = 'block';
+  document.getElementById('lineup-guest-name').focus();
+}
+
+function assignGuest() {
+  if (!_lAS || !isAdminUI()) return;
+  const name = (document.getElementById('lineup-guest-name').value || '').trim();
+  const num  = (document.getElementById('lineup-guest-num').value || '').trim();
+  if (!name) { toast('Zadaj meno hosťa.', 'error'); return; }
+  const key = _lAS.dataset.line + '_' + _lAS.dataset.pos;
+  _lD[key] = { guest: true, name, number: num || '—' };
+  document.getElementById('lineup-guest').style.display = 'none';
+  document.getElementById('lineup-picker').style.display = 'none';
+  _lAS = null;
+  renderLineup();
+  toast('Hosť pridaný ✓', 'success');
 }
 
 function assignPlayer(pid) {
@@ -6059,7 +6113,14 @@ function lineupText() {
   if (kolo) head.push(kolo + '. Kolo RAHL');
   if (d && !isNaN(d)) head.push(d.getDate() + '. ' + LT_MON_EN[d.getMonth()]
     + ' @ ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'));
-  head.push(m ? ('NEA vs ' + m.opponent) : _ltAscii(rawTitle));
+  // Poradie tímov je domáci vs hostia — tak, ako to má byť v ligovom zápise.
+  // Názov udalosti je už v tomto poradí, z neho vieme, či hráme doma.
+  if (m) {
+    const opp = _ltAscii(m.opponent);
+    head.push(m.home ? ('NEA vs ' + opp) : (opp + ' vs NEA'));
+  } else {
+    head.push(_ltAscii(rawTitle));
+  }
 
   let out = head.join(' - ') + '\n\n';
 
@@ -6140,14 +6201,21 @@ function autoLineup() {
   while (D.length < 4 && hi < hyb.length) { D.push(hyb[hi++]); }
   for (; hi < hyb.length; hi++) { F.push(hyb[hi]); }
 
+  // Hostí si admin pridal ručne — automatika ich nechá na svojich miestach.
+  const guests = {};
+  Object.keys(_lD).forEach(k => { if (_lD[k] && _lD[k].guest) guests[k] = _lD[k]; });
+
   _lD = {};
+  Object.assign(_lD, guests);
   if (!pool.length) {
     renderLineup();
     if (!_lEd) enableLineupEdit();
     toast('Zatiaľ sa nikto neprihlásil.','info');
     return;
   }
-  const put = (key,p)=>{ _lD[key]={playerId:p.id,name:_lDisplayName(p),number:p.number||'\u2014'}; };
+  // Slot, na ktorom sedí hosť, automatika nechá tak.
+  const put = (key,p)=>{ if (_lD[key] && _lD[key].guest) return;
+    _lD[key]={playerId:p.id,name:_lDisplayName(p),number:p.number||'\u2014'}; };
   if (g[0]) put('goalie_G', g[0]);
 
   // Obrana: dvojice podľa preferencií, v dvojici ľavý/pravý podľa pref_pos.
